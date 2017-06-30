@@ -1,0 +1,165 @@
+
+
+/*
+a.button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+    font-family: inherit;
+    background-color: lightgray;
+    border: none;
+    color: black;
+    padding: 3px 3px 1px 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+a.button:hover {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+    font-family: inherit;
+    background-color: darkgray;
+    border: none;
+    color: black;
+    padding: 3px 3px 1px 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+*/
+
+input[type=submit] {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+    font-family: inherit;
+    background-color: lightgray;
+    border: none;
+    color: black;
+    padding: 3px 3px 1px 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+input[type=submit]:hover {
+    background-color: darkgray;
+    border: none;
+    color: black;
+    padding: 3px 3px 1px 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.button {
+    background-color: white; /* Green */
+    border: 2px;
+    border-radius: 16px;
+    color: black;
+    padding: 16px 48px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 4px 2px;
+    cursor: pointer;
+    float: left;
+}
+.button1 {
+    background-color: lightgreen;                  /* Green */
+    color:  black;
+}
+.button2 {
+    background-color: lightblue;                  /* Blue */
+    color:  black;
+}
+
+.button3 {
+    background-color: lightpink;                  /* Red */
+    color:  black;
+}
+
+.button4 {
+    background-color: lightgray;    /* Gray */
+
+    color:  black;
+}
+.button5 {
+    background-color: lightgray;                  /* Black */
+    color: black;
+}
+
+
+.button:hover {                 /* Green */
+    background-color: black;
+    color: white;
+}
+.button1:hover {
+    background-color: darkgreen;                  /* Green */
+    color: white;
+}
+.button2:hover {
+    background-color: darkblue;                  /* Blue */
+    color: white;
+}
+.button3:hover {
+    background-color: deeppink;                  /* Red */
+    color: white;
+}
+.button4:hover {
+    background-color: darkgray;     /* Gray */
+    color: white;
+}
+.button5:hover {
+    background-color: lightgray;                  /* Black */
+    color: black;
+}
+
+
+
+
+table {
+    border-collapse: collapse;
+    font-family: "Courier New", arial, sans-serif;
+    width: 100%;
+}
+
+thead, tfoot {
+    background-color: #aaaaaa;
+    font-family: "Courier New", arial, sans-serif;
+}
+
+td, th {
+    border:     1px solid #dddddd;
+    text-align: left;
+    padding: 5px 8px 5px 8px;
+    font-family: "Courier New", arial, sans-serif;
+
+}
+
+tr:nth-child(even) {
+    background-color: #eeeeee;
+}
+
+
+input {
+    font-family: "Courier New", Courier, monospace;
+    font-size: inherit;
+}
+
+textarea {
+    font-family: "Courier New", Courier, monospace;
+    font-size: inherit;
+    width: 765px;
+    height: 150px;
+}
+
+table.WideOutput {
+    border-collapse: collapse;
+    font-family: "Courier New", arial, sans-serif;
+    width: 100%;
+}
