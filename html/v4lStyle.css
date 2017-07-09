@@ -1,34 +1,15 @@
 
-
-/*
-a.button {
-    -webkit-appearance: button;
-    -moz-appearance: button;
-    appearance: button;
-    font-family: inherit;
-    background-color: lightgray;
-    border: none;
-    color: black;
-    padding: 3px 3px 1px 2px;
-    text-align: center;
-    text-decoration: none;
+/* Full-width input fields */
+input[type=text],
+input[type=password] {
+    width: 100%;
+    /* max-width: 580px; */
+    padding: 12px 20px;
+    margin: 8px 0;
     display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
 }
-
-a.button:hover {
-    -webkit-appearance: button;
-    -moz-appearance: button;
-    appearance: button;
-    font-family: inherit;
-    background-color: darkgray;
-    border: none;
-    color: black;
-    padding: 3px 3px 1px 2px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-}
-*/
 
 input[type=submit] {
     -webkit-appearance: button;
@@ -54,72 +35,220 @@ input[type=submit]:hover {
     display: inline-block;
 }
 
-.button {
-    background-color: white; /* Green */
-    border: 2px;
-    border-radius: 16px;
-    color: black;
-    padding: 16px 48px;
+
+button {
+    /* background-color: #008CBA; */
+    font-size: x-large;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    /* max-width: 200px; */
+    height: 60px;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.btnLogin {
+    background-color: #008CBA;
+    font-size: x-large;
+    font-weight: bold;
+    border: 1px solid #000080;
+}
+
+
+/* Extra styles for the cancel button */
+.cancelbtn {
+    width: 10%;
+    padding: 10px 18px;
+    background-color: #c0c0c0;
+    font-size: x-large;
+}
+
+/* Center the image and position the close button */
+.imgcontainer {
+    text-align: center;
+    margin: 24px 0 12px 0;
+    position: relative;
+}
+
+img.avatar {
+    width: 40%;
+    max-width: 200px;
+    border-radius: 50%;
+}
+
+.container {
+    padding: 16px;
+}
+
+span.psw {
+    float: right;
+    padding-top: 16px;
+}
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    /* max-width: 600px; */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    padding-top: 60px;
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button (x) */
+.close {
+    position: absolute;
+    right: 25px;
+    top: 0;
+    color: #000;
+    font-size: 35px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: red;
+    cursor: pointer;
+}
+
+/* Add Zoom Animation */
+.animate {
+    -webkit-animation: animatezoom 0.6s;
+    animation: animatezoom 0.6s
+}
+
+@-webkit-keyframes animatezoom {
+    from {-webkit-transform: scale(0)}
+    to {-webkit-transform: scale(1)}
+}
+
+@keyframes animatezoom {
+    from {transform: scale(0)}
+    to {transform: scale(1)}
+}
+
+/* Change styles for span and cancel button on extra small screens */
+@media screen and (max-width: 300px) {
+    span.psw {
+        display: block;
+        float: none;
+    }
+    .cancelbtn {
+        width: 100%;
+    }
+}
+
+
+
+
+.buttongrid {
+   background-color: white;
+    padding: 3px 3px 1px 2px;
+    border: 2px solid gray;
+     border-radius: 3px;
+    width: 50px;
+    height: 16px;
+    color:  black;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+
+}
+
+.buttongrid:hover {
+    background-color: lightgray;
+    border: 2px solid black;
+
+}
+
+
+a.button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+    background-color: lightgray;
+    color: black;    font-family: inherit;
+
+    border: none;
+    padding: 3px 3px 1px 2px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 16px;
-    font-weight: bold;
-    margin: 4px 2px;
-    cursor: pointer;
-    float: left;
-}
-.button1 {
-    background-color: lightgreen;                  /* Green */
-    color:  black;
-}
-.button2 {
-    background-color: lightblue;                  /* Blue */
-    color:  black;
+    width: 100%;
 }
 
-.button3 {
-    background-color: lightpink;                  /* Red */
-    color:  black;
+a.button:hover {
+    background-color: darkgray;
+    color: white;
+    text-decoration: none;
+}
+a.btnStory {
+    background-color: lightblue;
+    max-width: 19%;
+}
+a.btnLesson {
+    background-color: #90ee90;
+    max-width: 19%;
 }
 
-.button4 {
-    background-color: lightgray;    /* Gray */
-
-    color:  black;
-}
-.button5 {
-    background-color: lightgray;                  /* Black */
-    color: black;
+a.btnBlog {
+    background-color: lightpink;
+    max-width: 19%;
 }
 
+a.btnDiscuss {
+    background-color: lightgoldenrodyellow;
+    max-width: 19%;
+}
 
-.button:hover {                 /* Green */
-    background-color: black;
+a.btnAdmin {
+    background-color: lightgray;
+    max-width: 19%;
+}
+
+
+.btnStory:hover {
+    background-color: darkblue;
     color: white;
 }
-.button1:hover {
-    background-color: darkgreen;                  /* Green */
+.btnLesson:hover {
+    background-color: darkgreen;
     color: white;
 }
-.button2:hover {
-    background-color: darkblue;                  /* Blue */
+.btnBlog:hover {
+    background-color: darkred;
     color: white;
 }
-.button3:hover {
-    background-color: deeppink;                  /* Red */
+.btnDiscuss:hover {
+    background-color: darkgoldenrod;
     color: white;
 }
-.button4:hover {
-    background-color: darkgray;     /* Gray */
+a.btnAdmin:hover {
+    background-color: darkgray;
     color: white;
 }
-.button5:hover {
-    background-color: lightgray;                  /* Black */
-    color: black;
-}
-
-
 
 
 table {
@@ -146,11 +275,6 @@ tr:nth-child(even) {
 }
 
 
-input {
-    font-family: "Courier New", Courier, monospace;
-    font-size: inherit;
-}
-
 textarea {
     font-family: "Courier New", Courier, monospace;
     font-size: inherit;
@@ -163,3 +287,6 @@ table.WideOutput {
     font-family: "Courier New", arial, sans-serif;
     width: 100%;
 }
+
+
+
