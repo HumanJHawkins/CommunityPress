@@ -1,146 +1,334 @@
-<!--
-  Login method based on:
-  https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_login_form_modal
--->
-
 <?php
-include 'sessionStart.php';
+include_once 'sessionStart.php';
+$connection = getDBConnection();
 
-// If returning here after adding a user, we'll have the password temporarily stored
-//  in a session variable. Move to POST and delete, to allow handling login of the new user.
-if ((isset($_SESSION["Password"])) && ($_SESSION["Password"] != '')) {
-    $_POST["username"] = $_SESSION["UserName"];
-    $_POST["password"] = $_SESSION["Password"];
-    $_SESSION["Password"] = '';
-    unset($_SESSION["Password"]);
+const LOGIN_DIALOG_STANDARD = 'LOGIN_DIALOG_STANDARD';
+const LOGIN_DIALOG_PASSWORD_INCORRECT = 'LOGIN_DIALOG_PASSWORD_INCORRECT';
+const LOGIN_VERIFY_PASSWORD = 'LOGIN_VERIFY_PASSWORD';
+const LOGIN_REGISTER_USER = 'LOGIN_REGISTER_USER';
+const LOGIN_VERIFY_SEND_CODE = 'LOGIN_VERIFY_SEND_CODE';
+const LOGIN_VERIFY_DIALOG_STANDARD = 'LOGIN_VERIFY_DIALOG_STANDARD';
+const LOGIN_VERIFY_DIALOG_CODE_INCORRECT = 'LOGIN_VERIFY_DIALOG_CODE_INCORRECT';
+const LOGIN_VERIFY_CODE = 'LOGIN_VERIFY_CODE';
+const LOGIN_PASSWORD_RESET = 'LOGIN_PASSWORD_RESET';
+const LOGIN_LOGOUT = 'LOGIN_LOGOUT';
+
+function loginDisplayLoginDialog()
+{
+  // Display the login dialog with password text conditional on error status.
+  $placeholder = 'Enter Password';
+  if (($_SESSION["loginStep"] == LOGIN_DIALOG_PASSWORD_INCORRECT)) {
+    $placeholder = 'Password Invalid. Please try again.';
+  }
+  $dlgHTML = file_get_contents('loginDlgMain.html');
+  $dlgHTML = str_replace("STRING_REPLACE_LAST_URL", $_SESSION['lastURL'], $dlgHTML);
+  $dlgHTML = str_replace("STRING_REPLACE_PLACEHOLDER", $placeholder, $dlgHTML);
+  
+  htmlStart('Login or Register', false);
+  echo $dlgHTML;
 }
 
-$_SESSION["UserID"]         = 0;
-$_SESSION["UserName"]       = '';
-$_SESSION["UserBirthday"]   = NULL;
-$_SESSION["UserMail"]       = '';
-$_SESSION["UserReputation"] = 0;
-$_SESSION["UserStatus"]     = 0;
+function loginDisplayVerifyDialog()
+{
+  // Display the verification dialog with verification code text conditional on error status.
+  $placeholder = 'Enter Verification Code';
+  if (($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT)) {
+    $placeholder = 'Verification Code Invalid. Please try again.';
+  }
+  $dlgHTML = file_get_contents('loginDlgVerify.html');
+  $dlgHTML = str_replace("STRING_REPLACE_EMAIL", $_SESSION['userEmail'], $dlgHTML);
+  $dlgHTML = str_replace("STRING_REPLACE_LAST_URL", $_SESSION['lastURL'], $dlgHTML);
+  $dlgHTML = str_replace("STRING_REPLACE_PLACEHOLDER", $placeholder, $dlgHTML);
+  
+  htmlStart('Confirm Account', false);
+  echo $dlgHTML;
+}
 
-$PasswordValid = false;
+function resetLoginProcess($errorText = '')
+{
+  destroySession();
+  if ($errorText != '') {
+    debugOut('ERROR: ' . $errorText);
+  }
+  
+  // NOTE: Technically some cases might be LOGIN_DIALOG_PASSWORD_INCORRECT.
+  //  However, we shouldn't get here without an error, so that would be a false message more often than not.
+  $_SESSION["loginStep"] = LOGIN_DIALOG_STANDARD;
+  header('Location: ' . $_SERVER['DOCUMENT_URI']);
+  exit();
+}
 
-if ((isset($_POST["username"])) && (trim($_POST["username"]) != '')) {
-    $sql = 'CALL procGetUserByName(\'' . mysqli_real_escape_string($connection, trim($_POST["username"])) . '\')';
-    $result = mysqli_query($connection, $sql) or die("Error: " . $sql . PHP_EOL . mysqli_error($connection));
+function getVerifyCodeEmailHTML($verifyCode, $htmlFile)
+{
+  $dlgHTML = file_get_contents($htmlFile);
+  
+  $dlgHTML = str_replace("PLACEHOLDER_SALUTATION", $_SESSION["userEmail"], $dlgHTML);
+  $dlgHTML = str_replace("PLACEHOLDER_SITENAME_CASUAL", $GLOBALS["SITE_URL_CASUAL"], $dlgHTML);
+  $dlgHTML = str_replace("PLACEHOLDER_CONFIRM_CODE", $verifyCode, $dlgHTML);
+  $dlgHTML = str_replace("PLACEHOLDER_VERIFICATION_EMAIL_SIGNATURE", $GLOBALS["VERIFICATION_EMAIL_SIGNATURE"], $dlgHTML);
+  
+  return $dlgHTML;
+}
 
-//   if($result) {
-//        // Should just be one username, but need to loop to avoid 'Commands out of sync' error.
-//        while ($row = $result->fetch_object()){
-//            $UserNames[] = $row;
-//            echo '<br>'.$UserNames[0];
-//        }
-//        // Free result set
-//        $result->close();
-//        $connection->next_result();
-//    }
+function sendVerifyCode($mailBodyText, $htmlFile)
+{
+  debugOut('Creating and sending verification code.');
+  $verifyCode = verifyCode();
+  $_SESSION["verifyCodeHash"] = password_hash($verifyCode, PASSWORD_DEFAULT,
+    ["cost" => $GLOBALS['VERIFYCODE_HASH_COST']]);
+  
+  // $mailBodyText = file_get_contents('verifyCodeEmailText.text');
+  $mailBodyHTML = getVerifyCodeEmailHTML($verifyCode, $htmlFile);
+  
+  debugOut('$_SESSION["userEmail"]', $_SESSION["userEmail"]);
+  debugOut('$_SESSION["verifyCodeHash"]', $_SESSION["verifyCodeHash"]);
+  debugOut('$verifyCode', $verifyCode);
+  
+  // This is using MailGun. Create a MailGun object with credentials to enable this.
+  //  I put it in the same file with DB Connect info, to keep security config together.
+  //
+  // TO DO:
+  //   Add text message option.
+  //   Switch to Amazon's mail solution?
+  
+  sendEmail($GLOBALS['VERIFICATION_EMAIL_FROM'], $_SESSION["userEmail"], $GLOBALS['VERIFICATION_EMAIL_SUBJECT'],
+    $mailBodyText, $mailBodyHTML);
+}
 
-    echo '<br>Have username: '.$_POST["username"];
+function returnToLogin()
+{
+  debugOut('function returnToLogin(), DOCUMENT_URI', $_SERVER['DOCUMENT_URI']);
+  header('Location: ' . $_SERVER['DOCUMENT_URI']);
+}
 
-    if ((isset($_POST["password"])) && ($_POST["password"] != '')) {
+function updateUserSession()
+{
+  $connection = getDBConnection();
+  $theUserID = 0;
+  if ((isset($_SESSION["userID"])) && $_SESSION["userID"] > 1) {
+    $theUserID = $_SESSION["userID"];
+  }
+  
+  $sql = 'SELECT addOrUpdateUser(
+    \'' . mysqli_real_escape_string($connection, $_SESSION["userEmail"]) .
+    '\', \'' . mysqli_real_escape_string($connection, $_SESSION['saltHash']) .
+    '\', \'' . mysqli_real_escape_string($connection, session_id()) .
+    '\', \'' . mysqli_real_escape_string($connection, ipAddress()) .
+    '\', \'' . mysqli_real_escape_string($connection, session_encode()) .
+    '\',' . $theUserID . ')';
+  $result = mysqli_query($connection, $sql) or die("Error: " . $sql . '<br />' . mysqli_error($connection));
+  $row = mysqli_fetch_array($result);
+  mysqli_free_result($result);
+  return $row;
+}
 
-        echo '<br>Have password: '.substr($_POST["password"],0,2).'********';
+function registerUser()
+{
+  $_SESSION['saltHash'] = password_hash($_POST["password"], PASSWORD_DEFAULT, ["cost" => $GLOBALS['PASSWORD_HASH_COST']]);
+  debugOut('$_SESSION[\'saltHash\']', $_SESSION['saltHash']);
+  
+  $row = updateUserSession();
+  if ($row) {
+    // Temporarily save the password for a reload.
+    $_SESSION["password"] = $_POST["password"];
+    $_POST["password"] = '';
+    unset($_POST["password"]);
+  } else {
+    debugOut('registerUser', 'No result returned. Handle error.');
+  }
+}
 
-        if($row=mysqli_fetch_array($result)) {
 
-            echo '<br>Fetched result.';
+$dlgHTML = '';
+$sql = '';
+$debugMsg = '';
+$_SESSION["isActive"] = false;
 
+// Use $_POST consistently for passwords because because POST is
+//   unset automatically if we forget.
+if ((isset($_SESSION["password"])) && ($_SESSION["password"] != '')) {
+  $_POST["password"] = $_SESSION["password"];
+  $_SESSION["password"] = '';
+  unset($_SESSION["password"]);
+}
+// Use $_SESSION consistently for other variables.
+if ((isset($_POST["userEmail"])) && ($_POST["userEmail"] != '')) {
+  $_SESSION["userEmail"] = $_POST["userEmail"];
+}
+if ((isset($_POST["loginStep"])) && ($_POST["loginStep"] != '')) {
+  $_SESSION["loginStep"] = $_POST["loginStep"];
+}
+// Allow $_GET to override $_POST from loginDlgVerify, etc. Allows handling of
+//  various related functionality.
+if (isset($_GET["action"])) {
+  if ($_GET["action"] == 'resend') {
+    $_SESSION["loginStep"] = 'LOGIN_VERIFY_SEND_CODE';
+  }
+  if ($_GET["action"] == 'reset') {
+    $_SESSION["loginStep"] = 'LOGIN_PASSWORD_RESET';
+  }
+  if ($_GET["action"] == 'logout') {
+    $_SESSION["loginStep"] = 'LOGIN_LOGOUT';
+  }
+}
 
-
-     //       if ($result = mysqli_store_result($link)) {
-     //           while ($row = mysqli_fetch_row($result)) {
-     //               printf("%s\n", $row[0]);
-     //           }
-     //           mysqli_free_result($result);
-     //       }
-
-
-            if (password_verify($_POST["password"], $row['PasswordSaltHash'])) {
-
-                echo '<br>Verified password.';
-
-                $PasswordValid = true;  // Probably not going to use this...
-                // $_SESSION["PasswordSaltHash"] = $row['PasswordSaltHash'];    // Not likely needed elsewhere.
-                $_SESSION["UserID"]           = $row['UserID'];
-                $_SESSION["UserName"]         = $row['UserName'];
-                $_SESSION["UserBirthday"]     = $row['Birthday'];
-                $_SESSION["UserMail"]         = $row['eMail'];
-                $_SESSION["UserReputation"]   = $row['Reputation'];
-                $_SESSION["UserStatus"]       = $row['Status'];
-
-                // Update session log with user ID now that we have it.
-                $sql = 'SELECT fnLogSession(\''.session_id().'\', \''.$_SESSION['ipAddress'].'\','.$_SESSION["UserID"].')';
-                $result = mysqli_query($connection2, $sql) or die("Error: " . $sql. '<br>' . mysqli_error($connection2));
-
-                // User is validated. Redirect to wherever they were bounced here from.
-                header('Location: ' . $_SESSION['LastRequestedURL']);
-                exit();
-            } else {
-                // Handle invalid password.
-
-                echo '<br>Password didn\'t match.';
-
-            }
-        } else {
-
-            echo '<br>User does not exist.';
-
-            // Handle User does not exist.
-            $SaltHash = password_hash($_POST["password"], PASSWORD_DEFAULT,["cost" => 8]);
-
-            // To Do: Probably don't need to escape the hash... Check and remove if safe.
-            $sql = 'SELECT fnAddUser(\'' . $_POST["username"] . '\',\''.mysqli_real_escape_string($connection, $SaltHash).'\')';
-            $result = mysqli_query($connection3, $sql) or die('<br>Error: ' .  mysqli_error($connection3). '<br>SQL was: ' .$sql);
-            if ($row = mysqli_fetch_array($result)) {
-                // User added. So, bounce back to login with the previously entered user and pass,
-                //  allowing login function to handle variables and redirect.
-                $_SESSION["UserName"] = $_POST["username"];
-                $_SESSION["Password"] = $_POST["password"];
-                header('Location: ' . 'login.php');
-                exit();
-            } else {
-                echo "<br>No result returned. Handle error.";
-            }
-         }
+if (
+  (!isset($_SESSION["loginStep"]))
+  || ($_SESSION["loginStep"] == LOGIN_DIALOG_STANDARD)
+  || ($_SESSION["loginStep"] == LOGIN_DIALOG_PASSWORD_INCORRECT)
+) {
+  debugSectionOut('LOGIN_DIALOG_STANDARD || LOGIN_DIALOG_PASSWORD_INCORRECT');
+  loginDisplayLoginDialog();
+} elseif ($_SESSION["loginStep"] == LOGIN_VERIFY_PASSWORD) {
+  debugSectionOut('LOGIN_VERIFY_PASSWORD');
+  
+  // If we get here without an email and password, it's an error. Log and revert to
+  //  initial login.
+  if (
+    (!((isset($_SESSION["userEmail"])) && (trim($_SESSION["userEmail"]) != ''))) ||
+    (!((isset($_POST["password"])) && (trim($_POST["password"]) != '')))
+  ) {
+    resetLoginProcess('At LOGIN_VERIFY_PASSWORD, without username and password. Returning to login screen.');
+  }
+  
+  $sql = 'CALL procGetUserForLogin(\'' . mysqli_real_escape_string($connection, trim($_SESSION["userEmail"])) . '\')';
+  $row = getOneStoredProcRow($connection, $sql);
+  
+  if (!empty($row)) {
+    if (password_verify($_POST["password"], $row['saltHash'])) {
+      // Don't hold passwords any longer than you have to.
+      $_POST["password"] = '';
+      unset($_POST["password"]);
+      debugOut('Password verified.');
+      
+      session_decode($row['sessionData']); // Cover anything we may not have saved directly in the DB.
+      // TO DO: This is unnecessarily complex, and probably already unnecessary (added debugOut test below)
+      //  1. Create a function to update the $_SESSION record in the database
+      //  2. Make sure everywhere we are saving one-off variables, we are storing them in the session and saving the session.
+      //  3. remove this
+      debugSectionOut('LOGIN_VERIFY_PASSWORD: Before the kluge *************************************');
+      unset($row['sessionData']);
+      foreach ($row as $key => $val) {
+        $_SESSION[$key] = $val;
+      }
+      debugSectionOut('LOGIN_VERIFY_PASSWORD: After the kluge **************************************');
+      
+      updateUserSession();
+      
+      if ($_SESSION['isActive']) {
+        unset($_SESSION["loginStep"]);
+        header('Location: ' . $_SESSION['lastURL']);
+        exit();
+      } else {
+        debugOut('Password verified, but user inactive (not validated/confirmed).');
+        $_SESSION["loginStep"] = LOGIN_VERIFY_SEND_CODE;
+        returnToLogin();
+        exit();
+      }
     } else {
-        // Handle had user, but no password. Equivalent to invalid password.
+      // Don't hold passwords any longer than you have to.
+      // (Even incorrect passwords could help a hacker guess the correct one.)
+      $_POST["password"] = '';
+      unset($_POST["password"]);
+      
+      debugOut('Password didn\'t match.');
+      $_SESSION["loginStep"] = LOGIN_DIALOG_PASSWORD_INCORRECT;
+      returnToLogin();
+      exit();
     }
+  } else {
+    // This means the user is not in our system at all...
+    debugOut("Email not in database.", '', true);
+    
+    // Temporarily save the password for a reload.
+    $_SESSION['password'] = $_POST['password'];
+    $_POST['password'] = '';
+    unset($_POST['password']);
+    
+    debugOut('Saving user to database.');
+    $_SESSION["loginStep"] = LOGIN_REGISTER_USER;
+    returnToLogin();
+    exit();
+  }
+} elseif ($_SESSION["loginStep"] == LOGIN_REGISTER_USER) {
+  debugSectionOut('LOGIN_REGISTER_USER');
+  registerUser();
+  $_SESSION["loginStep"] = LOGIN_VERIFY_PASSWORD; // Need to run through LOGIN_VERIFY_PASSWORD to load data for new user.
+  returnToLogin();
+  exit();
+} elseif ($_SESSION["loginStep"] == LOGIN_VERIFY_SEND_CODE) {
+  debugSectionOut('LOGIN_VERIFY_SEND_CODE');
+  
+  // If we got here without email, it is an error. Revert to login.
+  if (!(isset($_SESSION["userEmail"]) && (trim($_SESSION["userEmail"]) != ''))) {
+    resetLoginProcess('Cannot send code without email.');
+  }
+
+// Must use doublequotes below, or PHP will not translate the linefeeds.
+  $mailBodyText = "Dear " . $_SESSION["userEmail"] . ",\r\n\r\nThank you for registering at " .
+    $GLOBALS["SITE_URL_CASUAL"] . ". We hope you will find many great educational resources, and " .
+    "perhaps contribute some of your own.\r\n\r\n" .
+    "Please verify your email by entering the following code where it says \"Enter Code Here: \" at " .
+    $GLOBALS["SITE_URL_CASUAL"] . ": " . $verifyCode . "\r\n\r\n" .
+    "See you at the site.\r\n\r\n" . $GLOBALS["VERIFICATION_EMAIL_SIGNATURE"];
+  sendVerifyCode($mailBodyText, 'verifyCodeEmail.html');
+  
+  $_SESSION["loginStep"] = LOGIN_VERIFY_DIALOG_STANDARD;
+  returnToLogin();
+  exit();
+} elseif
+(($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_STANDARD) || ($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT)
+) {
+  debugSectionOut('LOGIN_VERIFY_DIALOG_STANDARD || LOGIN_VERIFY_DIALOG_CODE_INCORRECT');
+  loginDisplayVerifyDialog();
+} elseif ($_SESSION["loginStep"] == LOGIN_VERIFY_CODE) {
+  debugSectionOut('LOGIN_VERIFY_CODE');
+  
+  if ((isset($_POST["verifyCode"])) && ($_POST["verifyCode"] != '')) {
+    if (password_verify($_POST["verifyCode"], $_SESSION["verifyCodeHash"])) {
+      
+      // verifyCode is effectively a temp password. Clear when no longer needed..
+      $_POST["verifyCode"] = '';
+      unset($_POST["verifyCode"]);
+      
+      debugOut('Email Verified.');
+      // Confirm the user
+      $sql = 'SELECT TagUseInsert(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ',' . $_SESSION["userID"] . ')';
+      $result = mysqli_query($connection, $sql) or die("<br />Error:<br /> " . $sql . '<br /> ' . mysqli_error($connection));
+      
+      $_SESSION['isActive'] = true;
+      header('Location: ' . $_SESSION['lastURL']);
+      exit();
+      
+      
+    } else {
+      // Clear invalid code... Same as invalid passwords.
+      $_POST["verifyCode"] = '';
+      unset($_POST["verifyCode"]);
+      
+      debugOut('Verification code didn\'t match.');
+      $_SESSION["loginStep"] = LOGIN_VERIFY_DIALOG_CODE_INCORRECT;
+      returnToLogin();
+      exit();
+    }
+  } else {
+    debugOut("ERROR: Reached LOGIN_VERIFY_CODE, but have no code to verify.", '', true);
+  }
+} elseif ($_SESSION["loginStep"] == LOGIN_PASSWORD_RESET) {
+  ;
+  
+} elseif ($_SESSION["loginStep"] == LOGIN_LOGOUT) {
+  logout();
+  exit(0);
 } else {
-    // Handle non-input (just display the form.
+  // We don't have e-mail. So have to revert to default
+  $_SESSION["loginStep"] = LOGIN_DIALOG_STANDARD;
+  returnToLogin();
+  exit();
 }
 
-htmlStart('Login or Register',false);
+htmlEnd(false);
+
 ?>
-<body onload="document.getElementById('id01').style.display='block'">
-<!-- <button onclick="document.getElementById('id01').style.display='block'" style="width:auto;">Login</button> -->
-<div id="id01" class="modal">
-    <form class="modal-content animate" action="/login.php" method="post">
-        <div class="imgcontainer">
-            <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
-            <img src="./image/circle.png" alt="Avatar" class="avatar">
-        </div>
 
-        <div class="container">
-            <label><b>Username</b></label>
-            <input type="text" placeholder="Enter Username" name="username" required>
 
-            <label><b>Password</b></label>
-            <input type="password" placeholder="Enter Password" name="password" required>
-
-            <button type="submit" class="button btnLogin">Login (or Register)</button>
-            <input type="checkbox" checked="checked"> Remember me
-        </div>
-
-        <div class="container" style="background-color:#f1f1f1">
-            <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
-            <span class="psw">Forgot <a href="#">password?</a></span>
-        </div>
-    </form>
-</div>
-
-</body>
-</html>

@@ -1,134 +1,245 @@
-<?php include 'pageHeader.php';
+<?php
+include 'pageHeader.php';
+$connection = getDBConnection();
 
-if(isset($_GET['TagID'])!="") {
-    $TagID = $_GET['TagID'];
-    $Action = $_GET['Action'];
-
-    if($Action=='Delete') {
-        $delete=mysqli_query($connection,"DELETE FROM Tag WHERE TagID='$TagID'");
-        if($delete) {
-            header("Location:tagEdit.php");
-        } else {
-            echo mysqli_error($connection);
-        }
-    } else {
-        $SQL = 'SELECT Tag, TagDescription FROM Tag WHERE TagID = ' . $TagID;
-        $Edit = mysqli_query($connection, $SQL);
-    }
+// Action determined from GET directly, else via POST. Will be:
+//  Update or Insert (Same function): Data is set, so update DB.
+//  Edit:   Load an existing tag for editing.
+//  Delete: Delete from DB
+if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
+  $action = 'update';
+} else if ((isset($_POST["insert"])) && ($_POST["insert"] != '')) {
+  $action = 'insert';
+} else if ((isset($_GET["action"])) && ($_GET["action"] != '')) {
+  $action = $_GET["action"];
 }
 
-if($userrow=mysqli_fetch_array($Edit))
-{
-    // Already have $TagID
-    $Tag=trim($userrow['Tag']);
-    $TagDescription=trim($userrow['TagDescription']);
-} else
-{
-    $TagID=0;
-    $Tag='Enter New Tag';
-    $TagDescription='Enter Tag Description.';
+// tagID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST.
+if ((isset($_GET["pageTagID"])) && ($_GET["pageTagID"] > 0)) {
+  $pageTagID = $_GET["pageTagID"];
+} else if ((isset($_POST["tagID"])) && ($_POST["tagID"] > 0)) {
+  $pageTagID = $_POST["tagID"];
+} else {
+  $pageTagID = 0;
 }
-// ob_end_flush();
-htmlStart('Edit Metadata');
+
+// UserID needed for validating permission to edit.
+if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
+  $userID = $_SESSION["userID"];
+} else {
+  $userID = 0;
+}
+
+if ((isset($_POST["tag"])) && ($_POST["tag"] != '')) {
+  $tag = trim(mysqli_real_escape_string($connection, $_POST["tag"]));
+} else {
+  $tag = '';
+}
+
+/*
+if ((isset($_POST["tagCategory"])) && ($_POST["tagCategory"] != '')) {
+  $tagCategory = trim(mysqli_real_escape_string($connection, $_POST["tagCategory"]));
+} else {
+  $tagCategory = '';
+}
+*/
+if ((isset($_POST["tagCategory"])) && ($_POST["tagCategory"] != '')) {
+  $_POST["tagCategory"] = trim(mysqli_real_escape_string($connection, $_POST["tagCategory"]));
+}
+
+
+if ((isset($_POST["tagDescription"])) && ($_POST["tagDescription"] != '')) {
+  $tagDescription = trim(mysqli_real_escape_string($connection, $_POST["tagDescription"]));
+} else {
+  $tagDescription = '';
+}
+
+// Set variables for input form and continue to display.
+$sql = '';
+if ($action == 'delete') {
+  $sql = 'SELECT TagDelete(\'' . $pageTagID . '\', \'' . $userID . '\')';
+  
+  // Our redirect to last requested URL will cause a failure due to the $_GET paramaters passed in. So, strip them.
+  $_SESSION['lastURL'] = strtok($_SESSION['lastURL'], '?');
+  
+} else if ($action == 'insert') {
+  $sql = 'SELECT TagInsert("' . $tag . '",' . $_POST["tagCategory"] . ',"' . $tagDescription . '","' . $userID . '")';
+} else if ($action == 'update') {
+  $sql = 'SELECT TagUpdate(' . $pageTagID . ',"' . $tag . '",' . $_POST["tagCategory"] . ',"' . $tagDescription . '","' . $userID . '")';
+}
+
+// If we have SQL at this point, we are updating the DB via stored function. So run SQL and exit.
+if ($sql != '') {
+  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  header('Location: ' . $_SESSION['lastURL']);
+  exit();
+}
+
+// If we are still here, we are displaying the tag edit screen... So, if editing,
+//  load the tag to edit. Otherwise just continue with defaults.
+if ($action == 'edit') {
+  $sql = 'SELECT tag, tagCategory, tagDescription FROM vTag WHERE tagID = ' . $pageTagID;
+  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  if ($userrow = mysqli_fetch_array($result)) {
+    $tag = trim($userrow['tag']);
+    $_POST["tagCategory"] = trim($userrow['tagCategory']);
+    $tagDescription = trim($userrow['tagDescription']);
+  } else {
+    $tag = 'Tag';
+    $_POST["tagCategory"] = 'Tag Category';
+    $tagDescription = 'Tag Description.';
+  }
+}
+
+if ($pageTagID != 0) {
+  // Placeholder... Slice some of this off where tagID not present when done debugging.
+}
+
+htmlStart('Edit Tags');
+
+debugOut('$_POST["insert"]', $_POST["insert"]);
+debugOut('$_POST["update"]', $_POST["update"]);
+debugOut('$_GET["action"]', $_GET["action"]);
+debugOut('$action', $action);
+debugOut('$_GET["pageTagID"])', $_GET["pageTagID"]);
+debugOut('$_POST["tagID"])', $_POST["tagID"]);
+debugOut('$pageTagID', $pageTagID);
+debugOut('$userID', $userID);
+debugOut('$tag', $tag);
+debugOut('$_POST["tagCategory"]', $_POST["tagCategory"]);
+debugOut('$tagDescription', $tagDescription);
+debugOut('$sql', $sql);
 ?>
-    <form action="tagInsert.php" method="post" name="insertform">
-        <input type="hidden" name="TagID" value="<?php echo $TagID ?>" />
-        <table id="TagInsert" width="598">
-            <tr>
-                <td width="1px">Tag: </td>
-                <td><input type="text" name="Tag"
-                    <?php
-                        if($TagID == 0) {
-                            echo 'required placeholder="'.$Tag;
-                        } else {
-                            echo 'value="'.$Tag;
-                        }
-                    ?>
-                    " id="inputid" style="width: 80ch"/></td>
-            <tr>
-                <td>Description: </td>
-                <td><textarea name="TagDescription" rows="5" cols="80"
-                    <?php
-                    if($TagID == 0) {
-                        echo ' required placeholder="'.$TagDescription.'" id="inputid"></textarea>';
-                    } else {
-                        echo ' id="inputid">'.$TagDescription.'</textarea>';
-                    }
-                    ?>
-                    </td>
-            </tr>
-            <tr>
-                <td></td><td></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><?php
-                    if($TagID == 0) {
-                        echo '<input type="submit" name="insert" value=" Add Tag " id="inputid1" />';
-                    } else {
-                        echo '<input type="submit" name="update" value=" Update " id="inputid1" /> ';
-                        echo '<input type="button" name="cancel" value=" Cancel " onClick="window.location=\'tagEdit.php\';" />';
-                    }
-                    ?>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <br />
-    <hr/>
-    <table id="TagView" class="WideOutput">
-        <col width="60">
-        <col>
-        <col width="60">
-        <col width="60">
-        <col width="190">
-        <col width="190">
-        <thead>
-        <tr>
-            <th width="60px">Tag</th>
-            <th>Description</th>
-            <th width="60px"></th>
-            <th width="60px"></th>
-            <th width="190px">Creation Date</th>
-            <th width="190px">Update Date</th>
-        </tr>
-        </thead>
-        <tfoot>
-        <tr>
-            <th>Tag</th>
-            <th>Description</th>
-            <th></th>
-            <th></th>
-            <th>Creation Date</th>
-            <th>Update Date</th>
-        </tr>
-        </tfoot>
-        <tbody>
-        <?php
-        $select=mysqli_query($connection,"SELECT * FROM Tag WHERE TagID > 0 ORDER BY Tag");
 
-         while($userrow=mysqli_fetch_array($select))
-        {
-            $TagID=$userrow['TagID'];
-            $Tag=$userrow['Tag'];
-            $TagDescription=$userrow['TagDescription'];
-            $CreateDate=$userrow['CreateDate'];
-            $UpdateDate=$userrow['UpdateDate'];
-            echo
-                '<tr>'.
-                '<td>'.$Tag.'</td>'.
-                '<td>'.$TagDescription.'</td>'.
-                '<td><span><a href="tagEdit.php?Action=Edit&TagID='.$TagID.'" class="buttongrid">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a></span></td>'.
-                '<td><span><a href="tagEdit.php?Action=Delete&TagID='.$TagID.'" class="buttongrid" onclick="return '.
-                'confirm(\'Are you sure you wish to delete this Record?\');">&nbsp;Delete&nbsp;</a></span></td>'.
-                '<td>'.$CreateDate.'</td>'.
-                '<td>'.$UpdateDate.'</td>'.
-                '</tr>';
+<form action="tagEdit.php" method="post" name="tagEditForm">
+  <input type="hidden" name="tagID" value="<?php echo $pageTagID ?>"/>
+  <table id="tagEditTable">
+
+    <tr>
+      <td>Category:</td>
+      <td>
+        <?php
+        $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
+        $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+        ?>
+        <select name="tagCategory" id='tagCategory'>
+          <?php
+          while ($rows = mysqli_fetch_array($result)) {
+            $tagCategoryID = $rows['tagCategoryID'];
+            $tagCategory = $rows['tagCategory'];
+            if ($_POST["tagCategory"] == $tagCategory) {
+              echo '<option selected="selected" value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
+            } else {
+              echo '<option value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
+            }
+          }
+          ?>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Tag:</td>
+      <td><textarea name="tag" rows="1" cols="80"
+        <?php
+        if ($tag == '') {
+          echo 'required placeholder="Tag" id="inputTag"></textarea>';
+        } else {
+          echo ' id="inputTag">' . $tag . '</textarea>';
+        }
+        ?>
+      </td>
+    </tr>
+    <tr>
+      <td>Description:</td>
+      <td><textarea name="tagDescription" rows="5" cols="80"
+        <?php if ($tagDescription == '') {
+          echo 'required placeholder="Tag Description" id="inputTagDescription"></textarea>';
+        } else {
+          echo ' id="inputTagDescription">' . $tagDescription . '</textarea>';
         } ?>
-    </tbody>
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><?php
+        if ($pageTagID == 0) {
+          echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Tag " id="inputid1" />';
+        } else {
+          echo '<input type="submit" class="btn btn-danger" name="update" value=" Update " id="inputid1" /> ';
+          echo '<input type="button" class="btn btn-default" name="cancel" value=" Cancel " onClick="window.location=\'./tagEdit.php\';" />';
+          echo '&nbsp;<span class="bg-danger">&nbsp;Careful. You are updating an existing tag, not adding a new one.&nbsp;</span>';
+        }
+        ?>
+      </td>
+    </tr>
+
+  </table>
+</form>
+<br/>
+<table id="tagView" class="table table-striped table-bordered table-hover table-condensed table-responsive sortable">
+  <!--  -->
+
+  <thead>
+  <tr>
+    <th data-defaultsign="AZ" width="1%">Category</th>
+    <th data-defaultsign="AZ" width="1%">Tag</th>
+    <th data-defaultsign="AZ">Description</th>
+    <th data-defaultsign="AZ" width="1%">Actions</th>
+    <th data-defaultsign="AZ" width="1%">Update By</th>
+    <th data-defaultsign="month" width="1%">Update Date</th>
+  </tr>
+  </thead>
+  <tfoot>
+  <tr>
+    <th>Category</th>
+    <th>Tag</th>
+    <th>Description</th>
+    <th>Actions</th>
+    <th>Update By</th>
+    <th>Update Date</th>
+  </tr>
+  </tfoot>
+  <tbody>
+  <?php
+  $select = mysqli_query($connection, "CALL procViewTags('')");
+  
+  while ($userrow = mysqli_fetch_array($select)) {
+    $tagID = $userrow['tagID'];
+    $tag = $userrow['tag'];
+    $tagCategory = $userrow['tagCategory'];
+    $tagDescription = $userrow['tagDescription'];
+    $updateBy = $userrow['updateBy'];
+    $updateTime = $userrow['updateTime'];
+    echo
+      '<tr>' .
+      '<td data-value="1">' . $tagCategory . '</td>' .
+      '<td data-value="2">' . $tag . '</td>' .
+      '<td data-value="3">' . $tagDescription . '</td>' .
+      '<td data-value="4">' .
+      '<div style="white-space: nowrap;">' .
+      '<a href="./tagEdit.php?action=edit&pageTagID=' . $tagID . '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
+      '<a href="./tagEdit.php?action=delete&pageTagID=' . $tagID . '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>' .
+      '</div>' .
+      '</td>' .
+      '<td data-value="5">' .
+      '<div style="white-space: nowrap;">' .
+      $updateBy .
+      '</div>' .
+      '</td>' .
+      '<td data-value="6">' .
+      '<div style="white-space: nowrap;">' .
+      $updateTime .
+      '</div>' .
+      '</td>' .
+      
+      '</tr>';
+  } ?>
+  </tbody>
 </table>
 
 </body>
 </html>
-
-

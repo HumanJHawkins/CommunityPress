@@ -1,0 +1,46 @@
+
+<body onload="document.getElementById('#costumModal2').style.display='block'">
+<div id="#costumModal2" class="modal" data-easein="flipXIn" tabindex="-1" role="dialog"
+     aria-labelledby="costumModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          Verify Email
+        </h4>
+      </div>
+      <div class="modal-body">
+        <form action="login.php" method="post">
+          <input type="hidden" name="loginStep" value="LOGIN_VERIFY_CODE" />
+          <div class="form-group">
+            <p>
+              Thanks for logging in. We have sent an email verification code to you at
+              <span style="color:blue;font-weight:bold">STRING_REPLACE_EMAIL</span>.
+              Please copy the code from that e-mail and paste it below.
+            </p>
+            <p>
+              NOTE: Please <span class="bg-warning">check your spam folder</span> if you don't
+              receive the email right away. It will usually arrive in just a few seconds, though
+              some email systems can delay it.
+            </p>
+            <p>
+              This is necessary to prevent auto-generated accounts that can be harmful
+              to our community. You should only have to do this once per email or password change.
+            </p>
+            <br/>
+            <label><b>Verify Account:</b></label>
+            <input type="text" class="form-control" placeholder="STRING_REPLACE_PLACEHOLDER" name="verifyCode" required>
+            <br/>
+            <p align="left">
+              <button type="submit" class="btn btn-primary" title="Submit Verification Code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Verify&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+               <span style="float:right;">
+                 <button type="button" class="btn btn-info" onclick="location.href='STRING_REPLACE_LAST_URL'" title="Continue browsing while you wait for the email.">Finish Later</button>
+                 <button type="button" class="btn btn-info" onclick="location.href='login.php?action=resend'" title="Send me a new code.">&nbsp;&nbsp;&nbsp;Re-send&nbsp;&nbsp;&nbsp;</button>
+                 <button type="button" class="btn btn-basic" onclick="location.href='login.php?action=logout'" title="Cancel registration (typo in email, etc.)">&nbsp;&nbsp;&nbsp;Cancel&nbsp;&nbsp;&nbsp;</button>
+               </span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
