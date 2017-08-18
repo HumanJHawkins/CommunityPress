@@ -79,33 +79,37 @@ if ($sql != '') {
 // If we are still here, we are displaying the content edit screen... So, if editing,
 //  load the content to edit. Otherwise just continue with defaults.
 if ($action == 'edit') {
-  $sql = 'SELECT contentTitle, contentDescription, contentText, contentURL FROM vContent WHERE contentID = ' . $_POST["pageContentID"];
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-  if ($userrow = mysqli_fetch_array($result)) {
-    $contentTitle = trim($userrow['contentTitle']);
-    $contentDescription = trim($userrow['contentDescription']);
-    $contentText = trim($userrow['contentText']);
-    $contentURL = trim($userrow['contentURL']);
+  // $sql = 'SELECT contentTitle, contentDescription, contentText, contentURL FROM vContent WHERE contentID = ' . $_POST["pageContentID"];
+  // $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  // if ($userrow = mysqli_fetch_array($result)) {
+  $sql = "CALL procViewContent(" . $_POST["pageContentID"] . "," . $_SESSION['userID'] . ")";
+  $row = getOneStoredProcRow($connection, $sql);
+  
+  outputArray($row);
+  
+  if (!empty($row)) {
+    $contentTitle = trim($row['contentTitle']);
+    $contentDescription = trim($row['contentDescription']);
+    $contentText = trim($row['contentText']);
+    $contentURL = trim($row['contentURL']);
+    $canEdit = $row['canEdit'];
   } else {
     $contentTitle = 'Title';
     $contentDescription = 'Description.';
     $contentText = 'Text';
     $contentURL = 'URL';
+    // $canEdit = true;
   }
 }
 
 if ($_POST["pageContentID"] != 0) {
-  // Placeholder... Slice some of this off where contentID not present when done debugging.
+  // Placeholder... Slice some of this off where contentID not present when stable.
 }
 
 htmlStart('Edit Content');
 
-debugOut('$_POST["insert"]', $_POST["insert"]);
-debugOut('$_POST["update"]', $_POST["update"]);
-debugOut('$_GET["action"]', $_GET["action"]);
+debugSectionOut("Edit Content");
 debugOut('$action', $action);
-debugOut('$_POST["pageContentID"])', $_POST["pageContentID"]);
-debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
 debugOut('$userID', $userID);
 debugOut('$contentTitle', $contentTitle);
 debugOut('$contentDescription', $contentDescription);
@@ -183,9 +187,13 @@ debugOut('$sql', $sql);
         if ($_POST["pageContentID"] == 0) {
           echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" />';
         } else {
-          echo '<input type="submit" class="btn btn-danger" name="update" value=" Update " id="inputid1" /> ';
+          if ($canEdit) {
+            echo '<input type="submit" class="btn btn-danger" name="update" value=" Update " id="inputid1" /> ';
+          }
           echo '<input type="button" class="btn btn-default" name="cancel" value=" Cancel " onClick="window.location=\'./contentEdit.php\';" />';
-          echo '&nbsp;<span class="bg-danger">&nbsp;Careful. You are updating existing content, not adding new.&nbsp;</span>';
+          if ($canEdit) {
+            echo '&nbsp;<span class="bg-danger">&nbsp;Careful. You are updating existing content, not adding new.&nbsp;</span>';
+          }
         }
         ?>
       </td>
@@ -232,7 +240,10 @@ if ($_POST["pageContentID"] == 0) {
 }
 */
 ?>
+
+<!-- Here we should conditionally (if editing) add or remove tags. -->
 <form>
+
 
 </form>
 
@@ -245,7 +256,7 @@ if ($_POST["pageContentID"] == 0) {
   <thead>
   <tr>
     <th data-defaultsign="AZ" width="1%">ID</th>
-    <th data-defaultsign="AZ" width="1%">Title</th>
+    <th data-defaultsign="AZ">Title</th>
     <th data-defaultsign="AZ">URL</th>
     <th data-defaultsign="AZ" width="1%">Actions</th>
     <th data-defaultsign="AZ" width="1%">Update By</th>
@@ -264,32 +275,62 @@ if ($_POST["pageContentID"] == 0) {
   </tfoot>
   <tbody>
   <?php
-  $sql = "CALL procViewContent(0,0)";
-  $result = mysqli_query($connection, $sql);
-  while ($row = mysqli_fetch_array($result)) {
-   echo
-    '<tr>' .
-    '<td data-value="1">' . $row['contentID'] . '</td>' .
-    '<td data-value="2">' . $row['contentTitle'] . '</td>' .
-    '<td data-value="3"><a href="' . $row['contentURL'] . '">' . $row['contentURL'] . '</td>' .
-    '<td data-value="4">' .
-    '<div style="white-space: nowrap;">' .
-    '<a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] . '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
-    '<a href="./contentEdit.php?action=delete&pageContentID=' . $row['contentID'] . '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>' .
-    '</div>' .
-    '</td>' .
-    '<td data-value="5">' .
-    '<div style="white-space: nowrap;">' .
-    $row['updateBy'] .
-    '</div>' .
-    '</td>' .
-    '<td data-value="6">' .
-    '<div style="white-space: nowrap;">' .
-    $row['updateTime'] .
-    '</div>' .
-    '</td>' .
-    '</tr>';
-   }
+  $sql = "CALL procViewContent(0," . $_SESSION['userID'] . ")";
+  if (!$connection->multi_query($sql)) {
+    debugOut("$connection->errno", $connection->errno, true);
+    debugOut("$connection->error", $connection->error, true);
+  }
+
+  do {
+    if ($result = $connection->store_result()) {
+      while ($row = $result->fetch_assoc()) {
+        debugOut("*** +++ *** +++ *** +++ *** +++*** +++ *** +++ *** +++ *** +++*** +++ *** +++ *** +++ *** +++*** +++ *** +++ *** +++ *** +++");
+        outputArray($row);
+        echo
+          '<tr>' .
+          '<td data-value="1">' . $row['contentID'] . '</td>' .
+          '<td data-value="2">' . $row['contentTitle'] . '</td>' .
+          '<td data-value="3"><a href="' . $row['contentURL'] . '">' . $row['contentURL'] . '</td>' .
+          '<td data-value="4">' .
+          '<div style="white-space: nowrap;">';
+  
+        if ($row['canEdit']) {
+          echo
+            '<a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
+            '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
+            '<a href="./contentEdit.php?action=delete&pageContentID=' . $row['contentID'] .
+            '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>';
+        } else {
+          echo
+            '<a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
+            '" class="btn btn-default btn-xs">&nbsp;&nbsp;View&nbsp;&nbsp;</a>&nbsp;';
+        }
+  
+        echo '</div>' .
+          '</td>' .
+          '<td data-value="5">' .
+          '<div style="white-space: nowrap;">' .
+          $row['updateBy'] .
+          '</div>' .
+          '</td>' .
+          '<td data-value="6">' .
+          '<div style="white-space: nowrap;">' .
+          $row['updateTime'] .
+          '</div>' .
+          '</td>' .
+          '</tr>';
+       }
+       $result->free();
+    } else {
+      if ($connection->errno) {
+        debugOut("$connection->errno", $connection->errno, true);
+        debugOut("$connection->error", $connection->error, true);
+      }
+    }
+  } while ($connection->more_results() && $connection->next_result());
+
+
+
   ?>
 
   </tbody>

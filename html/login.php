@@ -293,7 +293,7 @@ if (
       
       debugOut('Email Verified.');
       // Confirm the user
-      $sql = 'SELECT TagUseInsert(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ',' . $_SESSION["userID"] . ')';
+      $sql = 'SELECT TagUseInsert(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ', ' . $_SESSION["userID"] . ')';
       $result = mysqli_query($connection, $sql) or die("<br />Error:<br /> " . $sql . '<br /> ' . mysqli_error($connection));
       
       $_SESSION['isActive'] = true;
