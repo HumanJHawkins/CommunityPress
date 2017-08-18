@@ -291,18 +291,17 @@ if ($_POST["pageContentID"] == 0) {
           '<td data-value="1">' . $row['contentID'] . '</td>' .
           '<td data-value="2">' . $row['contentTitle'] . '</td>' .
           '<td data-value="3"><a href="' . $row['contentURL'] . '">' . $row['contentURL'] . '</td>' .
-          '<td data-value="4">' .
-          '<div style="white-space: nowrap;">';
+          '<td data-value="4">';
   
         if ($row['canEdit']) {
           echo
-            '<a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
+            '<div style="white-space:nowrap;"><a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
             '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
             '<a href="./contentEdit.php?action=delete&pageContentID=' . $row['contentID'] .
             '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>';
         } else {
           echo
-            '<a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
+            '<div style="white-space:nowrap;text-align:center;"><a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
             '" class="btn btn-default btn-xs">&nbsp;&nbsp;View&nbsp;&nbsp;</a>&nbsp;';
         }
   
