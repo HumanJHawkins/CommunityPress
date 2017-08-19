@@ -12,6 +12,8 @@ if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
   $action = 'insert';
 } else if ((isset($_GET["action"])) && ($_GET["action"] != '')) {
   $action = $_GET["action"];
+} else {
+  $action = '';
 }
 
 // pageContentID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST.
@@ -102,7 +104,7 @@ if ($action == 'edit') {
   }
 }
 
-if ($_POST["pageContentID"] != 0) {
+if (isset($_POST["pageContentID"]) && $_POST["pageContentID"] != 0) {
   // Placeholder... Slice some of this off where contentID not present when stable.
 }
 
@@ -125,7 +127,7 @@ debugOut('$sql', $sql);
       <td>ID:</td>
       <td>
         <?php
-        if ($_POST["pageContentID"] == '' || $_POST["pageContentID"] == 0) {
+        if (!isset($_POST["pageContentID"]) || $_POST["pageContentID"] == '' || $_POST["pageContentID"] == 0) {
           // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
           echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
         } else {
@@ -184,7 +186,7 @@ debugOut('$sql', $sql);
     <tr>
       <td></td>
       <td><?php
-        if ($_POST["pageContentID"] == 0) {
+        if (!isset($_POST["pageContentID"]) || $_POST["pageContentID"] == '' || $_POST["pageContentID"] == 0) {
           echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" />';
         } else {
           if ($canEdit) {
@@ -243,8 +245,13 @@ if ($_POST["pageContentID"] == 0) {
 
 <!-- Here we should conditionally (if editing) add or remove tags. -->
 <form>
-
-
+  <?php
+  tagCategorySelector($connection);
+  // tagSelector($connection, null);
+  ?>
+  <select id="tagSelect"><option value="0">Select Tag...</option></select>
+  <button name="setTag" type="button" class="btn btn-default btn-xs">Attach Tag</button>
+  
 </form>
 
 
@@ -331,9 +338,72 @@ if ($_POST["pageContentID"] == 0) {
 
 
   ?>
-
   </tbody>
 </table>
 
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('#tagCatSelect').change(function() {
+            var tagCatID = $(this).val();
+            fillComboTags(tagCatID);
+        });
+    });
+    
+    function fillComboTags(tagCatID) {
+        $('#tagSelect').empty();
+        $('#tagSelect').append("<option>Select Tag...</option>");
+        $.ajax({
+            type:"POST",
+            url:"tagsByTagCategory.php?tagCatID="+tagCatID,
+            contentType:"application/json; charset=utf-8",
+            dataType:"json",
+            success: function(data) {
+                $('#tagSelect').empty();
+                $('#tagSelect').append("<option value='0'>Select Tag...</option>");
+                $.each(data,function(i,item){
+                    $('#tagSelect').append('<option value="'+ data[i].tagID +'">'+ data[i].tag+'</option>');
+                });
+            },
+            complete: function(){
+            }
+        });
+    }
+
+</script>
+
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -14,16 +14,20 @@ if (session_start()) {
   // We won't have user ID at this point, so log the session without it. On login, update
   //  the session record.
   $connection = getDBConnection();
-  $sql = 'SELECT addOrUpdateSession(\'' . mysqli_real_escape_string(session_id()) .
-    '\', \'' . mysqli_real_escape_string($_SESSION['ipAddress']) .
-    '\', \'' . mysqli_real_escape_string(session_encode()) . '\')';
+  $sql = 'SELECT addOrUpdateSession(\'' . mysqli_real_escape_string($connection, session_id()) .
+    '\', \'' . mysqli_real_escape_string($connection, $_SESSION['ipAddress']) .
+    '\', \'' . mysqli_real_escape_string($connection, session_encode()) . '\')';
   
   $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
   mysqli_free_result($result);
   
   
   // Store these in the session, but allow refresh once per hour just to be safe.
-  $sessionStartTime = new DateTime($_SESSION['sessionTimestamp']);
+  if(isset($_SESSION['sessionTimestamp'])) {
+    $sessionStartTime = new DateTime($_SESSION['sessionTimestamp']);
+  } else {
+    $sessionStartTime = new DateTime('2000-01-01');
+  }
   $timeDiff = $sessionStartTime->diff(new DateTime());
   $sessionAge = ($timeDiff->days * 1440) + ($timeDiff->h * 60) + ($timeDiff->i);
   debugOut('sessionAge', $sessionAge . ' minutes and ' . ($timeDiff->s) . 'seconds');

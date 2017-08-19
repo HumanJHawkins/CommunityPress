@@ -12,6 +12,8 @@ if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
   $action = 'insert';
 } else if ((isset($_GET["action"])) && ($_GET["action"] != '')) {
   $action = $_GET["action"];
+} else {
+  $action ='';
 }
 
 // tagID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST.
@@ -96,19 +98,6 @@ if ($pageTagID != 0) {
 }
 
 htmlStart('Edit Tags');
-
-debugOut('$_POST["insert"]', $_POST["insert"]);
-debugOut('$_POST["update"]', $_POST["update"]);
-debugOut('$_GET["action"]', $_GET["action"]);
-debugOut('$action', $action);
-debugOut('$_GET["pageTagID"])', $_GET["pageTagID"]);
-debugOut('$_POST["tagID"])', $_POST["tagID"]);
-debugOut('$pageTagID', $pageTagID);
-debugOut('$userID', $userID);
-debugOut('$tag', $tag);
-debugOut('$_POST["tagCategory"]', $_POST["tagCategory"]);
-debugOut('$tagDescription', $tagDescription);
-debugOut('$sql', $sql);
 ?>
 
 <form action="tagEdit.php" method="post" name="tagEditForm">
@@ -119,22 +108,8 @@ debugOut('$sql', $sql);
       <td>Category:</td>
       <td>
         <?php
-        $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
-        $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+          tagCategorySelector($connection);
         ?>
-        <select name="tagCategory" id='tagCategory'>
-          <?php
-          while ($rows = mysqli_fetch_array($result)) {
-            $tagCategoryID = $rows['tagCategoryID'];
-            $tagCategory = $rows['tagCategory'];
-            if ($_POST["tagCategory"] == $tagCategory) {
-              echo '<option selected="selected" value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
-            } else {
-              echo '<option value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
-            }
-          }
-          ?>
-        </select>
       </td>
     </tr>
     <tr>

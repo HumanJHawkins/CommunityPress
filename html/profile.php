@@ -35,8 +35,8 @@ echo '<h1>'.$_SESSION["userName"].'</h1>';
 
 // echo 'userID: '.$_SESSION["userID"];
 echo '<br />Email: '.$_SESSION["userEmail"];
-echo '<br />Birthday: '.$_SESSION["userBirthday"];
-echo '<br />Reputation: '.$_SESSION["userReputation"];
+// echo '<br />Birthday: '.$_SESSION["userBirthday"];
+// echo '<br />Reputation: '.$_SESSION["userReputation"];
 echo '<p></p>';
 
 IF (!$_SESSION["isActive"]) {
@@ -46,9 +46,13 @@ IF (!$_SESSION["isActive"]) {
         '<p>All active users are encouraged to create and share content, comment '.
         'and discuss, write reviews, and join in our community.</p>';
     IF ($_SESSION["isSuperUser"]) {
-        echo '<p>Additionally, you are a superuser, permitted for all administrative functions.</p>';
-    } elseif ($_SESSION["isTagEditor"]) {
-        echo '<p>Additionally, you are a Tag Editor, permitted to create and modify tags.</p>';
+        echo '<p>Additionally, you are a superuser, permitted for all functions.</p>';
+    } elseif ($_SESSION["isTagEditor"] || $_SESSION["isUserEditor"] || $_SESSION["isSiteDeveloper"]) {
+      echo '<p>Additionally, you have the following permissions:</p><ul>';
+      if($_SESSION["isTagEditor"]) {echo 'You are a Tag Editor, permitted to create and modify tags.';}
+      if($_SESSION["isUserEditor"]) {echo 'You are a User Editor, permitted to modify user accounts.';}
+      if($_SESSION["isSiteDeveloper"]) {echo 'You are a Site Developer, permitted to view and change most data.';}
+      echo '</ul>';
     }
 
  //   IF (!$_SESSION["isLicensed"]) {

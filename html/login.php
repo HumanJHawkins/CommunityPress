@@ -54,7 +54,7 @@ function resetLoginProcess($errorText = '')
   // NOTE: Technically some cases might be LOGIN_DIALOG_PASSWORD_INCORRECT.
   //  However, we shouldn't get here without an error, so that would be a false message more often than not.
   $_SESSION["loginStep"] = LOGIN_DIALOG_STANDARD;
-  header('Location: ' . $_SERVER['DOCUMENT_URI']);
+  returnToLogin();
   exit();
 }
 
@@ -98,7 +98,7 @@ function sendVerifyCode($mailBodyText, $htmlFile)
 function returnToLogin()
 {
   debugOut('function returnToLogin(), DOCUMENT_URI', $_SERVER['DOCUMENT_URI']);
-  header('Location: ' . $_SERVER['DOCUMENT_URI']);
+  header('Location: ' . $GLOBALS['SITE_URL'] . '/login.php');
 }
 
 function updateUserSession()
@@ -157,6 +157,8 @@ if ((isset($_POST["userEmail"])) && ($_POST["userEmail"] != '')) {
 }
 if ((isset($_POST["loginStep"])) && ($_POST["loginStep"] != '')) {
   $_SESSION["loginStep"] = $_POST["loginStep"];
+} else {
+  // $_SESSION["loginStep"] = '';
 }
 // Allow $_GET to override $_POST from loginDlgVerify, etc. Allows handling of
 //  various related functionality.

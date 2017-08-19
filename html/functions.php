@@ -2,38 +2,121 @@
 
 require './mailgun-php/vendor/autoload.php';
 use Mailgun\Mailgun;
+
 function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null,
-    $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null)
+                     $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null)
 {
   $sendArray['from'] = $mailFrom;
   $sendArray['to'] = $mailTo;
   $sendArray['subject'] = $mailSubject;
   $sendArray['text'] = $mailText;
-  if($mailHTML != null) {$sendArray['html'] = $mailHTML;
+  if ($mailHTML != null) {
+    $sendArray['html'] = $mailHTML;
   }
-  if($mailCC != null) {$sendArray['cc'] = $mailCC;
+  if ($mailCC != null) {
+    $sendArray['cc'] = $mailCC;
   }
-  if($mailBCC != null) {$sendArray['bcc'] = $mailBCC;
+  if ($mailBCC != null) {
+    $sendArray['bcc'] = $mailBCC;
   }
-  if($mailAttachmentsArray != null) {$sendArray['attachment'] = $mailAttachmentsArray;
+  if ($mailAttachmentsArray != null) {
+    $sendArray['attachment'] = $mailAttachmentsArray;
   }
   
   $mg = new Mailgun($GLOBALS['MAILGUN_API_KEY']);
   $mg->sendMessage($GLOBALS['MAILGUN_MAIL_DOMAIN'], $sendArray);
 }
 
-function getOneStoredProcRow($connection, $sql) {
+
+function tagCategorySelector($connection)
+{
+  $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
+  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  echo '<select name="tagCatSelect" id="tagCatSelect">';
+  echo '<option value="0">Select Category...</option>';
+  while ($rows = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+    outputArray($rows);
+    echo '<option ';
+    if (isset($_POST["tagCategory"]) && $_POST["tagCategory"] == $rows['tagCategory']) {
+      echo 'selected="selected" ';
+    }
+    echo 'value="' . $rows['tagCategoryID'] . '">' . $rows['tagCategory'] . '</option>';
+  }
+  echo'</select>';
+}
+
+
+function tagSelector($connection, $tagCategoryID)
+{
+  $sql = 'SELECT DISTINCT tagID, tag FROM vTag';
+  if($tagCategoryID) {
+    $sql = $sql . ' WHERE tagCategoryID = ' . $tagCategoryID;
+  }
+  
+  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  echo '<select name="tagSelect" id="tagSelect">';
+  while ($rows = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+    outputArray($rows);
+    echo '<option ';
+    if (isset($_POST["tag"]) && $_POST["tag"] == $rows['tag']) {
+      echo 'selected="selected" ';
+    }
+    echo 'value="' . $rows['tagID'] . '">' . $rows['tag'] . '</option>';
+  }
+  echo'</select>';
+}
+
+
+function getStoredProcResults($connection, $sql)
+{
   if (!$connection->multi_query($sql)) {
     debugOut("$connection->errno", $connection->errno, true);
     debugOut("$connection->error", $connection->error, true);
   }
   
-  // We are only going to get one result set and one row back, but PHP/MySQL requires
-  //   handling the potential for multiple result sets when pulling data from stored
-  //   procs, if the connection is to be reused.
-  //
-  // TO DO: Add error handling for if we ever get more than onr result set or row.
+  $resultSet[] = '';
+  $resultNum = 0;
+
   do {
+    if ($result = $connection->store_result()) {
+      while ($row = $result->fetch_assoc()) {
+        $resultSet[$resultNum][] = $row;
+      }
+      $result->free();
+      $resultNum++;
+  } else {
+    if ($connection->errno) {
+      debugOut("$connection->errno", $connection->errno, true);
+      debugOut("$connection->error", $connection->error, true);
+    }
+  }
+} while ($connection->more_results() && $connection->next_result()) ;
+
+debugOut("getStoredProcResults() Array Dump:");
+outputArray($resultSet);
+
+return $resultSet;
+}
+
+function getOneStoredProcTable($connection, $sql)
+{
+  return getStoredProcResults($connection, $sql)[0];
+}
+
+function getOneStoredProcRow($connection, $sql)
+{
+  return getStoredProcResults($connection, $sql)[0][0];
+}
+
+/*
+function getOneStoredProcRow($connection, $sql)
+{
+  if (!$connection->multi_query($sql)) {
+    debugOut("$connection->errno", $connection->errno, true);
+    debugOut("$connection->error", $connection->error, true);
+  }
+  
+ do {
     if ($result = $connection->store_result()) {
       $row = $result->fetch_assoc();
       $result->free();
@@ -50,6 +133,7 @@ function getOneStoredProcRow($connection, $sql) {
   
   return $row;
 }
+*/
 
 function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null,
                    $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null)
@@ -60,17 +144,21 @@ function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null
 }
 
 
-function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = NULL, $showRowCount= true)
+function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = NULL, $showRowCount = true)
 {
   // Will this make the world explode? Let's see...
   // ksort($GLOBALS);
   
   $rowCount = 0;
+  $prefix = '';
   
   if (is_array($theArray)) {
     foreach ($theArray as $key => $val) {
       $rowCount++;
-      $prefix = implode('|', $arrayBreadcrumbs);
+      
+      if($arrayBreadcrumbs) {
+        $prefix = implode('|', $arrayBreadcrumbs);
+      }
       
       if ($prefix != '') {
         $prefix = $prefix . '|';
@@ -85,10 +173,10 @@ function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = NULL, $
         debugOut($prefix . $key, 'Array  (row count: ' . count($val) . ')', $echo);
       } else {
         // Avoid output of DB_PASSWORD, etc.
-        if(strpos(strtolower($key), 'password') !== false) {
+        if (strpos(strtolower($key), 'password') !== false) {
           $val = '*******************';
         }
-          debugOut($prefix . $key, $val, $echo);
+        debugOut($prefix . $key, $val, $echo);
       }
       
       if (is_array($val)) {
@@ -98,7 +186,10 @@ function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = NULL, $
           $rowCount += outputArray($val, $echo, $arrayBreadcrumbs);
         }
       }
-      array_pop($arrayBreadcrumbs);
+      
+      if($arrayBreadcrumbs) {
+        array_pop($arrayBreadcrumbs);
+      }
     }
   }
   return $rowCount;
@@ -148,9 +239,10 @@ function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $t
   error_log($heading . PHP_EOL, 3, $GLOBALS['LOG_FILE_PATH']);
 }
 
-function debugSectionOut($sectionTitle) {
-  debugOut('','',false,false,false);
-  debugOut('***** ' .$sectionTitle . ':');
+function debugSectionOut($sectionTitle)
+{
+  debugOut('', '', false, false, false);
+  debugOut('***** ' . $sectionTitle . ':');
   debugOut('*****   $_SESSION:');
   outputArray($_SESSION);
   debugOut('*****   $_POST:');
@@ -167,6 +259,13 @@ function getDBConnection()
     return null;
   }
   return $connection;
+}
+
+
+function getDBPDO()
+{
+  $pdo = new PDO($GLOBALS['DB_DSN'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_OPTIONS']);
+  return $pdo;
 }
 
 
@@ -195,10 +294,11 @@ function destroySession()
   session_destroy();
 }
 
-function getSaltHashTimeCost($iterations) {
-  $timeStart  = round(microtime(true) * 1000);
-  password_hash('TestPassword', PASSWORD_DEFAULT,["cost" => $iterations]);
-  $timeEnd    = round(microtime(true) * 1000);
+function getSaltHashTimeCost($iterations)
+{
+  $timeStart = round(microtime(true) * 1000);
+  password_hash('TestPassword', PASSWORD_DEFAULT, ["cost" => $iterations]);
+  $timeEnd = round(microtime(true) * 1000);
   return $timeEnd - $timeStart;
 }
 
@@ -291,7 +391,7 @@ function htmlStart($string, $showBody = true)
     }
     
     echo '<span style="float:right;">';
-    if ($_SESSION['userID'] > 0) {
+    if (isset($_SESSION['userID']) && $_SESSION['userID'] > 0) {
       echo 'Hi ' . $_SESSION['userName'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="../profile.php">Profile</a>' .
         '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="login.php?action=logout">Logout</a></span></p>';
       
@@ -315,7 +415,8 @@ function htmlStart($string, $showBody = true)
   }
 }
 
-function htmlEnd($showFooter = true) {
+function htmlEnd($showFooter = true)
+{
   // Footer TBD.
   echo '</body></html>';
 }

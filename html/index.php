@@ -10,11 +10,18 @@ htmlStart('Visions for Learning');
     -->
 <div class="btn-group btn-group-justified">
     <a href="index.php" class="btn btn-primary" title="Cohesive units and the stories, lessons, worksheets and quizzes that support them.">Find Content</a>
-    <a href="contentEdit.php" class="btn btn-primary" title="Let your knowledge and creativity spread.">Contribute Content</a>
+  <?php
+  if(isset($_SESSION["isActive"]) && $_SESSION["isActive"]) {
+    echo '<a href="contentEdit.php" class="btn btn-primary" title="Let your knowledge and creativity spread.">Contribute Content</a>';
+  }
+  ?>
     <a href="index.php" class="btn btn-primary">Articles</a>
     <a href="index.php" class="btn btn-primary">Discussion</a>
   <?php
-    if ($_SESSION['isTagEditor'] || $_SESSION['isSuperUser']) {
+    if (
+      (isset($_SESSION['isTagEditor']) && $_SESSION['isTagEditor']) ||
+      (isset($_SESSION['isSuperUser']) && $_SESSION['isSuperUser'])
+      ) {
         echo '<a href="./admin.php" class="btn btn-default">Admin</a>';
     }
   ?>
