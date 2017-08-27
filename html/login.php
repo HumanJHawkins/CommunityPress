@@ -17,7 +17,7 @@ function loginDisplayLoginDialog()
 {
   // Display the login dialog with password text conditional on error status.
   $placeholder = 'Enter Password';
-  if (($_SESSION["loginStep"] == LOGIN_DIALOG_PASSWORD_INCORRECT)) {
+  if (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_DIALOG_PASSWORD_INCORRECT)) {
     $placeholder = 'Password Invalid. Please try again.';
   }
   $dlgHTML = file_get_contents('loginDlgMain.html');
@@ -32,7 +32,7 @@ function loginDisplayVerifyDialog()
 {
   // Display the verification dialog with verification code text conditional on error status.
   $placeholder = 'Enter Verification Code';
-  if (($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT)) {
+  if (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT)) {
     $placeholder = 'Verification Code Invalid. Please try again.';
   }
   $dlgHTML = file_get_contents('loginDlgVerify.html');
@@ -218,7 +218,9 @@ if (
       updateUserSession();
       
       if ($_SESSION['isActive']) {
-        unset($_SESSION["loginStep"]);
+        if(isset($_SESSION["loginStep"])) {
+          unset($_SESSION["loginStep"]);
+        }
         header('Location: ' . $_SESSION['lastURL']);
         exit();
       } else {
@@ -252,13 +254,13 @@ if (
     returnToLogin();
     exit();
   }
-} elseif ($_SESSION["loginStep"] == LOGIN_REGISTER_USER) {
+} elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_REGISTER_USER)) {
   debugSectionOut('LOGIN_REGISTER_USER');
   registerUser();
   $_SESSION["loginStep"] = LOGIN_VERIFY_PASSWORD; // Need to run through LOGIN_VERIFY_PASSWORD to load data for new user.
   returnToLogin();
   exit();
-} elseif ($_SESSION["loginStep"] == LOGIN_VERIFY_SEND_CODE) {
+} elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_VERIFY_SEND_CODE)) {
   debugSectionOut('LOGIN_VERIFY_SEND_CODE');
   
   // If we got here without email, it is an error. Revert to login.
@@ -278,12 +280,12 @@ if (
   $_SESSION["loginStep"] = LOGIN_VERIFY_DIALOG_STANDARD;
   returnToLogin();
   exit();
-} elseif
-(($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_STANDARD) || ($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT)
+} elseif (isset($_SESSION["loginStep"]) &&
+  (($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_STANDARD) || ($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT))
 ) {
   debugSectionOut('LOGIN_VERIFY_DIALOG_STANDARD || LOGIN_VERIFY_DIALOG_CODE_INCORRECT');
   loginDisplayVerifyDialog();
-} elseif ($_SESSION["loginStep"] == LOGIN_VERIFY_CODE) {
+} elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_VERIFY_CODE)) {
   debugSectionOut('LOGIN_VERIFY_CODE');
   
   if ((isset($_POST["verifyCode"])) && ($_POST["verifyCode"] != '')) {
@@ -295,7 +297,7 @@ if (
       
       debugOut('Email Verified.');
       // Confirm the user
-      $sql = 'SELECT TagUseInsert(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ', ' . $_SESSION["userID"] . ')';
+      $sql = 'SELECT tagAttach(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ', ' . $_SESSION["userID"] . ')';
       $result = mysqli_query($connection, $sql) or die("<br />Error:<br /> " . $sql . '<br /> ' . mysqli_error($connection));
       
       $_SESSION['isActive'] = true;
@@ -316,10 +318,10 @@ if (
   } else {
     debugOut("ERROR: Reached LOGIN_VERIFY_CODE, but have no code to verify.", '', true);
   }
-} elseif ($_SESSION["loginStep"] == LOGIN_PASSWORD_RESET) {
+} elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_PASSWORD_RESET)) {
   ;
   
-} elseif ($_SESSION["loginStep"] == LOGIN_LOGOUT) {
+} elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_LOGOUT)) {
   logout();
   exit(0);
 } else {

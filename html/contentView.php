@@ -84,7 +84,7 @@ if ($action == 'edit') {
   // $sql = 'SELECT contentTitle, contentDescription, contentText, contentURL FROM vContent WHERE contentID = ' . $_POST["pageContentID"];
   // $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
   // if ($userrow = mysqli_fetch_array($result)) {
-  if(isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
+  if (isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
     $sql = "CALL procViewContent(" . $_POST["pageContentID"] . "," . $_SESSION['userID'] . ")";
   } else {
     $sql = "CALL procViewContent(" . $_POST["pageContentID"] . ", 0)";
@@ -124,8 +124,8 @@ debugOut('$contentURL', $contentURL);
 debugOut('$sql', $sql);
 ?>
 
-<form action="contentEdit.php" method="post" name="contentEditForm">
-  <table id="contentEditTable">
+<form action="contentView.php" method="post" name="contentViewForm">
+  <table id="contentViewTable">
 
     <tr>
       <td>ID:</td>
@@ -183,24 +183,9 @@ debugOut('$sql', $sql);
         } ?>
       </td>
     </tr>
-    
-    <?php
-    if (isset($_POST['pageContentID']) && ($_POST['pageContentID'] > 0)) {
-      echo '<tr>';
-      echo '<td>Tags:</td>';
-      echo '<td>';
-      
-      include 'divContentTags.php';
-      
-      echo '</td>';
-      echo '</tr>';
-    }
-    ?>
-    
-    
     <tr>
       <td></td>
-      <td><br /></td>
+      <td></td>
     </tr>
     <tr>
       <td></td>
@@ -209,12 +194,9 @@ debugOut('$sql', $sql);
           echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" />';
         } else {
           if (isset($canEdit) && ($canEdit)) {
-            echo '<input type="submit" class="btn btn-danger" name="update" value=" Update " id="inputid1" /> ';
+            echo '<input type="submit" class="btn btn-primary" name="update" value="Save Changes" id="inputid1" /> ';
           }
-          echo '<input type="button" class="btn btn-default" name="cancel" value=" Cancel " onClick="window.location=\'./contentEdit.php\';" />';
-          if (isset($canEdit) && ($canEdit)) {
-            echo '&nbsp;<span class="bg-danger">&nbsp;Careful. You are updating existing content, not adding new.&nbsp;</span>';
-          }
+          echo '<input type="button" class="btn btn-default" name="cancel" value="   Cancel   " onClick="window.location=\'./content.php\';" />';
         }
         ?>
       </td>
@@ -263,48 +245,12 @@ if ($_POST["pageContentID"] == 0) {
 ?>
 
 <!-- Here we should conditionally (if editing) add or remove tags. -->
-<form>
-  <?php
-  tagCategorySelector($connection);
-  // tagSelector($connection, null);
-  ?>
-  <select id="tagSelect"><option value="0">Select Tag...</option></select>
-  <button name="setTag" type="button" class="btn btn-default btn-xs">Attach Tag</button>
-  
-</form>
-
-<?php include 'divContentGrid.php'; ?>
-
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script type="text/javascript">
-    $(document).ready(function(){
-        $('#tagCatSelect').change(function() {
-            var tagCatID = $(this).val();
-            fillComboTags(tagCatID);
-        });
-    });
-    
-    function fillComboTags(tagCatID) {
-        $('#tagSelect').empty();
-        $('#tagSelect').append("<option>Select Tag...</option>");
-        $.ajax({
-            type:"POST",
-            url:"tagsByTagCategory.php?tagCatID="+tagCatID,
-            contentType:"application/json; charset=utf-8",
-            dataType:"json",
-            success: function(data) {
-                $('#tagSelect').empty();
-                $('#tagSelect').append("<option value='0'>Select Tag...</option>");
-                $.each(data,function(i,item){
-                    $('#tagSelect').append('<option value="'+ data[i].tagID +'">'+ data[i].tag+'</option>');
-                });
-            },
-            complete: function(){
-            }
-        });
-    }
-
-</script>
+<?php
+if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
+  include 'divContentTagsEdit.php';
+  include 'divContentTags.php';
+}
+?>
 
 </body>
 </html>
