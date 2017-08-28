@@ -29,7 +29,7 @@ do {
     
         if ($row['canEdit']) {
           // First one has different punctuation, so keep inside the conditional
-          echo '<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' . $row['tag'] . '</a>';
+          echo '<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' . $row['tag'] . '&nbsp;&#9745;</a>';
         } else {
           echo $row['tag'];
         }
@@ -38,7 +38,7 @@ do {
       } else {
         if ($row['canEdit']) {
           // First one has different punctuation, so keep inside the conditional
-          echo ', <a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' . $row['tag'] . '</a>';
+          echo '&nbsp;<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' . $row['tag'] . '&nbsp;&#9745;</a>';
         } else {
           echo ', ' . $row['tag'];
         }

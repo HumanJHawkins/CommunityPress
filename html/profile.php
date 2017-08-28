@@ -1,9 +1,14 @@
 <?php
 include 'pageHeader.php';
 htmlStart('User Profile');
+?>
 
-
-
+<div class="container">
+  <?php include 'divbuttonGroupMain.php'; ?>
+  <br/>
+  <?php include 'divV4LBanner.php'; ?>
+  <br/>
+<?php
 
 // Need to be able to add grade tags, for grades taught (or, grades of interest... so same for student and teacher.)
 // Maybe select from combo and either add or remove?
@@ -26,9 +31,6 @@ htmlStart('User Profile');
 // Consider enhancing tag design... Is there a third column for primary key on binding? (theThing, theTag, and theContext?)
 
 // Run a backup
-
-
-
 
 
 echo '<h1>'.$_SESSION["userName"].'</h1>';
@@ -66,5 +68,6 @@ Please periodically review our <a href="termsandconditions.php">Terms and Condit
 <p>
   <a href="login.php?action=reset">Reset Password</a>
 </p>
+</div>
 </body>
 </html>

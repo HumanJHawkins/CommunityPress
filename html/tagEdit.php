@@ -1,5 +1,6 @@
 <?php
 include 'pageHeader.php';
+
 $connection = getDBConnection();
 
 // Action determined from GET directly, else via POST. Will be:
@@ -13,7 +14,7 @@ if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
 } else if ((isset($_GET["action"])) && ($_GET["action"] != '')) {
   $action = $_GET["action"];
 } else {
-  $action ='';
+  $action = '';
 }
 
 // tagID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST.
@@ -97,8 +98,27 @@ if ($pageTagID != 0) {
   // Placeholder... Slice some of this off where tagID not present when done debugging.
 }
 
-htmlStart('Edit Tags');
+htmlStart('Tag Edit');
 ?>
+
+<div class="container">
+  <div class="btn-group btn-group-justified">
+    <?php
+    if ($_SESSION['isTagEditor'] || $_SESSION['isSuperUser']) {
+      echo '<a href="./tagEdit.php" class="btn btn-default">Add or Edit Tags</a>';
+    }
+    
+    if ($_SESSION['isUserEditor'] || $_SESSION['isSuperUser']) {
+      echo '<a href="./userEdit.php" class="btn btn-default">Edit Users</a>';
+    }
+    
+    if ($_SESSION['isSiteDeveloper'] || $_SESSION['isSuperUser']) {
+      echo '<a href="./devInfo.php" class="btn btn-default">DevInfo (Temp)</a>';
+    }
+    ?>
+  </div>
+  <br/>
+</div>
 
 <form action="tagEdit.php" method="post" name="tagEditForm">
   <input type="hidden" name="tagID" value="<?php echo $pageTagID ?>"/>
@@ -108,7 +128,7 @@ htmlStart('Edit Tags');
       <td>Category:</td>
       <td>
         <?php
-          tagCategorySelector($connection);
+        tagCategorySelector($connection);
         ?>
       </td>
     </tr>

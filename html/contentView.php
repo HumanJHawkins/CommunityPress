@@ -56,27 +56,35 @@ if ((isset($_POST["contentURL"])) && ($_POST["contentURL"] != '')) {
 
 
 // Set variables for input form and continue to display.
+debugOut('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 $sql = '';
 if ($action == 'delete') {
   $sql = 'SELECT contentDelete(\'' . $_POST["pageContentID"] . '\', \'' . $userID . '\')';
-  
-  // Our redirect to last requested URL will cause a failure due to the $_GET paramaters passed in. So, strip them.
-  $_SESSION['lastURL'] = strtok($_SESSION['lastURL'], '?');
-  
+  debugOut($sql);
+  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  header('Location: ' . '/content.php');
+  exit();
 } else if ($action == 'insert') {
   $sql = 'SELECT contentInsert("' . $contentTitle . '","' . $contentDescription . '","' . $contentText .
     '","' . $contentURL . '",' . $userID . ')';
+  debugOut($sql);
+  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  $row = $result->fetch_row();
+  outputArray($row);
+  $_SESSION['lastURL'] = 'contentView.php?action=edit&pageContentID='. $row[0];
+  debugOut('$_SESSION["lastURL"]', $_SESSION['lastURL']);
+  header('Location: ' . $_SESSION['lastURL']);
+  exit();
 } else if ($action == 'update') {
   $sql = 'SELECT contentUpdate(' . $_POST["pageContentID"] . ',"' . $contentTitle . '","' . $contentDescription .
     '","' . $contentText . '","' . $contentURL . '",' . $userID . ')';
-}
-
-// If we have SQL at this point, we are updating the DB via stored function. So run SQL and exit.
-if ($sql != '') {
+  debugOut($sql);
   $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-  header('Location: ' . $_SESSION['lastURL']);
+  header('Location: ' . 'contentView.php?action=edit&pageContentID='. $_POST["pageContentID"]);
   exit();
 }
+
+// action=edit&pageContentID=100257
 
 // If we are still here, we are displaying the content edit screen... So, if editing,
 //  load the content to edit. Otherwise just continue with defaults.
@@ -112,8 +120,14 @@ if (isset($_POST["pageContentID"]) && $_POST["pageContentID"] != 0) {
   // Placeholder... Slice some of this off where contentID not present when stable.
 }
 
-htmlStart('Edit Content');
-
+htmlStart('Content View');
+?>
+<div class="container">
+  <?php include 'divbuttonGroupMain.php'; ?>
+  <br/>
+  <?php include 'divV4LBanner.php'; ?>
+  <br/>
+<?php
 debugSectionOut("Edit Content");
 debugOut('$action', $action);
 debugOut('$userID', $userID);
@@ -154,8 +168,8 @@ debugOut('$sql', $sql);
       </td>
     </tr>
     <tr>
-      <td>Description:</td>
-      <td><textarea name="contentDescription" rows="5" cols="80"
+      <td>Description:&nbsp;</td>
+      <td><textarea name="contentDescription" rows="3" cols="80"
         <?php if ($contentDescription == '') {
           echo 'required placeholder="Description" id="inputContentDescription"></textarea>';
         } else {
@@ -165,7 +179,7 @@ debugOut('$sql', $sql);
     </tr>
     <tr>
       <td>Text:</td>
-      <td><textarea name="contentText" rows="5" cols="80"
+      <td><textarea name="contentText" rows="20" cols="80"
         <?php if ($contentText == '') {
           echo 'required placeholder="Content Text" id="inputContentText"></textarea>';
         } else {
@@ -175,7 +189,7 @@ debugOut('$sql', $sql);
     </tr>
     <tr>
       <td>URL:</td>
-      <td><textarea name="contentURL" rows="5" cols="80"
+      <td><textarea name="contentURL" rows="1" cols="80"
         <?php if ($contentURL == '') {
           echo 'required placeholder="Fully Qualified URL (i.e. http://www.example.com)"></textarea>';
         } else {
@@ -191,58 +205,19 @@ debugOut('$sql', $sql);
       <td></td>
       <td><?php
         if (!isset($_POST["pageContentID"]) || $_POST["pageContentID"] == '' || $_POST["pageContentID"] == 0) {
-          echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" />';
+          echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" /> ';
         } else {
           if (isset($canEdit) && ($canEdit)) {
             echo '<input type="submit" class="btn btn-primary" name="update" value="Save Changes" id="inputid1" /> ';
           }
-          echo '<input type="button" class="btn btn-default" name="cancel" value="   Cancel   " onClick="window.location=\'./content.php\';" />';
         }
+        echo '<input type="button" class="btn btn-default" name="cancel" value="   Cancel   " onClick="window.location=\'./content.php\';" />';
         ?>
       </td>
     </tr>
   </table>
 </form>
 <br/>
-
-<?php
-/*
-if ($_POST["pageContentID"] == 0) {
-  echo '<form>';
-  echo '<select name="tagCategory" id="tagCategory">';
-    $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
-    $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-      while ($rows = mysqli_fetch_array($result)) {
-        $tagCategoryID = $rows['tagCategoryID'];
-        $tagCategory = $rows['tagCategory'];
-        if ($tagCategory == $tagCategory) {
-          echo '<option selected="selected" value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
-        } else {
-          echo '<option value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
-        }
-      }
-  echo '</select>';
-  
-  if($tagCategory) {
-    echo '<select name="tag" id="tag">';
-    $sql = 'SELECT DISTINCT tagID, tag FROM vTag WHERE ';
-    $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-    while ($rows = mysqli_fetch_array($result)) {
-      $tagCategoryID = $rows['tagCategoryID'];
-      $tagCategory = $rows['tagCategory'];
-      if ($tagCategory == $tagCategory) {
-        echo '<option selected="selected" value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
-      } else {
-        echo '<option value="' . $tagCategoryID . '">' . $tagCategory . '</option>';
-      }
-    }
-    echo '</select>';
-  
-  }
-
-}
-*/
-?>
 
 <!-- Here we should conditionally (if editing) add or remove tags. -->
 <?php
@@ -252,6 +227,7 @@ if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
 }
 ?>
 
+</div>
 </body>
 </html>
 
