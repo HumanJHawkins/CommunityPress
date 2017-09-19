@@ -28,47 +28,110 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
 }
 
 
-function tagCategorySelector($connection)
+function tagCategorySelector($pdo)
 {
   $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  $result = getOnePDOTable($pdo, $sql);
+  debugOut('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX functions.php tagCategorySelector($pdo)');
+  outputArray($result);
+  
   echo '<select name="tagCatSelect" id="tagCatSelect">';
   echo '<option value="0">Select Category...</option>';
-  while ($rows = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-    outputArray($rows);
+  foreach($result as $key => $value) {
     echo '<option ';
-    if (isset($_POST["tagCategory"]) && $_POST["tagCategory"] == $rows['tagCategory']) {
+    if (isset($_POST["tagCategory"]) && $_POST["tagCategory"] == $value["tagCategory"]) {
       echo 'selected="selected" ';
     }
-    echo 'value="' . $rows['tagCategoryID'] . '">' . $rows['tagCategory'] . '</option>';
+    echo 'value="' . $value['tagCategoryID'] . '">' . $value['tagCategory'] . '</option>';
   }
   echo'</select>';
 }
 
 
-function tagSelector($connection, $tagCategoryID)
+function tagSelector($pdo, $tagCategoryID)
 {
   $sql = 'SELECT DISTINCT tagID, tag FROM vTag';
   if($tagCategoryID) {
     $sql = $sql . ' WHERE tagCategoryID = ' . $tagCategoryID;
   }
   
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  $result = getOnePDOTable($pdo, $sql);
+  
+  debugOut('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX functions.php tagSelector($pdo, $tagCategoryID)');
+  outputArray($result);
+  
   echo '<select name="tagSelect" id="tagSelect">';
-  while ($rows = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-    outputArray($rows);
+  foreach($result as $key => $value) {
     echo '<option ';
-    if (isset($_POST["tag"]) && $_POST["tag"] == $rows['tag']) {
+    if (isset($_POST["tag"]) && $_POST["tag"] == $value['tag']) {
       echo 'selected="selected" ';
     }
-    echo 'value="' . $rows['tagID'] . '">' . $rows['tag'] . '</option>';
+    echo 'value="' . $value['tagID'] . '">' . $value['tag'] . '</option>';
   }
   echo'</select>';
 }
 
 
-function getStoredProcResults($connection, $sql)
+function getMySQLiConnection()
 {
+  // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
+  $connection = mysqli_connect($GLOBALS['DB_SERVER'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_DATABASE'], $GLOBALS['DB_PORT']);
+  if (!$connection) {
+    echo "Error: Unable to connect to MySQL.<br />";
+    echo "Debugging errno: " . mysqli_connect_errno() . '<br />';
+    echo "Debugging error: " . mysqli_connect_error() . '<br />';
+    return null;
+  }
+  return $connection;
+}
+
+
+function getDBPDO()
+{
+  $pdo = new PDO($GLOBALS['DB_DSN'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_OPTIONS']);
+  return $pdo;
+}
+
+
+function getPDOResults($pdo, $sql, $sqlParamArray = null)
+{
+  $statement = $pdo->prepare($sql);
+  try {
+    $statement->execute($sqlParamArray);
+  } catch(PDOException $exception) {
+    debugOut("PDOException", $exception->getMessage());
+    // This catch just to make the error visible via tail. Throw to make sure
+    // it also receives normal handling.
+    throw $exception;
+  }
+
+  do {
+    $resultSet[] = $statement->fetchAll(PDO::FETCH_ASSOC);
+  } while ($statement->nextRowset());
+  
+  // Calling closeCursor() should not be necessary after fetch all from each Rowset.
+  // It's possibly mildly counter-productive.
+  // $statement->closeCursor();
+
+  return $resultSet;
+}
+
+
+function getOnePDOTable($pdo, $sql, $sqlParamArray = null)
+{
+  return getPDOResults($pdo, $sql, $sqlParamArray)[0];
+}
+
+function getOnePDORow($pdo, $sql, $sqlParamArray = null)
+{
+  return getPDOResults($pdo, $sql, $sqlParamArray)[0][0];
+}
+
+
+
+function getMySQLiResults($connection, $sql)
+{
+  // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   if (!$connection->multi_query($sql)) {
     debugOut("$connection->errno", $connection->errno, true);
     debugOut("$connection->error", $connection->error, true);
@@ -76,7 +139,7 @@ function getStoredProcResults($connection, $sql)
   
   $resultSet[] = '';
   $resultNum = 0;
-
+  
   do {
     if ($result = $connection->store_result()) {
       while ($row = $result->fetch_assoc()) {
@@ -84,56 +147,32 @@ function getStoredProcResults($connection, $sql)
       }
       $result->free();
       $resultNum++;
-  } else {
-    if ($connection->errno) {
-      debugOut("$connection->errno", $connection->errno, true);
-      debugOut("$connection->error", $connection->error, true);
-    }
-  }
-} while ($connection->more_results() && $connection->next_result()) ;
-
-debugOut("getStoredProcResults() Array Dump:");
-outputArray($resultSet);
-
-return $resultSet;
-}
-
-function getOneStoredProcTable($connection, $sql)
-{
-  return getStoredProcResults($connection, $sql)[0];
-}
-
-function getOneStoredProcRow($connection, $sql)
-{
-  return getStoredProcResults($connection, $sql)[0][0];
-}
-
-/*
-function getOneStoredProcRow($connection, $sql)
-{
-  if (!$connection->multi_query($sql)) {
-    debugOut("$connection->errno", $connection->errno, true);
-    debugOut("$connection->error", $connection->error, true);
-  }
-  
- do {
-    if ($result = $connection->store_result()) {
-      $row = $result->fetch_assoc();
-      $result->free();
     } else {
       if ($connection->errno) {
         debugOut("$connection->errno", $connection->errno, true);
         debugOut("$connection->error", $connection->error, true);
       }
     }
-  } while ($connection->more_results() && $connection->next_result());
+  } while ($connection->more_results() && $connection->next_result()) ;
   
-  debugOut("getOneStoredProcRow() Array Dump:");
-  outputArray($row);
+  debugOut("getMySQLiResults() Array Dump:");
+  outputArray($resultSet);
   
-  return $row;
+  return $resultSet;
 }
-*/
+
+function getOneMySQLiTable($connection, $sql)
+{
+  // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
+  return getMySQLiResults($connection, $sql)[0];
+}
+
+function getOneMySQLiRow($connection, $sql)
+{
+  // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
+  return getMySQLiResults($connection, $sql)[0][0];
+}
+
 
 function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null,
                    $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null)
@@ -248,26 +287,6 @@ function debugSectionOut($sectionTitle)
   debugOut('*****   $_POST:');
   outputArray($_POST);
 }
-
-function getDBConnection()
-{
-  $connection = mysqli_connect($GLOBALS['DB_SERVER'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_DATABASE'], $GLOBALS['DB_PORT']);
-  if (!$connection) {
-    echo "Error: Unable to connect to MySQL.<br />";
-    echo "Debugging errno: " . mysqli_connect_errno() . '<br />';
-    echo "Debugging error: " . mysqli_connect_error() . '<br />';
-    return null;
-  }
-  return $connection;
-}
-
-
-function getDBPDO()
-{
-  $pdo = new PDO($GLOBALS['DB_DSN'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_OPTIONS']);
-  return $pdo;
-}
-
 
 function logout()
 {

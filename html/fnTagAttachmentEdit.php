@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * fnTagAttachmentEdit.php is non-specific. Can be used to add content tags, or to bind a review to a user, etc. Though that may be a bad
  * example, as the review code will probably do that during review creation.
  *
@@ -9,8 +9,7 @@
  * Uses:
  *   FUNCTION v4l.tagAttach(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
  *   FUNCTION v4l.tagRemove(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
- */
-
+*/
 include_once 'sessionStart.php';
 
 if (
@@ -27,27 +26,17 @@ if (
 $pdo = getDBPDO();
 
 if($_POST['action'] == 'attach') {
-  $statement = $pdo->prepare('SELECT tagAttach(?, ?, ?)');
-  debugOut('Prepped Action attach...');
+  $sql = 'SELECT tagAttach(?, ?, ?)';
 } elseif ($_POST['action'] == 'remove') {
-  $statement = $pdo->prepare('SELECT tagRemove(?, ?, ?)');
-  debugOut('Prepped Action remove...');
+  $sql = 'SELECT tagRemove(?, ?, ?)';
 } else {
   $ErrorMsg = 'fnTagAttachmentEdit.php Error: Invalid $_POST["action].';
   debugOut($ErrorMsg);
   exit($ErrorMsg);
 }
 
-debugOut('$statement->queryString', $statement->queryString);
-
-try {
-  $statement->execute([$_POST["theTagged"], $_POST["theTag"], $_POST["theUser"]]);
-} catch(PDOException $exception) {
-  debugOut("PDOException", $exception->getMessage());
-}
-$result = $statement->fetch();
-$statement->closeCursor();
-debugOut('$pdo cursor closed.');
+$sqlParamsArray = [$_POST["theTagged"], $_POST["theTag"], $_POST["theUser"]];
+$result = getOnePDORow($pdo,$sql,$sqlParamsArray);
 exit();
 ?>
 

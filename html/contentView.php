@@ -1,6 +1,6 @@
 <?php
 include 'pageHeader.php';
-$connection = getDBConnection();
+$pdo        = getDBPDO();
 
 // Action determined from GET directly, else via POST. Will be:
 //  Update or Insert (Same function): Data is set, so update DB.
@@ -31,55 +31,48 @@ if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
 }
 
 if ((isset($_POST["contentTitle"])) && ($_POST["contentTitle"] != '')) {
-  $contentTitle = trim(mysqli_real_escape_string($connection, $_POST["contentTitle"]));
+  $contentTitle = trim($_POST["contentTitle"]);
 } else {
   $contentTitle = '';
 }
 
 if ((isset($_POST["contentDescription"])) && ($_POST["contentDescription"] != '')) {
-  $contentDescription = trim(mysqli_real_escape_string($connection, $_POST["contentDescription"]));
+  $contentDescription = trim($_POST["contentDescription"]);
 } else {
   $contentDescription = '';
 }
 
 if ((isset($_POST["contentText"])) && ($_POST["contentText"] != '')) {
-  $contentText = trim(mysqli_real_escape_string($connection, $_POST["contentText"]));
+  $contentText = trim($_POST["contentText"]);
 } else {
   $contentText = '';
 }
 
 if ((isset($_POST["contentURL"])) && ($_POST["contentURL"] != '')) {
-  $contentURL = trim(mysqli_real_escape_string($connection, $_POST["contentURL"]));
+  $contentURL = trim($_POST["contentURL"]);
 } else {
   $contentURL = '';
 }
 
 
 // Set variables for input form and continue to display.
-debugOut('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 $sql = '';
 if ($action == 'delete') {
   $sql = 'SELECT contentDelete(\'' . $_POST["pageContentID"] . '\', \'' . $userID . '\')';
-  debugOut($sql);
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  $result = getOnePDORow($pdo, $sql);
   header('Location: ' . '/content.php');
   exit();
 } else if ($action == 'insert') {
   $sql = 'SELECT contentInsert("' . $contentTitle . '","' . $contentDescription . '","' . $contentText .
     '","' . $contentURL . '",' . $userID . ')';
-  debugOut($sql);
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-  $row = $result->fetch_row();
-  outputArray($row);
+  $row = getOnePDORow($pdo, $sql);
   $_SESSION['lastURL'] = 'contentView.php?action=edit&pageContentID='. $row[0];
-  debugOut('$_SESSION["lastURL"]', $_SESSION['lastURL']);
   header('Location: ' . $_SESSION['lastURL']);
   exit();
 } else if ($action == 'update') {
   $sql = 'SELECT contentUpdate(' . $_POST["pageContentID"] . ',"' . $contentTitle . '","' . $contentDescription .
     '","' . $contentText . '","' . $contentURL . '",' . $userID . ')';
-  debugOut($sql);
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  $result = getOnePDORow($pdo, $sql);
   header('Location: ' . 'contentView.php?action=edit&pageContentID='. $_POST["pageContentID"]);
   exit();
 }
@@ -89,16 +82,12 @@ if ($action == 'delete') {
 // If we are still here, we are displaying the content edit screen... So, if editing,
 //  load the content to edit. Otherwise just continue with defaults.
 if ($action == 'edit') {
-  // $sql = 'SELECT contentTitle, contentDescription, contentText, contentURL FROM vContent WHERE contentID = ' . $_POST["pageContentID"];
-  // $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-  // if ($userrow = mysqli_fetch_array($result)) {
   if (isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
     $sql = "CALL procViewContent(" . $_POST["pageContentID"] . "," . $_SESSION['userID'] . ")";
   } else {
     $sql = "CALL procViewContent(" . $_POST["pageContentID"] . ", 0)";
   }
-  $row = getOneStoredProcRow($connection, $sql);
-  
+  $row = getOnePDORow($pdo, $sql);
   outputArray($row);
   
   if (!empty($row)) {

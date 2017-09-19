@@ -1,6 +1,6 @@
 <?php
 include_once 'sessionStart.php';
-$connection = getDBConnection();
+$connection = getMySQLiConnection();
 
 const LOGIN_DIALOG_STANDARD = 'LOGIN_DIALOG_STANDARD';
 const LOGIN_DIALOG_PASSWORD_INCORRECT = 'LOGIN_DIALOG_PASSWORD_INCORRECT';
@@ -103,7 +103,7 @@ function returnToLogin()
 
 function updateUserSession()
 {
-  $connection = getDBConnection();
+  $connection = getMySQLiConnection();
   $theUserID = 0;
   if ((isset($_SESSION["userID"])) && $_SESSION["userID"] > 1) {
     $theUserID = $_SESSION["userID"];
@@ -194,7 +194,7 @@ if (
   }
   
   $sql = 'CALL procGetUserForLogin(\'' . mysqli_real_escape_string($connection, trim($_SESSION["userEmail"])) . '\')';
-  $row = getOneStoredProcRow($connection, $sql);
+  $row = getOneMySQLiRow($connection, $sql);
   
   if (!empty($row)) {
     if (password_verify($_POST["password"], $row['saltHash'])) {

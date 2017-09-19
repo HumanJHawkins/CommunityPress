@@ -1,7 +1,7 @@
 <?php
 include 'pageHeader.php';
 
-$connection = getDBConnection();
+$connection = getMySQLiConnection();
 
 // Action determined from GET directly, else via POST. Will be:
 //  Update or Insert (Same function): Data is set, so update DB.

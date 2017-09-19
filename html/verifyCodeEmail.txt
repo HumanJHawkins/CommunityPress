@@ -1,1 +1,0 @@
-Not used at this time... see the sending of verify code in login.php.

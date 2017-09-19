@@ -8,19 +8,14 @@ debugOut('','',false, false, false);
 // If session_start created a new session, log it.
 if (session_start()) {
   $_SESSION['ipAddress'] = ipAddress();
-
   debugOut('$_SESSION[\'ipAddress\']', $_SESSION['ipAddress']);
   
   // We won't have user ID at this point, so log the session without it. On login, update
   //  the session record.
-  $connection = getDBConnection();
-  $sql = 'SELECT addOrUpdateSession(\'' . mysqli_real_escape_string($connection, session_id()) .
-    '\', \'' . mysqli_real_escape_string($connection, $_SESSION['ipAddress']) .
-    '\', \'' . mysqli_real_escape_string($connection, session_encode()) . '\')';
-  
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-  mysqli_free_result($result);
-  
+  $pdo = getDBPDO();
+  $sql = 'SELECT addOrUpdateSession(?, ?, ?)';
+  $sqlParamArray = [session_id(), $_SESSION['ipAddress'], session_encode()];
+  $row = getOnePDORow($pdo, $sql, $sqlParamArray);
   
   // Store these in the session, but allow refresh once per hour just to be safe.
   if(isset($_SESSION['sessionTimestamp'])) {
@@ -38,7 +33,7 @@ if (session_start()) {
     ($sessionAge > 30)
   ) {
     $sql = 'CALL procServerConfig()';
-    $row = getOneStoredProcRow($connection, $sql);
+    $row = getOnePDORow($pdo, $sql);
     if (!empty($row)) {
       foreach ($row as $key => $val) {
         $_SESSION[$key] = $val;

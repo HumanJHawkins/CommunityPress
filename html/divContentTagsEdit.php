@@ -3,7 +3,7 @@
     <input type="hidden" name="pageContentID" id="taeContentID" value="<?= $_POST["pageContentID"] ?>"/>
     <input type="hidden" name="userID" id="taeUserID" value="<?= $_SESSION["userID"] ?>"/>
     <?php
-    tagCategorySelector($connection);     // id="tagCatSelect"
+    tagCategorySelector($pdo);     // id="tagCatSelect"
     ?>
     <select id="tagSelect">
       <option value="0">Select Tag...</option>
