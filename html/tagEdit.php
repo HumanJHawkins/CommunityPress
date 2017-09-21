@@ -1,7 +1,6 @@
 <?php
 include 'pageHeader.php';
-
-$connection = getMySQLiConnection();
+$pdo        = getDBPDO();
 
 // Action determined from GET directly, else via POST. Will be:
 //  Update or Insert (Same function): Data is set, so update DB.
@@ -34,25 +33,25 @@ if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
 }
 
 if ((isset($_POST["tag"])) && ($_POST["tag"] != '')) {
-  $tag = trim(mysqli_real_escape_string($connection, $_POST["tag"]));
+  $tag = trim($_POST["tag"]);
 } else {
   $tag = '';
 }
 
 /*
 if ((isset($_POST["tagCategory"])) && ($_POST["tagCategory"] != '')) {
-  $tagCategory = trim(mysqli_real_escape_string($connection, $_POST["tagCategory"]));
+  $tagCategory = trim($_POST["tagCategory"]);
 } else {
   $tagCategory = '';
 }
 */
 if ((isset($_POST["tagCategory"])) && ($_POST["tagCategory"] != '')) {
-  $_POST["tagCategory"] = trim(mysqli_real_escape_string($connection, $_POST["tagCategory"]));
+  $_POST["tagCategory"] = trim($_POST["tagCategory"]);
 }
 
 
 if ((isset($_POST["tagDescription"])) && ($_POST["tagDescription"] != '')) {
-  $tagDescription = trim(mysqli_real_escape_string($connection, $_POST["tagDescription"]));
+  $tagDescription = trim($_POST["tagDescription"]);
 } else {
   $tagDescription = '';
 }
@@ -73,7 +72,7 @@ if ($action == 'delete') {
 
 // If we have SQL at this point, we are updating the DB via stored function. So run SQL and exit.
 if ($sql != '') {
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
+  $result = getOnePDOTable($pdo, $sql);
   header('Location: ' . $_SESSION['lastURL']);
   exit();
 }
@@ -82,11 +81,11 @@ if ($sql != '') {
 //  load the tag to edit. Otherwise just continue with defaults.
 if ($action == 'edit') {
   $sql = 'SELECT tag, tagCategory, tagDescription FROM vTag WHERE tagID = ' . $pageTagID;
-  $result = mysqli_query($connection, $sql) or die("<br />Error: " . $sql . '<br />' . mysqli_error($connection));
-  if ($userrow = mysqli_fetch_array($result)) {
-    $tag = trim($userrow['tag']);
-    $_POST["tagCategory"] = trim($userrow['tagCategory']);
-    $tagDescription = trim($userrow['tagDescription']);
+  $row = getOnePDOTable($pdo, $sql);
+  if ($row) {
+    $tag = trim($row['tag']);
+    $_POST["tagCategory"] = trim($row['tagCategory']);
+    $tagDescription = trim($row['tagDescription']);
   } else {
     $tag = 'Tag';
     $_POST["tagCategory"] = 'Tag Category';

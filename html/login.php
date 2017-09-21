@@ -1,6 +1,6 @@
 <?php
 include_once 'sessionStart.php';
-$connection = getMySQLiConnection();
+$pdo        = getDBPDO();
 
 const LOGIN_DIALOG_STANDARD = 'LOGIN_DIALOG_STANDARD';
 const LOGIN_DIALOG_PASSWORD_INCORRECT = 'LOGIN_DIALOG_PASSWORD_INCORRECT';
@@ -103,23 +103,21 @@ function returnToLogin()
 
 function updateUserSession()
 {
-  $connection = getMySQLiConnection();
+  $pdo        = getDBPDO();
   $theUserID = 0;
   if ((isset($_SESSION["userID"])) && $_SESSION["userID"] > 1) {
     $theUserID = $_SESSION["userID"];
   }
   
   $sql = 'SELECT addOrUpdateUser(
-    \'' . mysqli_real_escape_string($connection, $_SESSION["userEmail"]) .
-    '\', \'' . mysqli_real_escape_string($connection, $_SESSION['saltHash']) .
-    '\', \'' . mysqli_real_escape_string($connection, session_id()) .
-    '\', \'' . mysqli_real_escape_string($connection, ipAddress()) .
-    '\', \'' . mysqli_real_escape_string($connection, session_encode()) .
+    \'' . $_SESSION["userEmail"] .
+    '\', \'' . $_SESSION['saltHash'] .
+    '\', \'' . session_id() .
+    '\', \'' . ipAddress() .
+    '\', \'' . session_encode() .
     '\',' . $theUserID . ')';
-  $result = mysqli_query($connection, $sql) or die("Error: " . $sql . '<br />' . mysqli_error($connection));
-  $row = mysqli_fetch_array($result);
-  mysqli_free_result($result);
-  return $row;
+
+  return getOnePDORow($pdo, $sql);
 }
 
 function registerUser()
@@ -193,8 +191,8 @@ if (
     resetLoginProcess('At LOGIN_VERIFY_PASSWORD, without username and password. Returning to login screen.');
   }
   
-  $sql = 'CALL procGetUserForLogin(\'' . mysqli_real_escape_string($connection, trim($_SESSION["userEmail"])) . '\')';
-  $row = getOneMySQLiRow($connection, $sql);
+  $sql = 'CALL procGetUserForLogin(\'' . trim($_SESSION["userEmail"]) . '\')';
+  $row = getOnePDORow($pdo, $sql);
   
   if (!empty($row)) {
     if (password_verify($_POST["password"], $row['saltHash'])) {
@@ -298,13 +296,11 @@ if (
       debugOut('Email Verified.');
       // Confirm the user
       $sql = 'SELECT tagAttach(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ', ' . $_SESSION["userID"] . ')';
-      $result = mysqli_query($connection, $sql) or die("<br />Error:<br /> " . $sql . '<br /> ' . mysqli_error($connection));
+      $result = getOnePDORow($pdo, $sql);
       
       $_SESSION['isActive'] = true;
       header('Location: ' . $_SESSION['lastURL']);
       exit();
-      
-      
     } else {
       // Clear invalid code... Same as invalid passwords.
       $_POST["verifyCode"] = '';
