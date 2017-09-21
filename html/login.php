@@ -12,7 +12,7 @@ const LOGIN_VERIFY_DIALOG_CODE_INCORRECT = 'LOGIN_VERIFY_DIALOG_CODE_INCORRECT';
 const LOGIN_VERIFY_CODE = 'LOGIN_VERIFY_CODE';
 const LOGIN_PASSWORD_RESET = 'LOGIN_PASSWORD_RESET';
 const LOGIN_LOGOUT = 'LOGIN_LOGOUT';
-
+ 
 function loginDisplayLoginDialog()
 {
   // Display the login dialog with password text conditional on error status.
