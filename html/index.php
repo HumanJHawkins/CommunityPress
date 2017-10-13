@@ -1,10 +1,10 @@
 <?php
-include 'pageHeader.php';
+  include_once 'pageHeader.php';
 htmlStart('Visions for Learning');
 ?>
 
 <div class="container">
-  <?php include 'divbuttonGroupMain.php'; ?>
+  <?php include 'divButtonGroupMain.php'; ?>
   <br/>
   <?php include 'divV4LBanner.php'; ?>
   <br/>

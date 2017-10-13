@@ -6,15 +6,16 @@ if (!isset($pdo)) {
 }
 // procGetContentTags(theContentID BIGINT);
 // Test w/ 100238... Should at least get createBy.
+  $sql = 'CALL procGetContentTags(?, ?)';
 
 if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
-  $sql = 'CALL procGetContentTags(' . $_POST['pageContentID'] . ', ' . $_SESSION['userID'] . ')';
+  $sqlParamArray = [$_POST['pageContentID'], $_SESSION['userID']];
 } else {
-  $sql = 'CALL procGetContentTags(' . $_POST['pageContentID'] . ', 0)';
+  $sqlParamArray = [$_POST['pageContentID'], 0];
 }
 
 $currentTagCategory = '';
-$result = getOnePDOTable($pdo, $sql);
+  $result = getOnePDOTable($pdo, $sql, $sqlParamArray);
 
 echo '<div id="contentTags">';
 foreach($result as $key => $value) {

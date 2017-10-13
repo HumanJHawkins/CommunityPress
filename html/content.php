@@ -4,7 +4,7 @@ htmlStart('Stories and Lessons');
 ?>
 
 <div class="container">
-  <?php include 'divbuttonGroupMain.php'; ?>
+  <?php include 'divButtonGroupMain.php'; ?>
   <br />
   <?php include 'divV4LBanner.php'; ?>
   <br />

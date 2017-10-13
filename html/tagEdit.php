@@ -100,25 +100,6 @@ if ($pageTagID != 0) {
 htmlStart('Tag Edit');
 ?>
 
-<div class="container">
-  <div class="btn-group btn-group-justified">
-    <?php
-    if ($_SESSION['isTagEditor'] || $_SESSION['isSuperUser']) {
-      echo '<a href="./tagEdit.php" class="btn btn-default">Add or Edit Tags</a>';
-    }
-    
-    if ($_SESSION['isUserEditor'] || $_SESSION['isSuperUser']) {
-      echo '<a href="./userEdit.php" class="btn btn-default">Edit Users</a>';
-    }
-    
-    if ($_SESSION['isSiteDeveloper'] || $_SESSION['isSuperUser']) {
-      echo '<a href="./devInfo.php" class="btn btn-default">DevInfo (Temp)</a>';
-    }
-    ?>
-  </div>
-  <br/>
-</div>
-
 <form action="tagEdit.php" method="post" name="tagEditForm">
   <input type="hidden" name="tagID" value="<?php echo $pageTagID ?>"/>
   <table id="tagEditTable">
@@ -127,7 +108,7 @@ htmlStart('Tag Edit');
       <td>Category:</td>
       <td>
         <?php
-        tagCategorySelector($connection);
+          tagCategorySelector($pdo);
         ?>
       </td>
     </tr>
@@ -199,38 +180,16 @@ htmlStart('Tag Edit');
   </tfoot>
   <tbody>
   <?php
-  $select = mysqli_query($connection, "CALL procViewTags('')");
-  
-  while ($userrow = mysqli_fetch_array($select)) {
-    $tagID = $userrow['tagID'];
-    $tag = $userrow['tag'];
-    $tagCategory = $userrow['tagCategory'];
-    $tagDescription = $userrow['tagDescription'];
-    $updateBy = $userrow['updateBy'];
-    $updateTime = $userrow['updateTime'];
-    echo
-      '<tr>' .
-      '<td data-value="1">' . $tagCategory . '</td>' .
-      '<td data-value="2">' . $tag . '</td>' .
-      '<td data-value="3">' . $tagDescription . '</td>' .
-      '<td data-value="4">' .
-      '<div style="white-space: nowrap;">' .
-      '<a href="./tagEdit.php?action=edit&pageTagID=' . $tagID . '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
-      '<a href="./tagEdit.php?action=delete&pageTagID=' . $tagID . '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>' .
-      '</div>' .
-      '</td>' .
-      '<td data-value="5">' .
-      '<div style="white-space: nowrap;">' .
-      $updateBy .
-      '</div>' .
-      '</td>' .
-      '<td data-value="6">' .
-      '<div style="white-space: nowrap;">' .
-      $updateTime .
-      '</div>' .
-      '</td>' .
-      
-      '</tr>';
+    $sql = "CALL procViewTags('')";
+    $result = getOnePDOTable($pdo, $sql);
+    foreach ($result as $key => $value) {
+      $tagID = $value['tagID'];
+      $tag = $value['tag'];
+      $tagCategory = $value['tagCategory'];
+      $tagDescription = $value['tagDescription'];
+      $updateBy = $value['updateBy'];
+      $updateTime = $value['updateTime'];
+      echo '<tr>' . '<td data-value="1">' . $tagCategory . '</td>' . '<td data-value="2">' . $tag . '</td>' . '<td data-value="3">' . $tagDescription . '</td>' . '<td data-value="4">' . '<div style="white-space: nowrap;">' . '<a href="./tagEdit.php?action=edit&pageTagID=' . $tagID . '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' . '<a href="./tagEdit.php?action=delete&pageTagID=' . $tagID . '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>' . '</div>' . '</td>' . '<td data-value="5">' . '<div style="white-space: nowrap;">' . $updateBy . '</div>' . '</td>' . '<td data-value="6">' . '<div style="white-space: nowrap;">' . $updateTime . '</div>' . '</td>' . '</tr>';
   } ?>
   </tbody>
 </table>

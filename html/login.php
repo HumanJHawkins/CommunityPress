@@ -12,7 +12,7 @@ const LOGIN_VERIFY_DIALOG_CODE_INCORRECT = 'LOGIN_VERIFY_DIALOG_CODE_INCORRECT';
 const LOGIN_VERIFY_CODE = 'LOGIN_VERIFY_CODE';
 const LOGIN_PASSWORD_RESET = 'LOGIN_PASSWORD_RESET';
 const LOGIN_LOGOUT = 'LOGIN_LOGOUT';
- 
+
 function loginDisplayLoginDialog()
 {
   // Display the login dialog with password text conditional on error status.
@@ -83,9 +83,7 @@ function sendVerifyCode($mailBodyText, $htmlFile)
   debugOut('$_SESSION["userEmail"]', $_SESSION["userEmail"]);
   debugOut('$_SESSION["verifyCodeHash"]', $_SESSION["verifyCodeHash"]);
   debugOut('$verifyCode', $verifyCode);
-  
-  // This is using MailGun. Create a MailGun object with credentials to enable this.
-  //  I put it in the same file with DB Connect info, to keep security config together.
+  // Uses Mailgun. Mailgun object created in config to keep security and access keys in the same file.
   //
   // TO DO:
   //   Add text message option.

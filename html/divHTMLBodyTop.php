@@ -11,12 +11,12 @@ if (isset($_SESSION['userID']) && $_SESSION['userID'] > 0) {
   
   if (isset($_SESSION["isSuperUser"]) && ($_SESSION["isSuperUser"])) {
     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="admin.php">Admin</a>';
+  } else if (isset($_SESSION["isTagEditor"]) && ($_SESSION["isTagEditor"]) && (!(substr($_SERVER['REQUEST_URI'], -11) == 'tagEdit.php'))) {
+    echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="tagEdit.php">Edit Tags</a>';
   }
-  
+
   echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="login.php?action=logout">Logout</a></div>';
-  
-  
-  
+
   if (!$_SESSION['isActive']) {
     echo '<div class="form-inline">';
     echo '<form action="login.php" method="post">';
@@ -32,6 +32,6 @@ if (isset($_SESSION['userID']) && $_SESSION['userID'] > 0) {
   echo 'Not logged in.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="login.php">Login or Register</a></div>';
 }
 echo '<hr />';
-debugOut($_SESSION['lastURL'], $_SESSION['lastURL']);
+// debugOut($_SESSION['lastURL'], $_SESSION['lastURL']);
 echo '<br />';
 ?>
