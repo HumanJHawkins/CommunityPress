@@ -28,8 +28,8 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
 
   function tagCategorySelector($pdo) {
     $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
-    $result = getOnePDOTable($pdo, $sql);
-    echo '<select name="tagCategoryID" id="tagCategoryID">';
+    $result = getOnePDOTable($pdo, $sql, null, PDO::FETCH_ASSOC);
+    echo '<select name="tagCatSelect" id="tagCatSelect">';
     echo '<option value="0">Select Category...</option>';
     foreach ($result as $key => $value) {
       echo '<option ';
@@ -47,7 +47,9 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
     if ($tagCategoryID) {
       $sql = $sql . ' WHERE tagCategoryID = ' . $tagCategoryID;
     }
-    $result = getOnePDOTable($pdo, $sql);
+    debugOut("**************************************************************** tagSelector");
+    debugOut("$sql", $sql);
+    $result = getOnePDOTable($pdo, $sql, null, PDO::FETCH_ASSOC);
     echo '<select name="tagSelect" id="tagSelect">';
     foreach ($result as $key => $value) {
       echo '<option ';

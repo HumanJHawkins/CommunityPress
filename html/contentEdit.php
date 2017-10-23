@@ -28,6 +28,8 @@ if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
 } else {
   $pageContentID = 0;   // TO DO: Consider using -1.
 }
+$_POST["pageContentID"] =
+    $pageContentID;   // TEMP. TO DO: Remove this... Some brancing using it to determine edit mode.
 debugOut('$pageContentID', $pageContentID);
 
 // UserID needed for validating permission to edit.
@@ -340,10 +342,10 @@ htmlStart('Content View');
     </table>
   </form>
   <br/>
-
-  <!-- Here we should conditionally (if editing) add or remove tags. -->
+    <!-- Here we should conditionally (if editing) add or remove tags. -->
   <?php
-  if ($pageContentID > 0) {
+  // if ($pageContentID > 0) {
+  if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
     include 'divContentTagsEdit.php';
     include 'divContentTags.php';
   }
