@@ -1,5 +1,6 @@
 <?php
 include 'pageHeader.php';
+debugOut('**************************************************************** Beginning contentEdit.php');
 $pdo = getDBPDO();
 
 // Action determined from GET directly, else via POST. Will be:
@@ -17,14 +18,17 @@ if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
 }
 debugOut('$action', $action);
 
-
-// pageContentID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST.
-//  Move all to _POST for consistency.
+// pageContentID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST. Consolidate.
 if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
-  $_POST["pageContentID"] = $_GET["pageContentID"];
-  unset($_GET["pageContentID"]);
+  debugOut('$_GET["pageContentID"]', $_GET["pageContentID"]);
+  $pageContentID = $_GET["pageContentID"];
+} elseif (isset($_POST["pageContentID"]) && $_POST["pageContentID"] > 0) {
+  debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
+  $pageContentID = $_POST["pageContentID"];
+} else {
+  $pageContentID = 0;   // TO DO: Consider using -1.
 }
-debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
+debugOut('$pageContentID', $pageContentID);
 
 // UserID needed for validating permission to edit.
 if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
@@ -62,43 +66,50 @@ if ((isset($_POST["contentURL"])) && ($_POST["contentURL"] != '')) {
 }
 debugOut('$contentURL', $contentURL);
 
-// TO DO: Test if we have filename here... Know it is in $_FILES['userUpload']['name'] if not.
-if ((isset($_POST["contentFilename"])) && ($_POST["contentFilename"] != '')) {
-  $contentFilename = trim($_POST["contentFilename"]);
+if ((isset($_FILES['contentFile']['name'])) && ($_FILES['contentFile']['name'] != '')) {
+  $contentFilename = $_FILES['contentFile']['name'];
 } else {
-  $contentFilename = '';
+  $contentFilename = null;
 }
+debugOut('******************************** File Info');
+outputArray($_FILES);
+debugOut('****************');
+if (isset($contentFile)) {
+  outputArray($contentFile);
+} else {
+  debugOut('$contentFile is not set.');
+}
+debugOut('****************');
 debugOut('$contentFilename', $contentFilename);
-
+debugOut('********************************');
 
 // Set variables for input form and continue to display.
 $sql = '';
 if ($action == 'delete') {
   // TO DO: Handle file delete too!
   $sql = 'SELECT contentDelete(?, ?)';
-  $sqlParamsArray = [$_POST["pageContentID"], $userID];
+  $sqlParamsArray = [$pageContentID, $userID];
   $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
   header('Location: ' . '/content.php');
   exit();
 } else if ($action == 'insert') {
   $sql = 'SELECT contentInsert(?, ?, ?, ?, ?, ?)';
   $sqlParamsArray = [$contentTitle, $contentDescription, $contentText, $contentURL, $contentFilename, $userID];
+  debugOut('******************************** SQL Info');
   debugOut('insert $sql', $sql);
   outputArray($sqlParamsArray);
   
   $newID = getOnePDOValue($pdo, $sql, $sqlParamsArray);
   debugOut('$newID', $newID);
-  
-  // TO DO: This needs to be a file upload function, taking the name of the tile and having access to the $_FILES array.
+
+  // TO DO: This needs to be a file upload function, taking the name of the file. (Note: $_FILES is superglobal.)
   // Same function for insert and update, with different input.
   if (!isset($_FILES['file_upload']) || $_FILES['file_upload']['error'] == UPLOAD_ERR_NO_FILE) {
     // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
     // $path = $_FILES['image']['name'];
     // $ext = pathinfo($path, PATHINFO_EXTENSION);
-    
     $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' . pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
-    
-    // echo '<pre>';
+
     if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
       ;  // Success. Do nothing here.
     } else {
@@ -113,18 +124,25 @@ if ($action == 'delete') {
   exit();
 } else if ($action == 'update') {
   $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?, ?)';
-  $sqlParamsArray = [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentText, $contentURL, $contentFilename, $userID];
+  if (isset($contentFile[name]) && $contentFile[name] != '') {
+    $sqlParamsArray =
+        [$pageContentID, $contentTitle, $contentDescription, $contentText, $contentURL, $contentFile[name], $userID];
+  } else {
+    $sqlParamsArray = [$pageContentID, $contentTitle, $contentDescription, $contentText, $contentURL, null, $userID];
+  }
+  debugOut('******************************** SQL Info');
   debugOut('update $sql', $sql);
   outputArray($sqlParamsArray);
-  
+
   $result = getOnePDOValue($pdo, $sql, $sqlParamsArray);
   
   if (!isset($_FILES['file_upload']) || $_FILES['file_upload']['error'] == UPLOAD_ERR_NO_FILE) {
     // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
     // $path = $_FILES['image']['name'];
     // $ext = pathinfo($path, PATHINFO_EXTENSION);
-    
-    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $_POST["pageContentID"] . '.' . pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
+
+    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $pageContentID . '.' .
+        pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
     
     // echo '<pre>';
     if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
@@ -135,8 +153,8 @@ if ($action == 'delete') {
       echo "<script>alert('Upload error. Press OK to return to page.')</script>";
     }
   }
-  
-  header('Location: ' . 'contentEdit.php?action=edit&pageContentID=' . $_POST["pageContentID"]);
+
+  header('Location: ' . 'contentEdit.php?action=edit&pageContentID=' . $pageContentID);
   exit();
 }
 
@@ -147,9 +165,9 @@ if ($action == 'delete') {
 if ($action == 'edit') {
   $sql = 'CALL procViewContent(?, ?)';
   if (isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
-    $sqlParamsArray = [$_POST["pageContentID"], $_SESSION['userID']];
+    $sqlParamsArray = [$pageContentID, $_SESSION['userID']];
   } else {
-    $sqlParamsArray = [$_POST["pageContentID"], 0];
+    $sqlParamsArray = [$pageContentID, 0];
   }
   debugOut('$sql', $sql);
   outputArray($sqlParamsArray);
@@ -183,7 +201,7 @@ abstract class ViewMode
 }
 
 $ViewMode = ViewMode::View;
-if (!isset($_POST["pageContentID"]) || $_POST["pageContentID"] == '' || $_POST["pageContentID"] == 0) {
+if ($pageContentID < 1 || $pageContentID == '') {
   $ViewMode = ViewMode::Create;
 } else {
   if (isset($canEdit) && ($canEdit)) {
@@ -221,8 +239,9 @@ htmlStart('Content View');
             // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
             echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
           } else {
-            // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
-            echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>' . $_POST["pageContentID"] . '</textarea>';
+            // echo '<input type="text" name="contentID" value="' . $pageContentID . '" readonly/>';
+            echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>' .
+                $pageContentID . '</textarea>';
           }
           ?>
         </td>
@@ -263,7 +282,7 @@ htmlStart('Content View');
         <td>URL:</td>
         <td><textarea name="contentURL" rows="1" cols="80"
           <?php if ($contentURL == '') {
-            echo 'required placeholder="Fully Qualified URL (i.e. http://www.example.com)"></textarea>';
+            echo 'required placeholder="Fully Qualified URL (i.e. http://www.example.com)" id="inputContentURL"></textarea>';
           } else {
             echo ' id="inputContentURL">' . $contentURL . '</textarea>';
           } ?>
@@ -290,13 +309,13 @@ htmlStart('Content View');
             // <!-- MAX_FILE_SIZE must precede the file input field -->
             echo '<input type="hidden" name="MAX_FILE_SIZE" value="16777216"/>';
             // <!-- Name of input element determines name in $_FILES array -->
-            echo '<input name="userUpload" type="file"/>';
+            echo '<input name="contentFile" type="file" /> ';
           } else {
-            echo '< textarea name = "contentFilename" rows = "1" cols = "80"';
+            echo '<textarea name="contentFilename" rows = "1" cols = "80"';
             if ($contentFilename == '') {
-              echo ' required placeholder="Content Filename" id="inputContentText"></textarea>';
+              echo ' required placeholder="Content Filename" id="inputContentFilename"></textarea>';
             } else {
-              echo ' id="inputContentText">' . $contentFilename . '</textarea>';
+              echo ' id="inputContentFilename">' . $contentFilename . '</textarea>';
             }
           }
           ?>
@@ -324,7 +343,7 @@ htmlStart('Content View');
 
   <!-- Here we should conditionally (if editing) add or remove tags. -->
   <?php
-  if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
+  if ($pageContentID > 0) {
     include 'divContentTagsEdit.php';
     include 'divContentTags.php';
   }
@@ -333,7 +352,6 @@ htmlStart('Content View');
 </div>
 </body>
 </html>
-
 
 
 

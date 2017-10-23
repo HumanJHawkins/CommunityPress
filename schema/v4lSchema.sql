@@ -1035,7 +1035,6 @@ CREATE VIEW vTag AS
       ON ((CategoryUse.thingID = Category.tagID))) LEFT JOIN v4l.thingTag Protected
       ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected')))));
 
-
 -- Insert required tags to support further creation of tags, etc.
 INSERT INTO tag (tag, tagDescription)
 VALUES ('TagCategory', 'Applied to another tag, indicates that tag is a tag category');
