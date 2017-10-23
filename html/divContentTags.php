@@ -1,21 +1,18 @@
 <?php
-
 include_once 'sessionStart.php';
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
-// procGetContentTags(theContentID BIGINT);
-// Test w/ 100238... Should at least get createBy.
   $sql = 'CALL procGetContentTags(?, ?)';
 
 if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
-  $sqlParamArray = [$_POST['pageContentID'], $_SESSION['userID']];
+  $sqlParamArray = [$pageContentID, $_SESSION['userID']];
 } else {
-  $sqlParamArray = [$_POST['pageContentID'], 0];
+  $sqlParamArray = [$pageContentID, 0];
 }
 
 $currentTagCategory = '';
-  $result = getOnePDOTable($pdo, $sql, $sqlParamArray);
+$result = getOnePDOTable($pdo, $sql, $sqlParamArray, PDO::FETCH_ASSOC);
 
 echo '<div id="contentTags">';
 foreach($result as $key => $value) {
