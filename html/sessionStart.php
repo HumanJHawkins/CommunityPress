@@ -3,7 +3,7 @@ include_once("config.php");
 include_once("functions.php");
 
 // Put a blank line in the log at the top of each page.
-debugOut('','',false, false, false);
+debugOut('', '', false, false, false);
 
 // If session_start created a new session, log it.
 if (session_start()) {
@@ -16,9 +16,9 @@ if (session_start()) {
   $sql = 'SELECT addOrUpdateSession(?, ?, ?)';
   $sqlParamArray = [session_id(), $_SESSION['ipAddress'], session_encode()];
   $row = getOnePDORow($pdo, $sql, $sqlParamArray);
-
+  
   // Store these in the session, but allow refresh once per hour just to be safe.
-  if(isset($_SESSION['sessionTimestamp'])) {
+  if (isset($_SESSION['sessionTimestamp'])) {
     $sessionStartTime = new DateTime($_SESSION['sessionTimestamp']);
   } else {
     $sessionStartTime = new DateTime('2000-01-01');

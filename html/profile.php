@@ -16,10 +16,10 @@ htmlStart('User Profile');
 
 // This should all be AJAX... Learn and do, or just PHP?
 
-// On SuperUser, allow selecting user at the top...
+// On Superuser, allow selecting user at the top...
 //  So, on load, copy user into variable. Act on variable user, not current user.
-//  SuperUser can change the variable. Others don't see the UX to do that.
-// Consider reasonable limits on what SuperUser can do via the web UX.
+//  Superuser can change the variable. Others don't see the UX to do that.
+// Consider reasonable limits on what Superuser can do via the web UX.
 
 // Consider other tags and data...
 //    What do we need to know about users?
@@ -47,7 +47,7 @@ IF (!$_SESSION["isActive"]) {
     echo '<p>Registration is active with verified email.</p>'.
         '<p>All active users are encouraged to create and share content, comment '.
         'and discuss, write reviews, and join in our community.</p>';
-    IF ($_SESSION["isSuperUser"]) {
+  IF ($_SESSION["isSuperuser"]) {
         echo '<p>Additionally, you are a superuser, permitted for all functions.</p>';
     } elseif ($_SESSION["isTagEditor"] || $_SESSION["isUserEditor"] || $_SESSION["isSiteDeveloper"]) {
       echo '<p>Additionally, you have the following permissions:</p><ul>';

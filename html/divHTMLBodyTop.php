@@ -4,12 +4,14 @@ if (!(substr($_SERVER['REQUEST_URI'], -9) == 'index.php')) {
   echo '<div class="left"><a href="index.php">Home</a></div>';
 }
 
+outputArray($_SESSION);
+
 echo '<span style="float:right;">';
 // echo '<div class="right">';
 if (isset($_SESSION['userID']) && $_SESSION['userID'] > 0) {
   echo 'Hi <a href="profile.php">' . $_SESSION['userName'] . '</a>';
   
-  if (isset($_SESSION["isSuperUser"]) && ($_SESSION["isSuperUser"])) {
+  if (isset($_SESSION["isSuperuser"]) && ($_SESSION["isSuperuser"])) {
     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="admin.php">Admin</a>';
   } else if (isset($_SESSION["isTagEditor"]) && ($_SESSION["isTagEditor"]) && (!(substr($_SERVER['REQUEST_URI'], -11) == 'tagEdit.php'))) {
     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="tagEdit.php">Edit Tags</a>';

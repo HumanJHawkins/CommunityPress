@@ -1,9 +1,10 @@
 <?php
   require './mailgun-php/vendor/autoload.php';
 
-  use Mailgun\Mailgun;
+use Mailgun\Mailgun;
 
-  function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null, $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null) {
+function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null, $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null)
+{
     $sendArray['from'] = $mailFrom;
     $sendArray['to'] = $mailTo;
     $sendArray['subject'] = $mailSubject;
@@ -28,7 +29,7 @@
   function tagCategorySelector($pdo) {
     $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
     $result = getOnePDOTable($pdo, $sql);
-    echo '<select name="tagCatSelect" id="tagCatSelect">';
+    echo '<select name="tagCategoryID" id="tagCategoryID">';
     echo '<option value="0">Select Category...</option>';
     foreach ($result as $key => $value) {
       echo '<option ';

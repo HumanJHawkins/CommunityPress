@@ -15,6 +15,7 @@ if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
 } else {
   $action = '';
 }
+debugOut('$action', $action);
 
 // tagID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST.
 if ((isset($_GET["pageTagID"])) && ($_GET["pageTagID"] > 0)) {
@@ -24,6 +25,7 @@ if ((isset($_GET["pageTagID"])) && ($_GET["pageTagID"] > 0)) {
 } else {
   $pageTagID = 0;
 }
+debugOut('$pageTagID', $pageTagID);
 
 // UserID needed for validating permission to edit.
 if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
@@ -31,23 +33,22 @@ if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
 } else {
   $userID = 0;
 }
+debugOut('$userID', $userID);
 
 if ((isset($_POST["tag"])) && ($_POST["tag"] != '')) {
   $tag = trim($_POST["tag"]);
 } else {
   $tag = '';
 }
+debugOut('$tag', $tag);
 
-/*
-if ((isset($_POST["tagCategory"])) && ($_POST["tagCategory"] != '')) {
-  $tagCategory = trim($_POST["tagCategory"]);
+if ((isset($_POST["tagCategoryID"])) && ($_POST["tagCategoryID"] != '')) {
+  $tagCategoryID = $_POST["tagCategoryID"];
 } else {
-  $tagCategory = '';
+  $tagCategoryID = 0;
 }
-*/
-if ((isset($_POST["tagCategory"])) && ($_POST["tagCategory"] != '')) {
-  $_POST["tagCategory"] = trim($_POST["tagCategory"]);
-}
+
+debugOut('$tagCategoryID', $tagCategoryID);
 
 
 if ((isset($_POST["tagDescription"])) && ($_POST["tagDescription"] != '')) {
@@ -55,6 +56,7 @@ if ((isset($_POST["tagDescription"])) && ($_POST["tagDescription"] != '')) {
 } else {
   $tagDescription = '';
 }
+debugOut('$tagDescription', $tagDescription);
 
 // Set variables for input form and continue to display.
 $sql = '';
@@ -65,10 +67,11 @@ if ($action == 'delete') {
   $_SESSION['lastURL'] = strtok($_SESSION['lastURL'], '?');
   
 } else if ($action == 'insert') {
-  $sql = 'SELECT TagInsert("' . $tag . '",' . $_POST["tagCategory"] . ',"' . $tagDescription . '","' . $userID . '")';
+  $sql = 'SELECT TagInsert("' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '","' . $userID . '")';
 } else if ($action == 'update') {
-  $sql = 'SELECT TagUpdate(' . $pageTagID . ',"' . $tag . '",' . $_POST["tagCategory"] . ',"' . $tagDescription . '","' . $userID . '")';
+  $sql = 'SELECT TagUpdate(' . $pageTagID . ',"' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '","' . $userID . '")';
 }
+debugOut('$sql', $sql);
 
 // If we have SQL at this point, we are updating the DB via stored function. So run SQL and exit.
 if ($sql != '') {
@@ -80,12 +83,14 @@ if ($sql != '') {
 // If we are still here, we are displaying the tag edit screen... So, if editing,
 //  load the tag to edit. Otherwise just continue with defaults.
 if ($action == 'edit') {
-  $sql = 'SELECT tag, tagCategory, tagDescription FROM vTag WHERE tagID = ' . $pageTagID;
-  $row = getOnePDOTable($pdo, $sql);
+  $sql = 'SELECT tag, tagCategory, tagDescription FROM vTag WHERE tagID = ?';
+  $sqlParamArray = [$pageTagID];
+  $row = getOnePDORow($pdo, $sql, $sqlParamArray, PDO::FETCH_ASSOC);
   if ($row) {
-    $tag = trim($row['tag']);
-    $_POST["tagCategory"] = trim($row['tagCategory']);
-    $tagDescription = trim($row['tagDescription']);
+    outputArray($row);
+    $tag = $row['tag'];
+    $_POST["tagCategory"] = $row['tagCategory'];
+    $tagDescription = $row['tagDescription'];
   } else {
     $tag = 'Tag';
     $_POST["tagCategory"] = 'Tag Category';

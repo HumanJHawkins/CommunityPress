@@ -5,8 +5,8 @@ CREATE SCHEMA IF NOT EXISTS v4l
 USE v4l;
 
 
-DROP TABLE IF EXISTS Content;
-CREATE TABLE Content
+DROP TABLE IF EXISTS content;
+CREATE TABLE content
 (
   contentID          BIGINT DEFAULT '0'                  NOT NULL PRIMARY KEY,
   contentTitle       VARCHAR(256) DEFAULT 'Untitled'     NOT NULL,
@@ -18,18 +18,18 @@ CREATE TABLE Content
   createTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updateBy           BIGINT DEFAULT '0'                  NOT NULL,
   updateTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT Content_contentFilename_uindex
+  CONSTRAINT content_contentFilename_uindex
   UNIQUE (contentFilename)
 );
 
-INSERT INTO Content (contentID, contentTitle, contentDescription, contentText, contentURL)
+INSERT INTO content (contentID, contentTitle, contentDescription, contentText, contentURL)
 VALUES (0, 'Placeholder: No Title', 'This is a placeholder record with no actual content attached.',
         'This is a placeholder record with no actual content attached.', 'https://visionsforlearning.org/');
 
 CREATE TRIGGER beforeInsertContent
-BEFORE INSERT ON Content
+BEFORE INSERT ON content
 FOR EACH ROW
-  SET new.contentID = fnGetLUID('ContentID');
+  SET new.contentID = fnGetLUID('contentID');
 
 
 DROP TABLE IF EXISTS LUID;
@@ -51,8 +51,8 @@ CREATE TABLE LUID
 INSERT INTO LUID (usedFor) VALUES ('Placeholder. Non-LUID');
 
 
-DROP TABLE IF EXISTS Rating;
-CREATE TABLE Rating
+DROP TABLE IF EXISTS rating;
+CREATE TABLE rating
 (
   raterID     BIGINT                              NOT NULL
   COMMENT 'Usually a UserID, but could be a uniquely identified algorithm, etc.',
@@ -69,8 +69,8 @@ CREATE TABLE Rating
   PRIMARY KEY (raterID, ratedID)
 );
 
-DROP TABLE IF EXISTS Session;
-CREATE TABLE Session
+DROP TABLE IF EXISTS session;
+CREATE TABLE session
 (
   sessionID    BIGINT DEFAULT '0'                  NOT NULL
     PRIMARY KEY,
@@ -83,21 +83,21 @@ CREATE TABLE Session
   createTime   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updateBy     BIGINT DEFAULT '0'                  NOT NULL,
   updateTime   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT Session_phpSessionID_uindex
+  CONSTRAINT session_phpSessionID_uindex
   UNIQUE (phpSessionID)
 );
 
-INSERT INTO Session (phpSessionID, ipAddress, sessionData)
+INSERT INTO session (phpSessionID, ipAddress, sessionData)
 VALUES ('0000000000000000000000000000000000000000000', '0000000000000000', '');
 
 CREATE TRIGGER beforeInsertSessionLog
-BEFORE INSERT ON Session
+BEFORE INSERT ON session
 FOR EACH ROW
-  SET new.sessionID = fnGetLUID('SessionID');
+  SET new.sessionID = fnGetLUID('sessionID');
 
 
-DROP TABLE IF EXISTS Tag;
-CREATE TABLE Tag
+DROP TABLE IF EXISTS tag;
+CREATE TABLE tag
 (
   tagID          BIGINT DEFAULT '0'                  NOT NULL
     PRIMARY KEY,
@@ -107,26 +107,26 @@ CREATE TABLE Tag
   createTime     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updateBy       BIGINT DEFAULT '0'                  NOT NULL,
   updateTime     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT Tag_Tag_uindex
+  CONSTRAINT tag_tag_uindex
   UNIQUE (tag)
 );
 
-INSERT INTO Tag (tagID, tag, tagDescription)
+INSERT INTO tag (tagID, tag, tagDescription)
 VALUES (0, 'Non-tag', 'A placeholder tag with no meaning attached.');
 
 CREATE TRIGGER beforeInsertTag
-BEFORE INSERT ON Tag
+BEFORE INSERT ON tag
 FOR EACH ROW
-  SET new.tagID = fnGetLUID('TagID');
+  SET new.tagID = fnGetLUID('tagID');
 
 CREATE TRIGGER beforeUpdateTag
-BEFORE UPDATE ON Tag
+BEFORE UPDATE ON tag
 FOR EACH ROW
   SET new.updateTime = CURRENT_TIMESTAMP;
 
 
-DROP TABLE IF EXISTS ThingTag;
-CREATE TABLE ThingTag
+DROP TABLE IF EXISTS thingTag;
+CREATE TABLE thingTag
 (
   thingTagID BIGINT DEFAULT '0'                  NOT NULL
     PRIMARY KEY,
@@ -138,7 +138,7 @@ CREATE TABLE ThingTag
   createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updateBy   BIGINT DEFAULT '0'                  NOT NULL,
   updateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT ThingTag_thingID_tagID_pk
+  CONSTRAINT thingTag_thingID_tagID_pk
   UNIQUE (thingID, tagID)
 )
   COMMENT 'TagUse can tag objects with Tags from the Tag table, or other LUIDs such as UserID to indicate ownership..';
@@ -154,8 +154,8 @@ FOR EACH ROW
   SET new.updateTime = CURRENT_TIMESTAMP;
 
 
-DROP TABLE IF EXISTS User;
-CREATE TABLE User
+DROP TABLE IF EXISTS user;
+CREATE TABLE user
 (
   userID     BIGINT DEFAULT '0'                  NOT NULL
     PRIMARY KEY,
@@ -168,20 +168,20 @@ CREATE TABLE User
   createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updateBy   BIGINT DEFAULT '0'                  NOT NULL,
   updateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT User_UserEMail_uindex
+  CONSTRAINT user_userEMail_uindex
   UNIQUE (userEmail),
-  CONSTRAINT User_UserName_uindex
+  CONSTRAINT user_userName_uindex
   UNIQUE (userName)
 )
-  COMMENT 'Active status and LicenseAccepted are tags. LicenseAcceptDate is updateTime of TagUse for User / LicenseAccept';
+  COMMENT 'Active status and LicenseAccepted are tags. LicenseAcceptDate is updateTime of TagUse for user / LicenseAccept';
 
-INSERT INTO User (userEmail, userName, sessionID) VALUES ('nobody@nowhere.none', 'nobody', 0);
+INSERT INTO user (userEmail, userName, sessionID) VALUES ('nobody@nowhere.none', 'nobody', 0);
 
 CREATE TRIGGER beforeInsertUser
-BEFORE INSERT ON User
+BEFORE INSERT ON user
 FOR EACH ROW
   BEGIN
-    SET new.userID = fnGetLUID('UserID');
+    SET new.userID = fnGetLUID('userID');
 
     IF (IFNULL(new.userName, 'Unknown') = 'Unknown')
     THEN
@@ -213,40 +213,6 @@ CREATE TRIGGER beforeInsertPasswordHash
 BEFORE INSERT ON saltHash
 FOR EACH ROW
   SET new.saltHashID = fnGetLUID('saltHashID');
-
-
-DROP VIEW IF EXISTS vContent;
-CREATE VIEW vContent AS
-  SELECT
-    `v4l`.`Content`.`contentID`          AS `contentID`,
-    `v4l`.`Content`.`contentTitle`       AS `contentTitle`,
-    `v4l`.`Content`.`contentDescription` AS `contentDescription`,
-    `v4l`.`Content`.`contentText`        AS `contentText`,
-    `v4l`.`Content`.`contentURL`         AS `contentURL`,
-    `v4l`.`Content`.`createBy`           AS `createBy`,
-    `v4l`.`Content`.`createTime`         AS `createTime`,
-    `v4l`.`Content`.`updateBy`           AS `updateBy`,
-    `v4l`.`Content`.`updateTime`         AS `updateTime`
-  FROM `v4l`.`Content`;
-
-
-DROP VIEW IF EXISTS vTag;
-CREATE VIEW vTag AS
-  SELECT
-    `Category`.`tagID`                AS `tagCategoryID`,
-    `Category`.`tag`                  AS `tagCategory`,
-    `v4l`.`Tag`.`tagID`               AS `tagID`,
-    `v4l`.`Tag`.`tag`                 AS `tag`,
-    `v4l`.`Tag`.`tagDescription`      AS `tagDescription`,
-    `v4l`.`Tag`.`updateBy`            AS `updateBy`,
-    `v4l`.`Tag`.`updateTime`          AS `updateTime`,
-    (`Protected`.`tagID` IS NOT NULL) AS `protected`
-  FROM ((((`v4l`.`Tag`
-    JOIN `v4l`.`ThingTag` ON ((`v4l`.`Tag`.`tagID` = `v4l`.`ThingTag`.`thingID`))) JOIN `v4l`.`ThingTag` `CategoryUse`
-      ON (((`v4l`.`ThingTag`.`tagID` = `CategoryUse`.`thingID`) AND
-           (`CategoryUse`.`tagID` = `TagCategoryTagID`())))) JOIN `v4l`.`Tag` `Category`
-      ON ((`CategoryUse`.`thingID` = `Category`.`tagID`))) LEFT JOIN `v4l`.`ThingTag` `Protected`
-      ON (((`v4l`.`Tag`.`tagID` = `Protected`.`thingID`) AND (`Protected`.`tagID` = `TagIDFromText`('Protected')))));
 
 
 DROP FUNCTION IF EXISTS LogSession;
@@ -281,7 +247,7 @@ CREATE FUNCTION LogSession(theSessionID BINARY(43), theIPAddress VARCHAR(45), th
       sessionID,
       userID
     INTO existingSessionLogID, existingUserID
-    FROM Session
+    FROM session
     WHERE phpSessionID = theSessionID AND ipAddress = existingIPAdress
     LIMIT 1;
 
@@ -289,15 +255,15 @@ CREATE FUNCTION LogSession(theSessionID BINARY(43), theIPAddress VARCHAR(45), th
     THEN
       IF (ISNULL(theUserID) || theUserID = 0)
       THEN
-        INSERT INTO Session (phpSessionID, ipAddress) VALUES (theSessionID, existingIPAdress);
+        INSERT INTO session (phpSessionID, ipAddress) VALUES (theSessionID, existingIPAdress);
       ELSE
-        INSERT INTO Session (phpSessionID, ipAddress, userID) VALUES (theSessionID, existingIPAdress, theUserID);
+        INSERT INTO session (phpSessionID, ipAddress, userID) VALUES (theSessionID, existingIPAdress, theUserID);
       END IF;
       SET result = LAST_INSERT_ID();
     ELSE
       IF ((!ISNULL(theUserID)) && (ISNULL(existingUserID)))
       THEN
-        UPDATE Session
+        UPDATE session
         SET userID = theUserID
         WHERE sessionID = existingSessionLogID;
       END IF;
@@ -307,38 +273,38 @@ CREATE FUNCTION LogSession(theSessionID BINARY(43), theIPAddress VARCHAR(45), th
     RETURN result;
   END;
 
-DROP FUNCTION IF EXISTS TagCategoryIDFromTagID;
-CREATE FUNCTION TagCategoryIDFromTagID(theTag BIGINT)
+DROP FUNCTION IF EXISTS tagCategoryIDFromTagID;
+CREATE FUNCTION tagCategoryIDFromTagID(theTag BIGINT)
   RETURNS BIGINT
   BEGIN
     DECLARE Result BIGINT;
-    DECLARE TagCategoryTagID BIGINT;
+    DECLARE tagCategoryTagID BIGINT;
 
-    SET TagCategoryTagID = (
-      SELECT TagCategoryTagID());
+    SET tagCategoryTagID = (
+      SELECT tagCategoryTagID());
     SET Result = (
       SELECT MyTagCategories.thingID
-      FROM ThingTag MyTagUse INNER JOIN ThingTag MyTagCategories ON (
+      FROM thingTag MyTagUse INNER JOIN thingTag MyTagCategories ON (
         MyTagUse.thingID = theTag AND
         MyTagCategories.thingID = MyTagUse.tagID AND
-        MyTagCategories.tagID = TagCategoryTagID));
+        MyTagCategories.tagID = tagCategoryTagID));
 
     RETURN Result;
   END;
 
-DROP FUNCTION IF EXISTS TagCategoryIDFromTagText;
-CREATE FUNCTION TagCategoryIDFromTagText(theTag VARCHAR(128))
+DROP FUNCTION IF EXISTS tagCategoryIDFromTagText;
+CREATE FUNCTION tagCategoryIDFromTagText(theTag VARCHAR(128))
   RETURNS BIGINT
   BEGIN
-    RETURN TagCategoryIDFromTagID(TagIDFromText(theTag));
+    RETURN tagCategoryIDFromTagID(tagIDFromText(theTag));
   END;
 
-DROP FUNCTION IF EXISTS TagCategoryInsert;
-CREATE FUNCTION TagCategoryInsert(theTag BIGINT, theCategory BIGINT, theUser BIGINT)
+DROP FUNCTION IF EXISTS tagCategoryInsert;
+CREATE FUNCTION tagCategoryInsert(theTag BIGINT, theCategory BIGINT, theUser BIGINT)
   RETURNS TINYINT
   BEGIN
     -- Test if category exists
-    IF (TagIsTagCategory(theCategory) = 0)
+    IF (tagIsTagCategory(theCategory) = 0)
     THEN RETURN -2;
     END IF;
 
@@ -349,28 +315,28 @@ CREATE FUNCTION TagCategoryInsert(theTag BIGINT, theCategory BIGINT, theUser BIG
   END;
 
 
-DROP FUNCTION IF EXISTS TagCategoryTagID;
-CREATE FUNCTION TagCategoryTagID()
+DROP FUNCTION IF EXISTS tagCategoryTagID;
+CREATE FUNCTION tagCategoryTagID()
   RETURNS BIGINT
   RETURN IFNULL((
-                  SELECT TagIDFromText('TagCategory')), 0);
+                  SELECT tagIDFromText('TagCategory')), 0);
 
-DROP FUNCTION IF EXISTS TagCategoryTextFromTagID;
-CREATE FUNCTION TagCategoryTextFromTagID(theTag BIGINT)
+DROP FUNCTION IF EXISTS tagCategoryTextFromTagID;
+CREATE FUNCTION tagCategoryTextFromTagID(theTag BIGINT)
   RETURNS VARCHAR(128)
   BEGIN
-    RETURN TagTextFromID(TagCategoryIDFromTagID(theTag));
+    RETURN tagTextFromID(tagCategoryIDFromTagID(theTag));
   END;
 
-DROP FUNCTION IF EXISTS TagCategoryTextFromTagText;
-CREATE FUNCTION TagCategoryTextFromTagText(theTag VARCHAR(128))
+DROP FUNCTION IF EXISTS tagCategoryTextFromTagText;
+CREATE FUNCTION tagCategoryTextFromTagText(theTag VARCHAR(128))
   RETURNS VARCHAR(128)
   BEGIN
-    RETURN TagCategoryTextFromTagID(TagIDFromText(theTag));
+    RETURN tagCategoryTextFromTagID(tagIDFromText(theTag));
   END;
 
-DROP FUNCTION IF EXISTS TagDelete;
-CREATE FUNCTION TagDelete(theTagID BIGINT, theUser BIGINT)
+DROP FUNCTION IF EXISTS tagDelete;
+CREATE FUNCTION tagDelete(theTagID BIGINT, theUser BIGINT)
   RETURNS INT
   BEGIN
     -- ------------------------------------------------------
@@ -385,7 +351,7 @@ CREATE FUNCTION TagDelete(theTagID BIGINT, theUser BIGINT)
     DECLARE affectedRecordCount BIGINT;
     SET affectedRecordCount = (
       SELECT COUNT(*)
-      FROM ThingTag
+      FROM thingTag
       WHERE tagID = theTagID
     );
 
@@ -398,24 +364,24 @@ CREATE FUNCTION TagDelete(theTagID BIGINT, theUser BIGINT)
     THEN
       RETURN 0 - affectedRecordCount;
     ELSE
-      DELETE FROM Tag
+      DELETE FROM tag
       WHERE tagID = theTagID;
-      DELETE FROM ThingTag
+      DELETE FROM thingTag
       WHERE (tagID = theTagID OR thingID = theTagID);
       RETURN ROW_COUNT();
     END IF;
   END;
 
-DROP FUNCTION IF EXISTS TagIDFromText;
-CREATE FUNCTION TagIDFromText(theTag VARCHAR(128))
+DROP FUNCTION IF EXISTS tagIDFromText;
+CREATE FUNCTION tagIDFromText(theTag VARCHAR(128))
   RETURNS BIGINT
   RETURN IFNULL((
                   SELECT tagID
-                  FROM Tag
+                  FROM tag
                   WHERE tag = theTag), 0);
 
-DROP FUNCTION IF EXISTS TagInsert;
-CREATE FUNCTION TagInsert(newTag VARCHAR(128), newCategory BIGINT, newDescription TEXT, theUser BIGINT)
+DROP FUNCTION IF EXISTS tagInsert;
+CREATE FUNCTION tagInsert(newTag VARCHAR(128), newCategory BIGINT, newDescription TEXT, theUser BIGINT)
   RETURNS BIGINT
   BEGIN
     -- ------------------------------------------------------
@@ -440,52 +406,52 @@ CREATE FUNCTION TagInsert(newTag VARCHAR(128), newCategory BIGINT, newDescriptio
     DECLARE Result BIGINT;
 
     -- Test if category exists
-    SET Result = TagIsTagCategory(newCategory);
+    SET Result = tagIsTagCategory(newCategory);
     IF (Result = 0)
     THEN RETURN -1;
     END IF;
 
     -- Test if tag exists
-    SET Result = TagIDFromText(newTag);
+    SET Result = tagIDFromText(newTag);
     IF (Result != 0)
     THEN RETURN -2;
     END IF;
 
     -- Insert the tag...
-    INSERT INTO Tag (tag, tagDescription, createBy, updateBy) VALUES (newTag, newDescription, theUser, theUser);
-    SET Result = TagIDFromText(newTag);
+    INSERT INTO tag (tag, tagDescription, createBy, updateBy) VALUES (newTag, newDescription, theUser, theUser);
+    SET Result = tagIDFromText(newTag);
     IF (Result < 1)
     THEN RETURN -3;
     END IF;
 
     -- Associate tag with category...
-    IF (TagCategoryInsert(Result, newCategory, theUser) != 1)
+    IF (tagCategoryInsert(Result, newCategory, theUser) != 1)
     THEN RETURN -4;
     END IF;
 
     RETURN Result;
   END;
 
-DROP FUNCTION IF EXISTS TagIsTagCategory;
-CREATE FUNCTION TagIsTagCategory(theTag BIGINT)
+DROP FUNCTION IF EXISTS tagIsTagCategory;
+CREATE FUNCTION tagIsTagCategory(theTag BIGINT)
   RETURNS BIGINT
   BEGIN
     -- Returns Tag ID of TagCategory if it exists as a TagCategory. 0 If not.
     RETURN IFNULL((
                     SELECT thingID
-                    FROM ThingTag
-                    WHERE thingID = theTag AND tagID = TagCategoryTagID()), 0);
+                    FROM thingTag
+                    WHERE thingID = theTag AND tagID = tagCategoryTagID()), 0);
   END;
 
-DROP FUNCTION IF EXISTS TagTextFromID;
-CREATE FUNCTION TagTextFromID(theTag BIGINT)
+DROP FUNCTION IF EXISTS tagTextFromID;
+CREATE FUNCTION tagTextFromID(theTag BIGINT)
   RETURNS VARCHAR(128)
   RETURN IFNULL((
                   SELECT tag
-                  FROM Tag
+                  FROM tag
                   WHERE tagID = theTag), '');
 
-CREATE FUNCTION TagUpdate(theTagID BIGINT, newTag VARCHAR(128), newCategory BIGINT, newDescription TEXT, theUser BIGINT)
+CREATE FUNCTION tagUpdate(theTagID BIGINT, newTag VARCHAR(128), newCategory BIGINT, newDescription TEXT, theUser BIGINT)
   RETURNS BIGINT
   BEGIN
     -- ------------------------------------------------------
@@ -498,20 +464,20 @@ CREATE FUNCTION TagUpdate(theTagID BIGINT, newTag VARCHAR(128), newCategory BIGI
     --  2017-07-12 J. Hawkins: Initial Version
     -- ------------------------------------------------------
     DECLARE oldCategory BIGINT;
-    SET oldCategory = TagCategoryIDFromTagID(theTagID);
+    SET oldCategory = tagCategoryIDFromTagID(theTagID);
 
     -- Test if category exists
-    IF (TagIsTagCategory(newCategory) = 0)
+    IF (tagIsTagCategory(newCategory) = 0)
     THEN RETURN -1;
     END IF;
 
     -- Test if tag exists
-    IF (TagTextFromID(theTagID) = '')
+    IF (tagTextFromID(theTagID) = '')
     THEN RETURN -2;
     END IF;
 
     -- Update the tag...
-    UPDATE Tag
+    UPDATE tag
     SET tag = newTag, tagDescription = newDescription, updateBy = theUser
     WHERE tagID = theTagID;
     -- TO DO: Research and address. Unsure if ROW_COUNT() will
@@ -531,22 +497,22 @@ CREATE FUNCTION TagUpdate(theTagID BIGINT, newTag VARCHAR(128), newCategory BIGI
   END;
 
 
-DROP FUNCTION IF EXISTS UserIDFromEmail;
-CREATE FUNCTION UserIDFromEmail(theEmail VARCHAR(128))
+DROP FUNCTION IF EXISTS userIDFromEmail;
+CREATE FUNCTION userIDFromEmail(theEmail VARCHAR(128))
   RETURNS BIGINT
   RETURN IFNULL((
                   SELECT userID
-                  FROM User
+                  FROM user
                   WHERE userEmail = theEmail), 0);
 
 
-DROP FUNCTION IF EXISTS UserIsTagged;
-CREATE FUNCTION UserIsTagged(theUser BIGINT, theTag BIGINT)
+DROP FUNCTION IF EXISTS userIsTagged;
+CREATE FUNCTION userIsTagged(theUser BIGINT, theTag BIGINT)
   RETURNS BOOLEAN
   BEGIN
     IF ((
           SELECT IFNULL(thingID, FALSE)
-          FROM ThingTag
+          FROM thingTag
           WHERE tagID = theTag AND thingID = theUser) > 0)
     THEN
       RETURN TRUE;
@@ -568,25 +534,25 @@ CREATE FUNCTION addOrUpdateSession(newSessionID BINARY(43), newSessionIPAddress 
     -- ------------------------------------------------------
     IF (
       SELECT sessionID IS NOT NULL
-      FROM Session
+      FROM session
       WHERE phpSessionID = newSessionID)
     THEN
       BEGIN
         -- Session should never change IP address... TO DO: Test for this.
-        UPDATE Session
+        UPDATE session
         SET sessionData = newSessionData
         WHERE phpSessionID = newSessionID;
       END;
     ELSE
       BEGIN
-        INSERT INTO Session (phpSessionID, ipAddress, sessionData)
+        INSERT INTO session (phpSessionID, ipAddress, sessionData)
         VALUES (newSessionID, newSessionIPAddress, newSessionData);
       END;
     END IF;
 
     RETURN (
       SELECT sessionID
-      FROM Session
+      FROM session
       WHERE phpSessionID = newSessionID);
   END;
 
@@ -615,7 +581,7 @@ CREATE FUNCTION addOrUpdateUser(newUserEMail        VARCHAR(256), newSaltHash BI
     SET newSessionID = addOrUpdateSession(newPHPSessionID, newSessionIPAddress, newSessionData);
     SET newUserID = (
       SELECT userID
-      FROM User
+      FROM user
       WHERE userEmail = newUserEMail);
     SET userExists = (
       SELECT newUserID IS NOT NULL);
@@ -623,17 +589,17 @@ CREATE FUNCTION addOrUpdateUser(newUserEMail        VARCHAR(256), newSaltHash BI
     IF (userExists)
     THEN
       BEGIN
-        UPDATE User
+        UPDATE user
         SET sessionID = newSessionID
         WHERE userID = newUserID;
       END;
     ELSE
       BEGIN
         -- Timestamps will all take care of themselves on initial insert.
-        INSERT INTO User (userEmail, userName, sessionID) VALUES (newUserEMail, newUserEMail, newSessionID);
+        INSERT INTO user (userEmail, userName, sessionID) VALUES (newUserEMail, newUserEMail, newSessionID);
         SET newUserID = (
           SELECT userID
-          FROM User
+          FROM user
           WHERE userEmail = newUserEMail);
       END;
     END IF;
@@ -645,11 +611,11 @@ CREATE FUNCTION addOrUpdateUser(newUserEMail        VARCHAR(256), newSaltHash BI
 
     IF (userExists)
     THEN
-      UPDATE User
+      UPDATE user
       SET saltHashID = newSaltHashID, updateBy = theUpdateBy
       WHERE userID = newUserID;
     ELSE
-      UPDATE User
+      UPDATE user
       SET saltHashID = newSaltHashID, updateBy = theUpdateBy, createBy = theUpdateBy
       WHERE userID = newUserID;
     END IF;
@@ -670,14 +636,13 @@ CREATE FUNCTION addPasswordHash(theUserID BIGINT, newSaltHash BINARY(60))
       WHERE saltHash = newSaltHash);
   END;
 
-DROP FUNCTION IF EXISTS bindTagEditor;
-CREATE FUNCTION bindTagEditor(theUser VARCHAR(128))
-  RETURNS TINYINT
+DROP FUNCTION IF EXISTS permitUserRole;
+CREATE FUNCTION permitUserRole(theUserID BIGINT, theUserRole VARCHAR(128))
+  RETURNS BIGINT
   BEGIN
-    DECLARE theUserID BIGINT;
-    SET theUserID = UserIDFromEmail(theUser);
     RETURN (
-      SELECT tagAttach(theUserID, TagIDFromText('TagEditor'), theUserID));
+      SELECT tagAttach(theUserID, tagIDFromText(theUserRole), theUserID)
+    );
   END;
 
 DROP FUNCTION IF EXISTS contentCanEdit;
@@ -687,13 +652,13 @@ CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
     DECLARE canEdit BIGINT;
     SET canEdit = (
       SELECT createBy
-      FROM Content
+      FROM content
       WHERE contentID = theContentID AND createBy = theUserID);
     IF (IFNULL(canEdit, 0) = 0)
     THEN
       SET canEdit = (
         SELECT thingID
-        FROM ThingTag
+        FROM thingTag
         WHERE thingID = theContentID AND tagID = theUserID);
     END IF;
 
@@ -712,7 +677,7 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
   BEGIN
     IF (contentCanEdit(theContentID, theUserID))
     THEN
-      DELETE FROM Content
+      DELETE FROM content
       WHERE contentID = theContentID;
       RETURN ROW_COUNT();
     ELSE
@@ -731,7 +696,7 @@ CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, new
     -- Test if title exists
     -- Test if URL exists
 
-    INSERT INTO Content (contentTitle, contentDescription, contentText, contentURL, contentFilename, createBy, updateBy)
+    INSERT INTO content (contentTitle, contentDescription, contentText, contentURL, contentFilename, createBy, updateBy)
     VALUES (newTitle, newDescription, newText, newURL, newFilename, theUserID, theUserID);
 
     -- TO DO: LAST_INSERT_ID() should be more efficient, but is not
@@ -741,7 +706,7 @@ CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, new
     -- TO DO: Work out issues around identical titles... Probably make titles unique.
     SET Result = (
       SELECT MAX(contentID) AS contentID
-      FROM Content
+      FROM content
       WHERE contentTitle = newTitle);
     IF (Result < 1)
     THEN RETURN -3;
@@ -759,7 +724,7 @@ CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDes
     -- Test if content record  exists
     IF ((
           SELECT contentID
-          FROM Content
+          FROM content
           WHERE contentTitle = newTitle) < 1)
     THEN RETURN -2;
     END IF;
@@ -769,7 +734,7 @@ CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDes
       RETURN -1;
     END IF;
 
-    UPDATE Content
+    UPDATE content
     SET
       contentTitle       = newTitle,
       contentDescription = newDescription,
@@ -827,28 +792,28 @@ CREATE PROCEDURE procGetContentTags(theContentID BIGINT, theUserID BIGINT)
            SELECT
              tagCategoryID,
              tagCategory,
-             ThingTag.tagID,
+             thingTag.tagID,
              tag
-           FROM ThingTag
-             LEFT OUTER JOIN vTag ON ThingTag.tagID = vTag.tagID
-           WHERE ThingTag.thingID = theContentID
+           FROM thingTag
+             LEFT OUTER JOIN vTag ON thingTag.tagID = vTag.tagID
+           WHERE thingTag.thingID = theContentID
            UNION
            SELECT
              0      AS tagCategoryID,
              'User' AS tagCategory,
              userID,
              userName
-           FROM ThingTag
-             LEFT OUTER JOIN User ON ThingTag.tagID = User.userID
-           WHERE ThingTag.thingID = theContentID
+           FROM thingTag
+             LEFT OUTER JOIN user ON thingTag.tagID = user.userID
+           WHERE thingTag.thingID = theContentID
            UNION
            SELECT
              0      AS tagCategoryID,
              'User' AS tagCategory,
-             Content.createBy,
+             content.createBy,
              userName
-           FROM Content
-             LEFT OUTER JOIN User ON Content.createBy = User.userID
+           FROM content
+             LEFT OUTER JOIN user ON content.createBy = user.userID
            WHERE contentID = theContentID
          ) AS W1
     ORDER BY tagCategory, tag;
@@ -861,30 +826,31 @@ CREATE PROCEDURE procGetUserByEmail(IN theEmail VARCHAR(256))
     -- Pass all similar requests to a single ID-based function
     CALL procGetUserByID((
                            SELECT userID
-                           FROM User
+                           FROM user
                            WHERE userEmail = theEmail));
   END;
 
-CREATE PROCEDURE procGetUserByID(IN theUserID VARCHAR(256))
+DROP PROCEDURE IF EXISTS procGetUserByID;
+CREATE PROCEDURE procGetUserByID(theUserID BIGINT)
   BEGIN
     SELECT
-      User.userID,
+      user.userID,
       userEmail,
       userName,
       saltHash,
-      DATEDIFF(saltHash.updateTime, NOW())                      AS PasswordAge,
+      DATEDIFF(saltHash.updateTime, NOW())                      AS saltHashAge,
       sessionData,
       reputation,
-      UserIsTagged(theUserID, TagIDFromText('Active'))          AS isActive,
-      UserIsTagged(theUserID, TagIDFromText('TagEditor'))       AS isTagEditor,
-      UserIsTagged(theUserID, TagIDFromText('UserEditor'))      AS isUserEditor,
-      UserIsTagged(theUserID, TagIDFromText('SiteDeveloper'))   AS isSiteDeveloper,
-      UserIsTagged(theUserID, TagIDFromText('SuperUser'))       AS isSuperUser,
-      UserIsTagged(theUserID, TagIDFromText('LicenseAccepted')) AS isLicensed
-    FROM User
-      LEFT OUTER JOIN saltHash ON User.saltHashID = saltHash.saltHashID
-      LEFT OUTER JOIN Session ON Session.sessionID = User.sessionID
-    WHERE User.userID = theUserID;
+      userIsTagged(theUserID, tagIDFromText('Active'))          AS isActive,
+      userIsTagged(theUserID, tagIDFromText('TagEditor'))       AS isTagEditor,
+      userIsTagged(theUserID, tagIDFromText('ContentEditor'))   AS isContentEditor,
+      userIsTagged(theUserID, tagIDFromText('SiteAdmin'))       AS isSiteAdmin,
+      userIsTagged(theUserID, tagIDFromText('Superuser'))       AS isSuperuser,
+      userIsTagged(theUserID, tagIDFromText('LicenseAccepted')) AS isLicensed
+    FROM user
+      LEFT OUTER JOIN saltHash ON user.saltHashID = saltHash.saltHashID
+      LEFT OUTER JOIN session ON session.sessionID = user.sessionID
+    WHERE user.userID = theUserID;
   END;
 
 DROP PROCEDURE IF EXISTS procGetUserByName;
@@ -893,7 +859,7 @@ CREATE PROCEDURE procGetUserByName(IN theName VARCHAR(256))
     -- Pass all similar requests to a single ID-based function
     CALL procGetUserByID((
                            SELECT userID
-                           FROM User
+                           FROM user
                            WHERE userName = theName));
   END;
 
@@ -917,12 +883,12 @@ DROP PROCEDURE IF EXISTS procServerConfig;
 CREATE PROCEDURE procServerConfig()
   BEGIN
     SELECT
-      TagCategoryTagID()               AS tagCategoryTagID,
-      TagIDFromText('Active')          AS tagActiveID,
-      TagIDFromText('Inactive')        AS tagInactiveID,
-      TagIDFromText('TagEditor')       AS tagEditorID,
-      TagIDFromText('SuperUser')       AS tagSuperUserID,
-      TagIDFromText('LicenseAccepted') AS tagLicenseAccepted,
+      tagCategoryTagID()               AS tagCategoryTagID,
+      tagIDFromText('Active')          AS tagActiveID,
+      tagIDFromText('Inactive')        AS tagInactiveID,
+      tagIDFromText('TagEditor')       AS tagEditorID,
+      tagIDFromText('Superuser')       AS tagSuperuserID,
+      tagIDFromText('LicenseAccepted') AS tagLicenseAccepted,
       CURRENT_TIMESTAMP()              AS sessionTimestamp;
   END;
 
@@ -989,12 +955,12 @@ CREATE FUNCTION tagAttach(theThing BIGINT, theTag BIGINT, theUser BIGINT)
   RETURNS TINYINT
   BEGIN
     -- Test if tag exists
-    IF (IFNULL(TagTextFromID(theTag), '') = '')
+    IF (IFNULL(tagTextFromID(theTag), '') = '')
     THEN RETURN -1;
     END IF;
 
     -- Apply theTag to theThing
-    INSERT INTO ThingTag (thingID, tagID, createBy, updateBy) VALUES (theThing, theTag, theUser, theUser);
+    INSERT INTO thingTag (thingID, tagID, createBy, updateBy) VALUES (theThing, theTag, theUser, theUser);
     IF (ROW_COUNT() != 1)
     THEN
       RETURN -4;
@@ -1008,7 +974,7 @@ DROP FUNCTION IF EXISTS tagCategoryUpdate;
 CREATE FUNCTION tagCategoryUpdate(newCategory BIGINT, oldCategory BIGINT, theTagID BIGINT, theUser BIGINT)
   RETURNS BIGINT
   BEGIN
-    UPDATE ThingTag
+    UPDATE thingTag
     SET tagID = newCategory, updateBy = theUser
     WHERE tagID = oldCategory AND thingID = theTagID; -- thingID will be the ID of tag being updated.
     IF (ROW_COUNT() != 1)
@@ -1026,16 +992,52 @@ CREATE FUNCTION tagRemove(theThing BIGINT, theTag BIGINT, theUser BIGINT)
     DECLARE Result INT;
     SET Result = (
       SELECT COUNT(*)
-      FROM ThingTag
+      FROM thingTag
       WHERE tagID = theTag AND thingID = theThing);
 
-    DELETE FROM ThingTag
+    DELETE FROM thingTag
     WHERE tagID = theTag AND thingID = theThing;
     RETURN Result;
   END;
 
+
+DROP VIEW IF EXISTS vContent;
+CREATE VIEW vContent AS
+  SELECT
+    v4l.content.contentID          AS contentID,
+    v4l.content.contentTitle       AS contentTitle,
+    v4l.content.contentDescription AS contentDescription,
+    v4l.content.contentText        AS contentText,
+    v4l.content.contentURL         AS contentURL,
+    v4l.content.contentFilename    AS contentFilename,
+    v4l.content.createBy           AS createBy,
+    v4l.content.createTime         AS createTime,
+    v4l.content.updateBy           AS updateBy,
+    v4l.content.updateTime         AS updateTime
+  FROM v4l.content;
+
+
+DROP VIEW IF EXISTS vTag;
+CREATE VIEW vTag AS
+  SELECT
+    Category.tagID                AS tagCategoryID,
+    Category.tag                  AS tagCategory,
+    v4l.tag.tagID                 AS tagID,
+    v4l.tag.tag                   AS tag,
+    v4l.tag.tagDescription        AS tagDescription,
+    v4l.tag.updateBy              AS updateBy,
+    v4l.tag.updateTime            AS updateTime,
+    (Protected.tagID IS NOT NULL) AS protected
+  FROM ((((v4l.tag
+    JOIN v4l.thingTag ON ((v4l.tag.tagID = v4l.thingTag.thingID))) JOIN v4l.thingTag CategoryUse
+      ON (((v4l.thingTag.tagID = CategoryUse.thingID) AND
+           (CategoryUse.tagID = tagCategoryTagID())))) JOIN v4l.tag Category
+      ON ((CategoryUse.thingID = Category.tagID))) LEFT JOIN v4l.thingTag Protected
+      ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected')))));
+
+
 -- Insert required tags to support further creation of tags, etc.
-INSERT INTO Tag (tag, tagDescription)
+INSERT INTO tag (tag, tagDescription)
 VALUES ('TagCategory', 'Applied to another tag, indicates that tag is a tag category');
-INSERT INTO ThingTag (tagID, thingID) VALUES (TagCategoryTagID(), TagCategoryTagID());
+INSERT INTO thingTag (tagID, thingID) VALUES (tagCategoryTagID(), tagCategoryTagID());
 

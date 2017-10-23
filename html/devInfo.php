@@ -3,7 +3,7 @@
   // Show the ID, etc.
   htmlStart('Dev Info');
   echo '<span style="font-family:\'Courier New\',monospace">';
-  if ($_SESSION['isSiteDeveloper'] || $_SESSION['isSuperUser']) {
+if ($_SESSION['isSiteAdmin'] || $_SESSION['isSuperuser']) {
     // print_r($GLOBALS);
     debugOut('BEGIN FUNCTIONS OR DATA', '', true, false, false);
     debugOut('get_include_path()', get_include_path(), true);

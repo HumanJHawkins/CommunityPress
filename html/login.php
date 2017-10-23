@@ -1,5 +1,11 @@
 <?php
 include_once 'sessionStart.php';
+/*
+if((!isset($_SESSION['lastURL'])) || ($_SESSION['lastURL'] == '')) {
+  $_SESSION['lastURL'] == $GLOBALS['SITE_URL'];
+}
+*/
+
 $pdo        = getDBPDO();
 
 const LOGIN_DIALOG_STANDARD = 'LOGIN_DIALOG_STANDARD';
@@ -114,7 +120,9 @@ function updateUserSession()
     '\', \'' . ipAddress() .
     '\', \'' . session_encode() .
     '\',' . $theUserID . ')';
-
+  
+  debugOut($sql);
+  
   return getOnePDORow($pdo, $sql);
 }
 

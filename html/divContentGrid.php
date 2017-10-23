@@ -6,7 +6,7 @@ if (!isset($pdo)) {
 ?>
 
 <div id="contentGrid">
-  <table id="contentView"
+  <table id="contentEdit"
          class="table table-striped table-bordered table-hover table-condensed table-responsive sortable">
     <thead>
     <tr>
@@ -47,9 +47,9 @@ if (!isset($pdo)) {
       
       if ($value['canEdit']) {
         echo
-          '<div style="white-space:nowrap;"><a href="./contentView.php?action=edit&pageContentID=' . $value['contentID'] .
+          '<div style="white-space:nowrap;"><a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
-          '<a href="./contentView.php?action=delete&pageContentID=' . $value['contentID'] .
+          '<a href="./contentEdit.php?action=delete&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>';
       } else {
         echo

@@ -8,7 +8,7 @@ htmlStart('Stories and Lessons');
   <br />
   <?php include 'divV4LBanner.php'; ?>
   <br />
-  <a href="contentView.php" class="btn btn-primary">&nbsp;&nbsp;&nbsp;New...&nbsp;&nbsp;&nbsp;</a>
+  <a href="contentEdit.php" class="btn btn-primary">&nbsp;&nbsp;&nbsp;New...&nbsp;&nbsp;&nbsp;</a>
   <br /><br />
   <?php include 'divContentGrid.php'; ?>
 </div>
