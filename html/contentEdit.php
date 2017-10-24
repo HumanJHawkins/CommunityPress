@@ -234,7 +234,7 @@ htmlStart('Content View');
     <table id="contentEditTable">
 
       <tr>
-        <td>ID:</td>
+          <td class="contentInputLabel">ID:</td>
         <td>
           <?php
           if ($ViewMode == ViewMode::Create) {
@@ -249,11 +249,11 @@ htmlStart('Content View');
         </td>
       </tr>
       <tr>
-        <td>Title:</td>
+          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?>:</td>
         <td><textarea name="contentTitle" rows="1" cols="80"
           <?php
           if ($contentTitle == '') {
-            echo 'required placeholder="Title" id="inputContentTitle"></textarea>';
+            echo 'required id="inputContentTitle"></textarea>';
           } else {
             echo ' id="inputContentTitle">' . $contentTitle . '</textarea>';
           }
@@ -261,30 +261,30 @@ htmlStart('Content View');
         </td>
       </tr>
       <tr>
-        <td>Description:&nbsp;</td>
-        <td><textarea name="contentDescription" rows="3" cols="80"
+          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?>:&nbsp;</td>
+          <td><textarea name="contentDescription" rows="5" cols="80"
           <?php if ($contentDescription == '') {
-            echo 'required placeholder="Description" id="inputContentDescription"></textarea>';
+            echo 'required id="inputContentDescription"></textarea>';
           } else {
             echo ' id="inputContentDescription">' . $contentDescription . '</textarea>';
           } ?>
         </td>
       </tr>
       <tr>
-        <td>Text:</td>
-        <td><textarea name="contentText" rows="20" cols="80"
+          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_EXCERPT_LABEL'] ?>:</td>
+          <td><textarea name="contentText" rows="15" cols="80"
           <?php if ($contentText == '') {
-            echo 'required placeholder="Content Text" id="inputContentText"></textarea>';
+            echo ' id="inputContentText"></textarea>';
           } else {
             echo ' id="inputContentText">' . $contentText . '</textarea>';
           } ?>
         </td>
       </tr>
       <tr>
-        <td>URL:</td>
-        <td><textarea name="contentURL" rows="1" cols="80"
+          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_DESCRIPTION_LABEL'] ?>:</td>
+          <td><textarea name="contentURL" rows="15" cols="80"
           <?php if ($contentURL == '') {
-            echo 'required placeholder="Fully Qualified URL (i.e. http://www.example.com)" id="inputContentURL"></textarea>';
+            echo ' id="inputContentURL"></textarea>';
           } else {
             echo ' id="inputContentURL">' . $contentURL . '</textarea>';
           } ?>
@@ -314,8 +314,8 @@ htmlStart('Content View');
             echo '<input name="contentFile" type="file" /> ';
           } else {
             echo '<textarea name="contentFilename" rows = "1" cols = "80"';
-            if ($contentFilename == '') {
-              echo ' required placeholder="Content Filename" id="inputContentFilename"></textarea>';
+            if (is_null($contentFilename) || $contentFilename == '') {
+              echo ' placeholder="Content Filename" id="inputContentFilename"></textarea>';
             } else {
               echo ' id="inputContentFilename">' . $contentFilename . '</textarea>';
             }
@@ -325,7 +325,9 @@ htmlStart('Content View');
       </tr>
       <tr>
         <td></td>
-        <td><?php
+          <td>
+              <br/>
+            <?php
           if ($ViewMode == ViewMode::Create) {
             echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" /> ';
           } else {

@@ -46,9 +46,6 @@
           $.ajax({
               type: "POST",
               data: {action: 'attach',theTagged: $("#taeContentID").val(),theTag: $("#tagSelect").val(),theUser: $("#taeUserID").val()},
-              // data: { action: taeAction, theTagged: taeContentID, theTag: taeTagID, theUser: taeUserID }
-              // data: {"action":"' + taeAction + '", "theTagged":"' + taeContentID + ', "theTag":"' + taeTagID + ', "theUser":"' + taeUserID + '"},
-              // data: {action: taeAction, theTagged: taeContentID, theTag: taeTagID, theUser: taeUserID}
               url: "fnTagAttachmentEdit.php",
               success: function () {
                   window.location.reload(true);
