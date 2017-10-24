@@ -3,7 +3,7 @@
       <input type="hidden" name="pageContentID" id="taeContentID" value="<?= $pageContentID ?>"/>
     <input type="hidden" name="userID" id="taeUserID" value="<?= $_SESSION["userID"] ?>"/>
     <?php
-    tagCategorySelector($pdo);     // id="tagCatSelect"
+    tagCategorySelector($pdo);     // id="tagCategoryIDSelector"
     ?>
     <select id="tagSelect">
       <option value="0">Select Tag...</option>
@@ -15,7 +15,7 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script type="text/javascript">
       $(document).ready(function () {
-          $('#tagCatSelect').change(function () {
+          $('#tagCategoryIDSelector').change(function () {
               var tagCatID = $(this).val();
               fillComboTags(tagCatID);
           });

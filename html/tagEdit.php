@@ -42,8 +42,8 @@ if ((isset($_POST["tag"])) && ($_POST["tag"] != '')) {
 }
 debugOut('$tag', $tag);
 
-if ((isset($_POST["tagCategoryID"])) && ($_POST["tagCategoryID"] != '')) {
-  $tagCategoryID = $_POST["tagCategoryID"];
+if ((isset($_POST["tagCategoryIDSelector"])) && ($_POST["tagCategoryIDSelector"] != '')) {
+  $tagCategoryID = $_POST["tagCategoryIDSelector"];
 } else {
   $tagCategoryID = 0;
 }
@@ -67,9 +67,11 @@ if ($action == 'delete') {
   $_SESSION['lastURL'] = strtok($_SESSION['lastURL'], '?');
   
 } else if ($action == 'insert') {
-  $sql = 'SELECT TagInsert("' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '","' . $userID . '")';
+  $sql = 'SELECT TagInsert("' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '",' . $userID . ')';
 } else if ($action == 'update') {
-  $sql = 'SELECT TagUpdate(' . $pageTagID . ',"' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '","' . $userID . '")';
+  $sql =
+      'SELECT TagUpdate(' . $pageTagID . ',"' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '",' . $userID .
+      ')';
 }
 debugOut('$sql', $sql);
 
