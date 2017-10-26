@@ -1,6 +1,6 @@
 <div id="TagAttachmentEdit">
   <form action="contentEdit.php">
-      <input type="hidden" name="pageContentID" id="taeContentID" value="<?= $pageContentID ?>"/>
+      <input type="hidden" name="pageContentID" id="taeContentID" value="<?= $_POST["pageContentID"] ?>"/>
     <input type="hidden" name="userID" id="taeUserID" value="<?= $_SESSION["userID"] ?>"/>
     <?php
     tagCategorySelector($pdo);     // id="tagCategoryIDSelector"

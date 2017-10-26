@@ -19,18 +19,7 @@ if ((isset($_POST["update"])) && ($_POST["update"] != '')) {
 debugOut('$action', $action);
 
 // pageContentID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST. Consolidate.
-if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
-  debugOut('$_GET["pageContentID"]', $_GET["pageContentID"]);
-  $pageContentID = $_GET["pageContentID"];
-} elseif (isset($_POST["pageContentID"]) && $_POST["pageContentID"] > 0) {
-  debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
-  $pageContentID = $_POST["pageContentID"];
-} else {
-  $pageContentID = 0;   // TO DO: Consider using -1.
-}
-$_POST["pageContentID"] =
-    $pageContentID;   // TEMP. TO DO: Remove this... Some brancing using it to determine edit mode.
-debugOut('$pageContentID', $pageContentID);
+consolidatePageContentID();
 
 // UserID needed for validating permission to edit.
 if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
@@ -90,7 +79,7 @@ $sql = '';
 if ($action == 'delete') {
   // TO DO: Handle file delete too!
   $sql = 'SELECT contentDelete(?, ?)';
-  $sqlParamsArray = [$pageContentID, $userID];
+  $sqlParamsArray = [$_POST["pageContentID"], $userID];
   $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
   header('Location: ' . '/content.php');
   exit();
@@ -128,9 +117,10 @@ if ($action == 'delete') {
   $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?, ?)';
   if (isset($contentFile[name]) && $contentFile[name] != '') {
     $sqlParamsArray =
-        [$pageContentID, $contentTitle, $contentDescription, $contentText, $contentURL, $contentFile[name], $userID];
+        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentText, $contentURL, $contentFile[name], $userID];
   } else {
-    $sqlParamsArray = [$pageContentID, $contentTitle, $contentDescription, $contentText, $contentURL, null, $userID];
+    $sqlParamsArray =
+        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentText, $contentURL, null, $userID];
   }
   debugOut('******************************** SQL Info');
   debugOut('update $sql', $sql);
@@ -143,7 +133,7 @@ if ($action == 'delete') {
     // $path = $_FILES['image']['name'];
     // $ext = pathinfo($path, PATHINFO_EXTENSION);
 
-    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $pageContentID . '.' .
+    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $_POST["pageContentID"] . '.' .
         pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
     
     // echo '<pre>';
@@ -156,7 +146,7 @@ if ($action == 'delete') {
     }
   }
 
-  header('Location: ' . 'contentEdit.php?action=edit&pageContentID=' . $pageContentID);
+  header('Location: ' . 'contentEdit.php?action=edit&pageContentID=' . $_POST["pageContentID"]);
   exit();
 }
 
@@ -167,9 +157,9 @@ if ($action == 'delete') {
 if ($action == 'edit') {
   $sql = 'CALL procViewContent(?, ?)';
   if (isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
-    $sqlParamsArray = [$pageContentID, $_SESSION['userID']];
+    $sqlParamsArray = [$_POST["pageContentID"], $_SESSION['userID']];
   } else {
-    $sqlParamsArray = [$pageContentID, 0];
+    $sqlParamsArray = [$_POST["pageContentID"], 0];
   }
   debugOut('$sql', $sql);
   outputArray($sqlParamsArray);
@@ -203,7 +193,7 @@ abstract class ViewMode
 }
 
 $ViewMode = ViewMode::View;
-if ($pageContentID < 1 || $pageContentID == '') {
+if ($_POST["pageContentID"] < 1) {
   $ViewMode = ViewMode::Create;
 } else {
   if (isset($canEdit) && ($canEdit)) {
@@ -241,9 +231,9 @@ htmlStart('Content View');
             // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
             echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
           } else {
-            // echo '<input type="text" name="contentID" value="' . $pageContentID . '" readonly/>';
+            // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
             echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>' .
-                $pageContentID . '</textarea>';
+                $_POST["pageContentID"] . '</textarea>';
           }
           ?>
         </td>
@@ -346,7 +336,7 @@ htmlStart('Content View');
   <br/>
     <!-- Here we should conditionally (if editing) add or remove tags. -->
   <?php
-  // if ($pageContentID > 0) {
+  // if ($_POST["pageContentID"] > 0) {
   if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
     include 'divContentTagsEdit.php';
     include 'divContentTags.php';

@@ -1,14 +1,16 @@
 <?php
 include_once 'sessionStart.php';
+consolidatePageContentID();
+
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
   $sql = 'CALL procGetContentTags(?, ?)';
 
 if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
-  $sqlParamArray = [$pageContentID, $_SESSION['userID']];
+  $sqlParamArray = [$_POST["pageContentID"], $_SESSION['userID']];
 } else {
-  $sqlParamArray = [$pageContentID, 0];
+  $sqlParamArray = [$_POST["pageContentID"], 0];
 }
 
 $currentTagCategory = '';

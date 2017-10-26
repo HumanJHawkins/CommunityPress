@@ -52,8 +52,8 @@ if (!isset($pdo)) {
           '<a href="./contentEdit.php?action=delete&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>';
       } else {
-        echo
-          '<div style="white-space:nowrap;text-align:center;"><a href="./contentView.php?action=edit&pageContentID=' . $value['contentID'] .
+        echo '<div style="white-space:nowrap;text-align:center;"><a href="./contentView.php?&pageContentID=' .
+            $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;View&nbsp;&nbsp;</a>&nbsp;';
       }
       

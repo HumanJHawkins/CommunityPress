@@ -3,6 +3,7 @@ include 'pageHeader.php';
 $pdo = getDBPDO();
 
 // View $_POST["pageContentID"]
+consolidatePageContentID();
 
 // Get Content to display
 $sql = 'CALL procViewContent(?, ?)';
