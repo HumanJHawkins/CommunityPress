@@ -34,7 +34,7 @@ if (!isset($pdo)) {
       $sql = "CALL procViewContent(0," . $_SESSION['userID'] . ")";
     } else {
       $sql = "CALL procViewContent(0,0)";
-    }
+    };
     
     $result = getOnePDOTable($pdo, $sql);
     foreach ($result as $key => $value) {
