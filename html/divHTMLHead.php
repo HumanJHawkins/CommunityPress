@@ -53,6 +53,9 @@ echo '<link type="text/css" media="all" rel="stylesheet" href="../css/v4lStyle.c
 // sorttable.js (see: https://www.kryogenix.org/code/browser/sorttable/)
 echo '<script src="../js/sorttable.js"></script>';
 
+// TinyMCE for HTML Edit Controls
+echo '<script type="text/javascript" src="../js/tinymce/tinymce.min.js" ></script >';
+
 // ModalEffects support
 // Need to be at bottom of page?
 // echo '<script src="js/modalEffects.js"></script>';

@@ -34,7 +34,7 @@ if (!isset($pdo)) {
       $sql = "CALL procViewContent(0," . $_SESSION['userID'] . ")";
     } else {
       $sql = "CALL procViewContent(0,0)";
-    };
+    }
     
     $result = getOnePDOTable($pdo, $sql);
     foreach ($result as $key => $value) {
@@ -50,12 +50,12 @@ if (!isset($pdo)) {
           '<div style="white-space:nowrap;"><a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
           '<a href="./contentEdit.php?action=delete&pageContentID=' . $value['contentID'] .
-          '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>';
-      } else {
-        echo '<div style="white-space:nowrap;text-align:center;"><a href="./contentView.php?&pageContentID=' .
+          '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>&nbsp;';
+      }
+
+      echo '<div style="white-space:nowrap;text-align:center;"><a href="./contentView.php?&pageContentID=' .
             $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;View&nbsp;&nbsp;</a>&nbsp;';
-      }
       
       echo '</div>' .
         '</td>' .

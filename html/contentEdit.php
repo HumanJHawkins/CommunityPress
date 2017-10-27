@@ -204,6 +204,24 @@ if ($_POST["pageContentID"] < 1) {
 
 htmlStart('Content View');
 ?>
+
+<script type="text/javascript">
+    tinyMCE.init({
+        //mode : "textareas",
+        mode: "specific_textareas",
+        editor_selector: "html5EditControl",
+        width: "900",
+        plugins: 'print preview fullpage searchreplace autolink directionality visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists textcolor wordcount imagetools contextmenu colorpicker textpattern help',
+        toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | removeformat',
+        image_advtab: true,
+        theme: "modern"
+        // theme : "simple"
+        //setup: function (editor) {
+        //    editor.on('change', function () {
+        //        editor.save();
+        //    });
+    });
+</script>
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
     <br/>
@@ -230,10 +248,10 @@ htmlStart('Content View');
                   <?php
                   if ($ViewMode == ViewMode::Create) {
                     // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
-                    echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
+                    echo '<textarea name="pageContentID" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
                   } else {
                     // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
-                    echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>' .
+                    echo '<textarea name="pageContentID" required placeholder="ID" id="pageContentID" readonly>' .
                         $_POST["pageContentID"] . '</textarea>';
                   }
                   ?>
@@ -241,10 +259,10 @@ htmlStart('Content View');
             </tr>
             <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?>:</td>
-                <td><textarea name="contentTitle" rows="1" cols="80"
+                <td><textarea name="contentTitle" class="form-control html5EditControl" style="min-width: 80%"
                   <?php
                   if ($contentTitle == '') {
-                    echo 'required id="inputContentTitle"></textarea>';
+                    echo ' required id="inputContentTitle"></textarea>';
                   } else {
                     echo ' id="inputContentTitle">' . $contentTitle . '</textarea>';
                   }
@@ -253,17 +271,17 @@ htmlStart('Content View');
             </tr>
             <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?>:&nbsp;</td>
-                <td><textarea name="contentDescription" rows="5" cols="80"
-                  <?php if ($contentDescription == '') {
-                    echo 'required id="inputContentDescription"></textarea>';
+                <td><textarea name="contentSummary" class="html5EditControl" rows="15" cols="80"
+                  <?php if ($contentSummary == '') {
+                    echo ' id="inputcontentSummary"></textarea>';
                   } else {
-                    echo ' id="inputContentDescription">' . $contentDescription . '</textarea>';
+                    echo ' id="inputcontentSummary">' . $contentSummary . '</textarea>';
                   } ?>
                 </td>
             </tr>
             <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_EXCERPT_LABEL'] ?>:</td>
-                <td><textarea name="contentExcerpt" rows="15" cols="80"
+                <td><textarea name="contentExcerpt" class="html5EditControl" rows="15" cols="80"
                   <?php if ($contentExcerpt == '') {
                     echo ' id="inputcontentExcerpt"></textarea>';
                   } else {
@@ -273,11 +291,11 @@ htmlStart('Content View');
             </tr>
             <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_DESCRIPTION_LABEL'] ?>:</td>
-                <td><textarea name="contentSummary" rows="15" cols="80"
-                  <?php if ($contentSummary == '') {
-                    echo ' id="inputcontentSummary"></textarea>';
+                <td><textarea name="contentDescription" class="html5EditControl" rows="5" cols="80"
+                  <?php if ($contentDescription == '') {
+                    echo 'required id="inputContentDescription"></textarea>';
                   } else {
-                    echo ' id="inputcontentSummary">' . $contentSummary . '</textarea>';
+                    echo ' id="inputContentDescription">' . $contentDescription . '</textarea>';
                   } ?>
                 </td>
             </tr>
@@ -334,6 +352,14 @@ htmlStart('Content View');
             </tr>
         </table>
     </form>
+    <script>
+        $('#myform').submit(function () {
+            tinyMCE.triggerSave();
+
+        });
+    </script>
+
+
     <br/>
     <!-- Here we should conditionally (if editing) add or remove tags. -->
   <?php
