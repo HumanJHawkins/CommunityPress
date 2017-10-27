@@ -36,6 +36,13 @@ if ((isset($_POST["contentTitle"])) && ($_POST["contentTitle"] != '')) {
 }
 debugOut('$contentTitle', $contentTitle);
 
+if ((isset($_POST["contentSummary"])) && ($_POST["contentSummary"] != '')) {
+  $contentSummary = trim($_POST["contentSummary"]);
+} else {
+  $contentSummary = '';
+}
+debugOut('contentSummary', $contentSummary);
+
 if ((isset($_POST["contentDescription"])) && ($_POST["contentDescription"] != '')) {
   $contentDescription = trim($_POST["contentDescription"]);
 } else {
@@ -43,19 +50,12 @@ if ((isset($_POST["contentDescription"])) && ($_POST["contentDescription"] != ''
 }
 debugOut('$contentDescription', $contentDescription);
 
-if ((isset($_POST["contentText"])) && ($_POST["contentText"] != '')) {
-  $contentText = trim($_POST["contentText"]);
+if ((isset($_POST["contentExcerpt"])) && ($_POST["contentExcerpt"] != '')) {
+  $contentExcerpt = trim($_POST["contentExcerpt"]);
 } else {
-  $contentText = '';
+  $contentExcerpt = '';
 }
-debugOut('$contentText', $contentText);
-
-if ((isset($_POST["contentURL"])) && ($_POST["contentURL"] != '')) {
-  $contentURL = trim($_POST["contentURL"]);
-} else {
-  $contentURL = '';
-}
-debugOut('$contentURL', $contentURL);
+debugOut('$contentExcerpt', $contentExcerpt);
 
 if ((isset($_FILES['contentFile']['name'])) && ($_FILES['contentFile']['name'] != '')) {
   $contentFilename = $_FILES['contentFile']['name'];
@@ -85,11 +85,11 @@ if ($action == 'delete') {
   exit();
 } else if ($action == 'insert') {
   $sql = 'SELECT contentInsert(?, ?, ?, ?, ?, ?)';
-  $sqlParamsArray = [$contentTitle, $contentDescription, $contentText, $contentURL, $contentFilename, $userID];
+  $sqlParamsArray = [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $contentFilename, $userID];
   debugOut('******************************** SQL Info');
   debugOut('insert $sql', $sql);
   outputArray($sqlParamsArray);
-  
+
   $newID = getOnePDOValue($pdo, $sql, $sqlParamsArray);
   debugOut('$newID', $newID);
 
@@ -99,7 +99,8 @@ if ($action == 'delete') {
     // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
     // $path = $_FILES['image']['name'];
     // $ext = pathinfo($path, PATHINFO_EXTENSION);
-    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' . pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
+    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' .
+        pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
 
     if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
       ;  // Success. Do nothing here.
@@ -109,7 +110,7 @@ if ($action == 'delete') {
       echo "<script>alert('Upload error. Press OK to return to page.')</script>";
     }
   }
-  
+
   $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $newID;
   header('Location: ' . $_SESSION['lastURL']);
   exit();
@@ -117,17 +118,17 @@ if ($action == 'delete') {
   $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?, ?)';
   if (isset($contentFile[name]) && $contentFile[name] != '') {
     $sqlParamsArray =
-        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentText, $contentURL, $contentFile[name], $userID];
+        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $contentFile[name], $userID];
   } else {
     $sqlParamsArray =
-        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentText, $contentURL, null, $userID];
+        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, null, $userID];
   }
   debugOut('******************************** SQL Info');
   debugOut('update $sql', $sql);
   outputArray($sqlParamsArray);
 
   $result = getOnePDOValue($pdo, $sql, $sqlParamsArray);
-  
+
   if (!isset($_FILES['file_upload']) || $_FILES['file_upload']['error'] == UPLOAD_ERR_NO_FILE) {
     // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
     // $path = $_FILES['image']['name'];
@@ -135,7 +136,7 @@ if ($action == 'delete') {
 
     $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $_POST["pageContentID"] . '.' .
         pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
-    
+
     // echo '<pre>';
     if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
       ;  // Success. Do nothing here.
@@ -163,34 +164,34 @@ if ($action == 'edit') {
   }
   debugOut('$sql', $sql);
   outputArray($sqlParamsArray);
-  
+
   $row = getOnePDORow($pdo, $sql, $sqlParamsArray, PDO::FETCH_ASSOC);
   outputArray($row);
-  
+
   if (!empty($row)) {
     $contentTitle = trim($row['contentTitle']);
     $contentDescription = trim($row['contentDescription']);
-    $contentText = trim($row['contentText']);
-    $contentURL = trim($row['contentURL']);
+    $contentExcerpt = trim($row['contentExcerpt']);
+    $contentSummary = trim($row['contentSummary']);
     $contentFilename = trim($row['contentFilename']);
     $canEdit = $row['canEdit'];
   } else {
     $contentTitle = 'Title';
     $contentDescription = 'Description.';
-    $contentText = 'Text';
-    $contentURL = 'URL';
+    $contentExcerpt = 'Excerpt';
+    $contentSummary = 'URL';
     $contentFilename = 'Select Filename with Browse Button.';
     // $canEdit = true;
   }
 }
 
 
-abstract class ViewMode
-{
+abstract class ViewMode {
   const View = 0;
   const Create = 1;
   const Update = 2;
 }
+
 
 $ViewMode = ViewMode::View;
 if ($_POST["pageContentID"] < 1) {
@@ -205,135 +206,135 @@ htmlStart('Content View');
 ?>
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
-  <br/>
+    <br/>
   <?php include 'divV4LBanner.php'; ?>
-  <br/>
+    <br/>
   <?php
   debugSectionOut("Edit Content");
   debugOut('$action', $action);
   debugOut('$userID', $userID);
   debugOut('$contentTitle', $contentTitle);
   debugOut('$contentDescription', $contentDescription);
-  debugOut('$contentText', $contentText);
-  debugOut('$contentURL', $contentURL);
+  debugOut('$contentExcerpt', $contentExcerpt);
+  debugOut('$contentSummary', $contentSummary);
   debugOut('$contentFilename', $contentFilename);
   debugOut('$sql', $sql);
   ?>
 
-  <form enctype="multipart/form-data" action="contentEdit.php" method="post" name="contentEditForm">
-    <table id="contentEditTable">
+    <form enctype="multipart/form-data" action="contentEdit.php" method="post" name="contentEditForm">
+        <table id="contentEditTable">
 
-      <tr>
-          <td class="contentInputLabel">ID:</td>
-        <td>
-          <?php
-          if ($ViewMode == ViewMode::Create) {
-            // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
-            echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
-          } else {
-            // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
-            echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>' .
-                $_POST["pageContentID"] . '</textarea>';
-          }
-          ?>
-        </td>
-      </tr>
-      <tr>
-          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?>:</td>
-        <td><textarea name="contentTitle" rows="1" cols="80"
-          <?php
-          if ($contentTitle == '') {
-            echo 'required id="inputContentTitle"></textarea>';
-          } else {
-            echo ' id="inputContentTitle">' . $contentTitle . '</textarea>';
-          }
-          ?>
-        </td>
-      </tr>
-      <tr>
-          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?>:&nbsp;</td>
-          <td><textarea name="contentDescription" rows="5" cols="80"
-          <?php if ($contentDescription == '') {
-            echo 'required id="inputContentDescription"></textarea>';
-          } else {
-            echo ' id="inputContentDescription">' . $contentDescription . '</textarea>';
-          } ?>
-        </td>
-      </tr>
-      <tr>
-          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_EXCERPT_LABEL'] ?>:</td>
-          <td><textarea name="contentText" rows="15" cols="80"
-          <?php if ($contentText == '') {
-            echo ' id="inputContentText"></textarea>';
-          } else {
-            echo ' id="inputContentText">' . $contentText . '</textarea>';
-          } ?>
-        </td>
-      </tr>
-      <tr>
-          <td class="contentInputLabel"><?= $GLOBALS['CONTENT_DESCRIPTION_LABEL'] ?>:</td>
-          <td><textarea name="contentURL" rows="15" cols="80"
-          <?php if ($contentURL == '') {
-            echo ' id="inputContentURL"></textarea>';
-          } else {
-            echo ' id="inputContentURL">' . $contentURL . '</textarea>';
-          } ?>
-        </td>
-      </tr>
-      <tr>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>
-          <?php if ($ViewMode == ViewMode::Create) {
-            echo 'File to upload:';
-          } elseif ($ViewMode == ViewMode::Update) {
-            echo 'New (Replacement) File:';
-          } else {
-            echo 'Filename: ';
-          }
-          ?>
-        </td>
-        <td>
-          <?php
-          if ($ViewMode == ViewMode::Create || $ViewMode == ViewMode::Update) {
-            // <!-- MAX_FILE_SIZE must precede the file input field -->
-            echo '<input type="hidden" name="MAX_FILE_SIZE" value="16777216"/>';
-            // <!-- Name of input element determines name in $_FILES array -->
-            echo '<input name="contentFile" type="file" /> ';
-          } else {
-            echo '<textarea name="contentFilename" rows = "1" cols = "80"';
-            if (is_null($contentFilename) || $contentFilename == '') {
-              echo ' placeholder="Content Filename" id="inputContentFilename"></textarea>';
-            } else {
-              echo ' id="inputContentFilename">' . $contentFilename . '</textarea>';
-            }
-          }
-          ?>
-        </td>
-      </tr>
-      <tr>
-        <td></td>
-          <td>
-              <br/>
-            <?php
-          if ($ViewMode == ViewMode::Create) {
-            echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" /> ';
-          } else {
-            if ($ViewMode == ViewMode::Update) {
-              echo '<input type="submit" class="btn btn-primary" name="update" value="Save Changes" id="inputid1" /> ';
-              echo '<input type="button" class="btn btn-default" name="cancel" value="   Cancel   " onClick="window.location=\'./content.php\';" />';
-            } else {
-              echo '<input type="button" class="btn btn-default" name="back" value="    Back    " onClick="window.location=\'./content.php\';" />';
-            }
-          }
-          ?>
-        </td>
-      </tr>
-    </table>
-  </form>
-  <br/>
+            <tr>
+                <td class="contentInputLabel">ID:</td>
+                <td>
+                  <?php
+                  if ($ViewMode == ViewMode::Create) {
+                    // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
+                    echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
+                  } else {
+                    // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
+                    echo '<textarea name="pageContentID" rows="1" cols="80" required placeholder="ID" id="pageContentID" readonly>' .
+                        $_POST["pageContentID"] . '</textarea>';
+                  }
+                  ?>
+                </td>
+            </tr>
+            <tr>
+                <td class="contentInputLabel"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?>:</td>
+                <td><textarea name="contentTitle" rows="1" cols="80"
+                  <?php
+                  if ($contentTitle == '') {
+                    echo 'required id="inputContentTitle"></textarea>';
+                  } else {
+                    echo ' id="inputContentTitle">' . $contentTitle . '</textarea>';
+                  }
+                  ?>
+                </td>
+            </tr>
+            <tr>
+                <td class="contentInputLabel"><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?>:&nbsp;</td>
+                <td><textarea name="contentDescription" rows="5" cols="80"
+                  <?php if ($contentDescription == '') {
+                    echo 'required id="inputContentDescription"></textarea>';
+                  } else {
+                    echo ' id="inputContentDescription">' . $contentDescription . '</textarea>';
+                  } ?>
+                </td>
+            </tr>
+            <tr>
+                <td class="contentInputLabel"><?= $GLOBALS['CONTENT_EXCERPT_LABEL'] ?>:</td>
+                <td><textarea name="contentExcerpt" rows="15" cols="80"
+                  <?php if ($contentExcerpt == '') {
+                    echo ' id="inputcontentExcerpt"></textarea>';
+                  } else {
+                    echo ' id="inputcontentExcerpt">' . $contentExcerpt . '</textarea>';
+                  } ?>
+                </td>
+            </tr>
+            <tr>
+                <td class="contentInputLabel"><?= $GLOBALS['CONTENT_DESCRIPTION_LABEL'] ?>:</td>
+                <td><textarea name="contentSummary" rows="15" cols="80"
+                  <?php if ($contentSummary == '') {
+                    echo ' id="inputcontentSummary"></textarea>';
+                  } else {
+                    echo ' id="inputcontentSummary">' . $contentSummary . '</textarea>';
+                  } ?>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                  <?php if ($ViewMode == ViewMode::Create) {
+                    echo 'File to upload:';
+                  } elseif ($ViewMode == ViewMode::Update) {
+                    echo 'New (Replacement) File:';
+                  } else {
+                    echo 'Filename: ';
+                  }
+                  ?>
+                </td>
+                <td>
+                  <?php
+                  if ($ViewMode == ViewMode::Create || $ViewMode == ViewMode::Update) {
+                    // <!-- MAX_FILE_SIZE must precede the file input field -->
+                    echo '<input type="hidden" name="MAX_FILE_SIZE" value="16777216"/>';
+                    // <!-- Name of input element determines name in $_FILES array -->
+                    echo '<input name="contentFile" type="file" /> ';
+                  } else {
+                    echo '<textarea name="contentFilename" rows = "1" cols = "80"';
+                    if (is_null($contentFilename) || $contentFilename == '') {
+                      echo ' placeholder="Content Filename" id="inputContentFilename"></textarea>';
+                    } else {
+                      echo ' id="inputContentFilename">' . $contentFilename . '</textarea>';
+                    }
+                  }
+                  ?>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <br/>
+                  <?php
+                  if ($ViewMode == ViewMode::Create) {
+                    echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" /> ';
+                  } else {
+                    if ($ViewMode == ViewMode::Update) {
+                      echo '<input type="submit" class="btn btn-primary" name="update" value="Save Changes" id="inputid1" /> ';
+                      echo '<input type="button" class="btn btn-default" name="cancel" value="   Cancel   " onClick="window.location=\'./content.php\';" />';
+                    } else {
+                      echo '<input type="button" class="btn btn-default" name="back" value="    Back    " onClick="window.location=\'./content.php\';" />';
+                    }
+                  }
+                  ?>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <br/>
     <!-- Here we should conditionally (if editing) add or remove tags. -->
   <?php
   // if ($_POST["pageContentID"] > 0) {

@@ -17,15 +17,15 @@ outputArray($row);
 if (!empty($row)) {
   $contentTitle = trim($row['contentTitle']);
   $contentDescription = trim($row['contentDescription']);
-  $contentText = trim($row['contentText']);
-  $contentURL = trim($row['contentURL']);
+  $contentExcerpt = trim($row['contentExcerpt']);
+  $contentSummary = trim($row['contentSummary']);
   $contentFilename = trim($row['contentFilename']);
   $canEdit = $row['canEdit'];
 } else {
   $contentTitle = 'Title';
   $contentDescription = 'Description.';
-  $contentText = 'Text';
-  $contentURL = 'URL';
+  $contentExcerpt = 'Excerpt';
+  $contentSummary = 'URL';
   $contentFilename = 'Select Filename with Browse Button.';
   // $canEdit = true;
 }
@@ -61,8 +61,8 @@ htmlStart('Content View');
   debugOut('$userID', $userID);
   debugOut('$contentTitle', $contentTitle);
   debugOut('$contentDescription', $contentDescription);
-  debugOut('$contentText', $contentText);
-  debugOut('$contentURL', $contentURL);
+  debugOut('$contentExcerpt', $contentExcerpt);
+  debugOut('$contentSummary', $contentSummary);
   debugOut('$contentFilename', $contentFilename);
   debugOut('$sql', $sql);
   ?>
@@ -108,21 +108,21 @@ htmlStart('Content View');
       </tr>
       <tr>
         <td>Text:</td>
-        <td><textarea name="contentText" rows="20" cols="80"
-          <?php if ($contentText == '') {
-            echo 'required placeholder="Content Text" id="inputContentText"></textarea>';
+          <td><textarea name="contentExcerpt" rows="20" cols="80"
+            <?php if ($contentExcerpt == '') {
+              echo 'required placeholder="Content Text" id="inputcontentExcerpt"></textarea>';
           } else {
-            echo ' id="inputContentText">' . $contentText . '</textarea>';
+              echo ' id="inputcontentExcerpt">' . $contentExcerpt . '</textarea>';
           } ?>
         </td>
       </tr>
       <tr>
         <td>URL:</td>
-        <td><textarea name="contentURL" rows="1" cols="80"
-          <?php if ($contentURL == '') {
+          <td><textarea name="contentSummary" rows="1" cols="80"
+            <?php if ($contentSummary == '') {
             echo 'required placeholder="Fully Qualified URL (i.e. http://www.example.com)"></textarea>';
           } else {
-            echo ' id="inputContentURL">' . $contentURL . '</textarea>';
+              echo ' id="inputcontentSummary">' . $contentSummary . '</textarea>';
           } ?>
         </td>
       </tr>
@@ -151,9 +151,9 @@ htmlStart('Content View');
           } else {
             echo '< textarea name = "contentFilename" rows = "1" cols = "80"';
             if ($contentFilename == '') {
-              echo ' required placeholder="Content Filename" id="inputContentText"></textarea>';
+              echo ' required placeholder="Content Filename" id="inputcontentExcerpt"></textarea>';
             } else {
-              echo ' id="inputContentText">' . $contentFilename . '</textarea>';
+              echo ' id="inputcontentExcerpt">' . $contentFilename . '</textarea>';
             }
           }
           ?>

@@ -10,9 +10,9 @@ CREATE TABLE content
 (
   contentID          BIGINT DEFAULT '0'                  NOT NULL PRIMARY KEY,
   contentTitle       VARCHAR(256) DEFAULT 'Untitled'     NOT NULL,
+  contentSummary     TEXT                                NULL,
+  contentExcerpt     TEXT                                NULL,
   contentDescription TEXT                                NULL,
-  contentText        TEXT                                NULL,
-  contentURL         TEXT                                NULL,
   contentFilename    VARCHAR(256)                        NULL,
   createBy           BIGINT DEFAULT '0'                  NOT NULL,
   createTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE content
   UNIQUE (contentFilename)
 );
 
-INSERT INTO content (contentID, contentTitle, contentDescription, contentText, contentURL)
+INSERT INTO content (contentID, contentTitle, contentDescription, contentExcerpt, contentSummary)
 VALUES (0, 'Placeholder: No Title', 'This is a placeholder record with no actual content attached.',
         'This is a placeholder record with no actual content attached.', 'https://visionsforlearning.org/');
 
@@ -686,7 +686,7 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
   END;
 
 DROP FUNCTION IF EXISTS contentInsert;
-CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, newText TEXT, newURL TEXT,
+CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, newExcerpt TEXT, newSummary TEXT,
                               newFilename VARCHAR(256), theUserID BIGINT)
   RETURNS BIGINT
   BEGIN
@@ -696,8 +696,8 @@ CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, new
     -- Test if title exists
     -- Test if URL exists
 
-    INSERT INTO content (contentTitle, contentDescription, contentText, contentURL, contentFilename, createBy, updateBy)
-    VALUES (newTitle, newDescription, newText, newURL, newFilename, theUserID, theUserID);
+    INSERT INTO content (contentTitle, contentDescription, contentExcerpt, contentSummary, contentFilename, createBy, updateBy)
+    VALUES (newTitle, newDescription, newExcerpt, newSummary, newFilename, theUserID, theUserID);
 
     -- TO DO: LAST_INSERT_ID() should be more efficient, but is not
     --  working here... Research if/when optimization is needed.
@@ -717,8 +717,8 @@ CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, new
 
 
 DROP FUNCTION IF EXISTS contentUpdate;
-CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDescription TEXT, newText TEXT,
-                              newURL       TEXT, newFilename VARCHAR(256), theUserID BIGINT)
+CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDescription TEXT, newExcerpt TEXT,
+                              newSummary   TEXT, newFilename VARCHAR(256), theUserID BIGINT)
   RETURNS BIGINT
   BEGIN
     -- Test if content record  exists
@@ -738,8 +738,8 @@ CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDes
     SET
       contentTitle       = newTitle,
       contentDescription = newDescription,
-      contentText        = newText,
-      contentURL         = newURL,
+      contentExcerpt     = newExcerpt,
+      contentSummary     = newSummary,
       contentFilename    = newFilename,
       updateBy           = theUserID
     WHERE contentID = theContentID;
@@ -1007,8 +1007,8 @@ CREATE VIEW vContent AS
     v4l.content.contentID          AS contentID,
     v4l.content.contentTitle       AS contentTitle,
     v4l.content.contentDescription AS contentDescription,
-    v4l.content.contentText        AS contentText,
-    v4l.content.contentURL         AS contentURL,
+    v4l.content.contentExcerpt     AS contentExcerpt,
+    v4l.content.contentSummary     AS contentSummary,
     v4l.content.contentFilename    AS contentFilename,
     v4l.content.createBy           AS createBy,
     v4l.content.createTime         AS createTime,

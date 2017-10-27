@@ -29,7 +29,9 @@ function consolidatePageContentID() {
   if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
     debugOut('$_GET["pageContentID"]', $_GET["pageContentID"]);
     $_POST["pageContentID"] = $_GET["pageContentID"];
-  } elseif (!(isset($_POST["pageContentID"]) || $_POST["pageContentID"] > 0)) {
+  } elseif ((isset($_POST["pageContentID"]) && $_POST["pageContentID"] > 0)) {
+    ; // Do nothing.
+  } else {
     $_POST["pageContentID"] = 0;
   }
   debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);

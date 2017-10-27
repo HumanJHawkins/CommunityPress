@@ -41,8 +41,8 @@ if (!isset($pdo)) {
       echo
         '<tr>' .
         '<td data-value="1">' . $value['contentID'] . '</td>' .
-        '<td data-value="2">' . $value['contentTitle'] . '</td>' .
-        '<td data-value="3"><a href="' . $value['contentURL'] . '">' . $value['contentURL'] . '</td>' .
+        '<td data-value="2">' . $value['contentTitle'] . '</td>' . '<td data-value="3"><a href="' .
+        $value['contentSummary'] . '">' . $value['contentSummary'] . '</td>' .
         '<td data-value="4">';
       
       if ($value['canEdit']) {
