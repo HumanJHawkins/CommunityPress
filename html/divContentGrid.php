@@ -44,8 +44,8 @@ if (!isset($pdo)) {
         '<td data-value="2">' . $value['contentTitle'] . '</td>' . '<td data-value="3"><a href="' .
         $value['contentSummary'] . '">' . $value['contentSummary'] . '</td>' .
         '<td data-value="4">';
-      
-      if ($value['canEdit']) {
+
+      if (($value['canEdit']) && ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser'])) {
         echo
           '<div style="white-space:nowrap;"><a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .

@@ -8,8 +8,12 @@ htmlStart('Stories and Lessons');
   <br />
   <?php include 'divV4LBanner.php'; ?>
   <br />
-  <a href="contentEdit.php" class="btn btn-primary">&nbsp;&nbsp;&nbsp;New...&nbsp;&nbsp;&nbsp;</a>
-  <br /><br />
+  <?php
+  if ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser']) {
+    echo '<a href="contentEdit.php" class="btn btn-primary">&nbsp;&nbsp;&nbsp;New...&nbsp;&nbsp;&nbsp;</a><br />';
+  }
+  ?>
+    <br/>
   <?php include 'divContentGrid.php'; ?>
 </div>
 </body>
