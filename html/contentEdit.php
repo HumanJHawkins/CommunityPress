@@ -359,13 +359,12 @@ htmlStart('Content View');
                   if ($ViewMode == ViewMode::Create) {
                     echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Content " id="inputid1" /> ';
                   } else {
-                    if ($ViewMode == ViewMode::Update) {
-                      echo '<input type="submit" class="btn btn-primary" name="update" value="Save Changes" id="inputid1" /> ';
-                      echo '<input type="button" class="btn btn-default" name="cancel" value="   Cancel   " onClick="window.location=\'./content.php\';" />';
-                    } else {
-                      echo '<input type="button" class="btn btn-default" name="back" value="    Back    " onClick="window.location=\'./content.php\';" />';
-                    }
+                    // if ($ViewMode == ViewMode::Update) {
+                    echo '<input type="submit" class="btn btn-primary" name="update" value="Save Changes" id="inputid1" /> &nbsp; ';
+                    echo '<a href="./contentEdit.php?action=delete&pageContentID=' . $_POST["pageContentID"] .
+                        '" class="btn btn-primary" style="float: right" onclick="return confirm(\'Are you sure you wish to delete this Record?\');"> &nbsp; Delete &nbsp; </a>&nbsp;';
                   }
+                  echo '<input type="button" class="btn btn-default" name="back" value="&nbsp;&nbsp;&nbsp;&nbsp;Back&nbsp;&nbsp;&nbsp;&nbsp;" onClick="window.location=\'./content.php\';" />';
                   ?>
                 </td>
             </tr>
@@ -374,7 +373,6 @@ htmlStart('Content View');
     <script>
         $('#myform').submit(function () {
             tinyMCE.triggerSave();
-
         });
     </script>
 

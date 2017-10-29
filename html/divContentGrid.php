@@ -12,7 +12,7 @@ if (!isset($pdo)) {
     <tr>
       <th data-defaultsign="AZ" width="1%">ID</th>
         <th data-defaultsign="AZ"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?></th>
-        <th data-defaultsign="AZ"><?= $GLOBALS['CONTENT_TITLE_SUMMARY'] ?></th>
+        <th data-defaultsign="AZ"><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?></th>
       <th data-defaultsign="AZ" width="1%">Actions</th>
       <th data-defaultsign="AZ" width="1%">Update By</th>
       <th data-defaultsign="month" width="1%">Update Date</th>
@@ -22,7 +22,7 @@ if (!isset($pdo)) {
     <tr>
       <th>ID</th>
         <th><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?></th>
-        <th><?= $GLOBALS['CONTENT_TITLE_SUMMARY'] ?></th>
+        <th><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?></th>
       <th>Actions</th>
       <th>Update By</th>
       <th>Update Date</th>
@@ -44,17 +44,13 @@ if (!isset($pdo)) {
         '<td data-value="2">' . $value['contentTitle'] . '</td>' . '<td data-value="3"><a href="' .
         $value['contentSummary'] . '">' . $value['contentSummary'] . '</td>' .
         '<td data-value="4">';
-
+      echo '<div style="white-space:nowrap;">';
       if (($value['canEdit']) && ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser'])) {
-        echo
-          '<div style="white-space:nowrap;"><a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
+        echo '<a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;';
-        .
-          '<a href="./contentEdit.php?action=delete&pageContentID=' . $value['contentID'] .
-          '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>&nbsp;';
       }
 
-      echo '<div style="white-space:nowrap;text-align:center;"><a href="./contentView.php?&pageContentID=' .
+      echo '<a href="./contentView.php?&pageContentID=' .
             $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;View&nbsp;&nbsp;</a>&nbsp;';
       
@@ -72,7 +68,6 @@ if (!isset($pdo)) {
         '</td>' .
         '</tr>';
     }
-
     ?>
     </tbody>
   </table>
