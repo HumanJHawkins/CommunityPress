@@ -83,9 +83,18 @@ if ($action == 'delete') {
   $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
   header('Location: ' . '/content.php');
   exit();
+
+// ******************
+// ***** INSERT *****
+// ******************
 } else if ($action == 'insert') {
   $sql = 'SELECT contentInsert(?, ?, ?, ?, ?, ?)';
-  $sqlParamsArray = [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $contentFilename, $userID];
+  if (isset($contentFile[name]) && $contentFile[name] != '') {
+    $sqlParamsArray =
+        [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $contentFile[name], $userID];
+  } else {
+    $sqlParamsArray = [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, null, $userID];
+  }
   debugOut('******************************** SQL Info');
   debugOut('insert $sql', $sql);
   outputArray($sqlParamsArray);
@@ -101,7 +110,6 @@ if ($action == 'delete') {
     // $ext = pathinfo($path, PATHINFO_EXTENSION);
     $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' .
         pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
-
     if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
       ;  // Success. Do nothing here.
     } else {
@@ -114,6 +122,10 @@ if ($action == 'delete') {
   $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $newID;
   header('Location: ' . $_SESSION['lastURL']);
   exit();
+
+// ******************
+// ***** UPDATE *****
+// ******************
 } else if ($action == 'update') {
   $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?, ?)';
   if (isset($contentFile[name]) && $contentFile[name] != '') {
@@ -214,7 +226,8 @@ htmlStart('Content View');
         plugins: 'print preview fullpage searchreplace autolink directionality visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists textcolor wordcount imagetools contextmenu colorpicker textpattern help',
         toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | removeformat',
         image_advtab: true,
-        theme: "modern"
+        theme: "modern",
+        branding: false
         // theme : "simple"
         //setup: function (editor) {
         //    editor.on('change', function () {
@@ -240,7 +253,7 @@ htmlStart('Content View');
   ?>
 
     <form enctype="multipart/form-data" action="contentEdit.php" method="post" name="contentEditForm">
-        <table id="contentEditTable">
+        <table id="contentEditTable" style="border-spacing:5em;">
 
             <tr>
                 <td class="contentInputLabel">ID:</td>
@@ -248,7 +261,7 @@ htmlStart('Content View');
                   <?php
                   if ($ViewMode == ViewMode::Create) {
                     // echo '<input type="text" name="contentID" value="Auto-generated" rows="1" cols="80" readonly/>';
-                    echo '<textarea name="pageContentID" required placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
+                    echo '<textarea name="pageContentID" placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
                   } else {
                     // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
                     echo '<textarea name="pageContentID" required placeholder="ID" id="pageContentID" readonly>' .
@@ -258,16 +271,22 @@ htmlStart('Content View');
                 </td>
             </tr>
             <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?>:</td>
                 <td><textarea name="contentTitle" class="form-control html5EditControl" style="min-width: 80%"
                   <?php
                   if ($contentTitle == '') {
-                    echo ' required id="inputContentTitle"></textarea>';
+                    echo ' id="inputContentTitle"></textarea>';
                   } else {
                     echo ' id="inputContentTitle">' . $contentTitle . '</textarea>';
                   }
                   ?>
                 </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
             </tr>
             <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_SUMMARY_LABEL'] ?>:&nbsp;</td>
@@ -280,6 +299,9 @@ htmlStart('Content View');
                 </td>
             </tr>
             <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_EXCERPT_LABEL'] ?>:</td>
                 <td><textarea name="contentExcerpt" class="html5EditControl" rows="15" cols="80"
                   <?php if ($contentExcerpt == '') {
@@ -290,18 +312,20 @@ htmlStart('Content View');
                 </td>
             </tr>
             <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_DESCRIPTION_LABEL'] ?>:</td>
                 <td><textarea name="contentDescription" class="html5EditControl" rows="5" cols="80"
                   <?php if ($contentDescription == '') {
-                    echo 'required id="inputContentDescription"></textarea>';
+                    echo ' id="inputContentDescription"></textarea>';
                   } else {
                     echo ' id="inputContentDescription">' . $contentDescription . '</textarea>';
                   } ?>
                 </td>
             </tr>
             <tr>
-                <td></td>
-                <td></td>
+                <td>&nbsp;</td>
             </tr>
             <tr>
                 <td>
