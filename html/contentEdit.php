@@ -228,11 +228,6 @@ htmlStart('Content View');
         image_advtab: true,
         theme: "modern",
         branding: false
-        // theme : "simple"
-        //setup: function (editor) {
-        //    editor.on('change', function () {
-        //        editor.save();
-        //    });
     });
 </script>
 <div class="container">

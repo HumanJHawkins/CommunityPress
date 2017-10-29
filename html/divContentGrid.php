@@ -11,8 +11,8 @@ if (!isset($pdo)) {
     <thead>
     <tr>
       <th data-defaultsign="AZ" width="1%">ID</th>
-      <th data-defaultsign="AZ">Title</th>
-      <th data-defaultsign="AZ">URL</th>
+        <th data-defaultsign="AZ"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?></th>
+        <th data-defaultsign="AZ"><?= $GLOBALS['CONTENT_TITLE_SUMMARY'] ?></th>
       <th data-defaultsign="AZ" width="1%">Actions</th>
       <th data-defaultsign="AZ" width="1%">Update By</th>
       <th data-defaultsign="month" width="1%">Update Date</th>
@@ -21,8 +21,8 @@ if (!isset($pdo)) {
     <tfoot>
     <tr>
       <th>ID</th>
-      <th>Title</th>
-      <th>URL</th>
+        <th><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?></th>
+        <th><?= $GLOBALS['CONTENT_TITLE_SUMMARY'] ?></th>
       <th>Actions</th>
       <th>Update By</th>
       <th>Update Date</th>
@@ -48,7 +48,8 @@ if (!isset($pdo)) {
       if (($value['canEdit']) && ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser'])) {
         echo
           '<div style="white-space:nowrap;"><a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
-          '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' .
+          '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;';
+        .
           '<a href="./contentEdit.php?action=delete&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>&nbsp;';
       }
@@ -71,8 +72,7 @@ if (!isset($pdo)) {
         '</td>' .
         '</tr>';
     }
-    
-    
+
     ?>
     </tbody>
   </table>
