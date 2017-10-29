@@ -40,16 +40,14 @@ if (!isset($pdo)) {
     foreach ($result as $key => $value) {
       echo
         '<tr>' .
-        '<td data-value="1">' . $value['contentID'] . '</td>' .
-        '<td data-value="2">' . $value['contentTitle'] . '</td>' . '<td data-value="3"><a href="' .
-        $value['contentSummary'] . '">' . $value['contentSummary'] . '</td>' .
+        '<td data-value="1">' . $value['contentID'] . '</td>' . '<td data-value="2">' . $value['contentTitle'] .
+        '</td>' . '<td data-value="3">' . $value['contentSummary'] . '</td>' .
         '<td data-value="4">';
       echo '<div style="white-space:nowrap;">';
       if (($value['canEdit']) && ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser'])) {
         echo '<a href="./contentEdit.php?action=edit&pageContentID=' . $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;';
       }
-
       echo '<a href="./contentView.php?&pageContentID=' .
             $value['contentID'] .
           '" class="btn btn-default btn-xs">&nbsp;&nbsp;View&nbsp;&nbsp;</a>&nbsp;';

@@ -30,28 +30,28 @@ if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
 debugOut('$userID', $userID);
 
 if ((isset($_POST["contentTitle"])) && ($_POST["contentTitle"] != '')) {
-  $contentTitle = trim($_POST["contentTitle"]);
+  $contentTitle = trim(stripslashes($_POST["contentTitle"]));
 } else {
   $contentTitle = '';
 }
 debugOut('$contentTitle', $contentTitle);
 
 if ((isset($_POST["contentSummary"])) && ($_POST["contentSummary"] != '')) {
-  $contentSummary = trim($_POST["contentSummary"]);
+  $contentSummary = trim(stripslashes($_POST["contentSummary"]));
 } else {
   $contentSummary = '';
 }
 debugOut('contentSummary', $contentSummary);
 
 if ((isset($_POST["contentDescription"])) && ($_POST["contentDescription"] != '')) {
-  $contentDescription = trim($_POST["contentDescription"]);
+  $contentDescription = trim(stripslashes($_POST["contentDescription"]));
 } else {
   $contentDescription = '';
 }
 debugOut('$contentDescription', $contentDescription);
 
 if ((isset($_POST["contentExcerpt"])) && ($_POST["contentExcerpt"] != '')) {
-  $contentExcerpt = trim($_POST["contentExcerpt"]);
+  $contentExcerpt = trim(stripslashes($_POST["contentExcerpt"]));
 } else {
   $contentExcerpt = '';
 }
