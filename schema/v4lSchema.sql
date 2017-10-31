@@ -5,33 +5,6 @@ CREATE SCHEMA IF NOT EXISTS v4l
 USE v4l;
 
 
-DROP TABLE IF EXISTS content;
-CREATE TABLE content
-(
-  contentID          BIGINT DEFAULT '0'                  NOT NULL PRIMARY KEY,
-  contentTitle       VARCHAR(256) DEFAULT 'Untitled'     NOT NULL,
-  contentSummary     TEXT                                NULL,
-  contentExcerpt     TEXT                                NULL,
-  contentDescription TEXT                                NULL,
-  contentFilename    VARCHAR(256)                        NULL,
-  createBy           BIGINT DEFAULT '0'                  NOT NULL,
-  createTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updateBy           BIGINT DEFAULT '0'                  NOT NULL,
-  updateTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT content_contentFilename_uindex
-  UNIQUE (contentFilename)
-);
-
-INSERT INTO content (contentID, contentTitle, contentDescription, contentExcerpt, contentSummary)
-VALUES (0, 'Placeholder: No Title', 'This is a placeholder record with no actual content attached.',
-        'This is a placeholder record with no actual content attached.', 'https://visionsforlearning.org/');
-
-CREATE TRIGGER beforeInsertContent
-BEFORE INSERT ON content
-FOR EACH ROW
-  SET new.contentID = fnGetLUID('contentID');
-
-
 DROP TABLE IF EXISTS LUID;
 CREATE TABLE LUID
 (
@@ -49,6 +22,73 @@ CREATE TABLE LUID
   AUTO_INCREMENT = 100000
   COMMENT 'To avoid the overhead of UUIDs, we will serve IDs and maintain uniqueness within the system.';
 INSERT INTO LUID (usedFor) VALUES ('Placeholder. Non-LUID');
+
+
+DROP FUNCTION IF EXISTS fnGetLUID;
+CREATE FUNCTION fnGetLUID(newUse VARCHAR(128))
+  RETURNS BIGINT
+  BEGIN
+    -- ------------------------------------------------------
+    -- Generates, logs, and returns a new locally unique ID.
+    --
+    -- History:
+    --  2017-06-26 J. Hawkins: Initial Version
+    -- ------------------------------------------------------
+    INSERT INTO LUID (usedFor) VALUES (newUse);
+
+    -- Use of LAST_INSERT_ID() should be safe against race conditions
+    --  due to context... Worth testing.
+    RETURN LAST_INSERT_ID();
+  END;
+
+
+DROP TABLE IF EXISTS content;
+CREATE TABLE content
+(
+  contentID          BIGINT DEFAULT '0'                  NOT NULL PRIMARY KEY,
+  contentTitle       VARCHAR(256) DEFAULT 'Untitled'     NOT NULL,
+  contentSummary     TEXT                                NULL,
+  contentExcerpt     TEXT                                NULL,
+  contentDescription TEXT                                NULL,
+  createBy           BIGINT DEFAULT '0'                  NOT NULL,
+  createTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updateBy           BIGINT DEFAULT '0'                  NOT NULL,
+  updateTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+INSERT INTO content (contentID, contentTitle, contentDescription, contentExcerpt, contentSummary)
+VALUES (0, 'Placeholder: No Title', 'This is a placeholder record with no actual content attached.',
+        'This is a placeholder record with no actual content attached.', 'https://visionsforlearning.org/');
+
+CREATE TRIGGER beforeInsertContent
+BEFORE INSERT ON content
+FOR EACH ROW
+  SET new.contentID = fnGetLUID('contentID');
+
+
+DROP TABLE IF EXISTS uploadFile;
+CREATE TABLE uploadFile
+(
+  uploadFileID       BIGINT DEFAULT '0'                  NOT NULL PRIMARY KEY,
+  uploadFileName     VARCHAR(256)                        NOT NULL,
+  uploadFileSize     INT                                 NOT NULL,
+  uploadFileMimeType VARCHAR(256)                        NOT NULL,
+  uploadFilePath     TEXT                                NOT NULL,
+  createBy           BIGINT DEFAULT '0'                  NOT NULL,
+  createTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updateBy           BIGINT DEFAULT '0'                  NOT NULL,
+  updateTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uploadFile_uploadFileName_uindex
+  UNIQUE (uploadFileName)
+);
+
+INSERT INTO uploadFile (uploadFileID, uploadFileName, uploadFileSize, uploadFileMimeType, uploadFilePath)
+VALUES (0, 'Placeholder: No File', 0, 'No File', '/var/www/none/');
+
+CREATE TRIGGER beforeInsertUploadFile
+BEFORE INSERT ON uploadFile
+FOR EACH ROW
+  SET new.uploadFileID = fnGetLUID('contentID');
 
 
 DROP TABLE IF EXISTS rating;
@@ -343,11 +383,20 @@ CREATE FUNCTION tagDelete(theTagID BIGINT, theUser BIGINT)
     -- Deletes existing Tag.
     -- RETURNS:
     --   Success: The count of deleted TagUse rows... Hopefully 1.
-    --   Failure: 0 - the number of records that would have been affected.
+    --   Failure:
+    --     If user is not tagEditor: 0
+    --     If tag is in use: 0 - Number of tag uses.
     --
     -- History:
     --  2017-07-14 J. Hawkins: Initial Version
+    --  2017-10-30 J. Hawkins: Added tag protection check
     -- ------------------------------------------------------
+    IF NOT (userIsTagEditor(theUser))
+    THEN
+      RETURN 0;
+    END IF;
+
+    -- Do not delete tags that are in (actual) use.
     DECLARE affectedRecordCount BIGINT;
     SET affectedRecordCount = (
       SELECT COUNT(*)
@@ -355,10 +404,6 @@ CREATE FUNCTION tagDelete(theTagID BIGINT, theUser BIGINT)
       WHERE tagID = theTagID
     );
 
-    -- TO DO: Need to design and build a protective mechanism,
-    --  so that in-use tags cannot easily be discarded.
-    --  Until then, refuse to delete tags that are in use.
-    --
     -- NOTE: All tags have at least one use, being tagged with their category.
     IF (affectedRecordCount > 1)
     THEN
@@ -389,11 +434,12 @@ CREATE FUNCTION tagInsert(newTag VARCHAR(128), newCategory BIGINT, newDescriptio
     -- RETURNS:
     --   Success: New TagID
     --   Failure:
-    --     Unknown Failure: 0
-    --     Category does not exist: -1
-    --     Tag already exists: -2
-    --     Tag Insert failed: -3
-    --     TagUse Insert failed: -4
+    --     User not permitted to edit tags: 0
+    --     Unknown Error:           -1
+    --     Category does not exist: -2
+    --     Tag already exists:      -3
+    --     Tag Insert failed:       -4
+    --     TagUse Insert failed:    -5
     --
     -- REQUIRES:
     --   Category must already exist.
@@ -405,32 +451,55 @@ CREATE FUNCTION tagInsert(newTag VARCHAR(128), newCategory BIGINT, newDescriptio
     -- ------------------------------------------------------
     DECLARE Result BIGINT;
 
+    -- Test if user is allowed to edit tags.
+    IF NOT (userIsTagEditor(theUser))
+    THEN
+      RETURN 0;
+    END IF;
+
     -- Test if category exists
     SET Result = tagIsTagCategory(newCategory);
     IF (Result = 0)
-    THEN RETURN -1;
+    THEN RETURN -2;
     END IF;
 
     -- Test if tag exists
     SET Result = tagIDFromText(newTag);
     IF (Result != 0)
-    THEN RETURN -2;
+    THEN RETURN -3;
     END IF;
 
     -- Insert the tag...
     INSERT INTO tag (tag, tagDescription, createBy, updateBy) VALUES (newTag, newDescription, theUser, theUser);
     SET Result = tagIDFromText(newTag);
     IF (Result < 1)
-    THEN RETURN -3;
+    THEN RETURN -4;
     END IF;
 
     -- Associate tag with category...
     IF (tagCategoryInsert(Result, newCategory, theUser) != 1)
-    THEN RETURN -4;
+    THEN RETURN -5;
     END IF;
 
     RETURN Result;
   END;
+
+
+DROP FUNCTION IF EXISTS tagProtect;
+CREATE FUNCTION tagProtect(theTag BIGINT, theUser BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    DECLARE result TINYINT;
+    SET result = tagAttach(theTag, tagIDFromText('Protected'), theUser);
+
+    IF (result > 0)
+    THEN
+      RETURN theTag;
+    ELSE
+      RETURN result;
+    END IF;
+  END;
+
 
 DROP FUNCTION IF EXISTS tagIsTagCategory;
 CREATE FUNCTION tagIsTagCategory(theTag BIGINT)
@@ -506,19 +575,95 @@ CREATE FUNCTION userIDFromEmail(theEmail VARCHAR(128))
                   WHERE userEmail = theEmail), 0);
 
 
-DROP FUNCTION IF EXISTS userIsTagged;
-CREATE FUNCTION userIsTagged(theUser BIGINT, theTag BIGINT)
+DROP FUNCTION IF EXISTS thingIsTagged;
+CREATE FUNCTION thingIsTagged(theThing BIGINT, theTag BIGINT)
   RETURNS BOOLEAN
   BEGIN
     IF ((
           SELECT IFNULL(thingID, FALSE)
           FROM thingTag
-          WHERE tagID = theTag AND thingID = theUser) > 0)
+          WHERE tagID = theTag AND thingID = theThing) > 0)
     THEN
       RETURN TRUE;
     ELSE
       RETURN FALSE;
     END IF;
+  END;
+
+
+DROP FUNCTION IF EXISTS userIsActive;
+CREATE FUNCTION userIsActive(theUser BIGINT)
+  RETURNS BOOLEAN
+  BEGIN
+    IF (thingIsTagged(theUser, tagIDFromText('Active')))
+    THEN
+      RETURN TRUE;
+    END IF;
+
+    RETURN FALSE;
+  END;
+
+
+DROP FUNCTION IF EXISTS userIsLicensed;
+CREATE FUNCTION userIsLicensed(theUser BIGINT)
+  RETURNS BOOLEAN
+  BEGIN
+    IF (thingIsTagged(theUser, tagIDFromText('LicenseAccepted')))
+    THEN
+      RETURN TRUE;
+    END IF;
+
+    RETURN FALSE;
+  END;
+
+
+DROP FUNCTION IF EXISTS userIsTagEditor;
+CREATE FUNCTION userIsTagEditor(theUser BIGINT)
+  RETURNS BOOLEAN
+  BEGIN
+    IF (thingIsTagged(theUser, tagIDFromText('TagEditor')))
+    THEN
+      RETURN TRUE;
+    END IF;
+
+    RETURN userIsSuperuser(theUser);
+  END;
+
+
+DROP FUNCTION IF EXISTS userIsContentEditor;
+CREATE FUNCTION userIsContentEditor(theUser BIGINT)
+  RETURNS BOOLEAN
+  BEGIN
+    IF (thingIsTagged(theUser, tagIDFromText('ContentEditor')))
+    THEN
+      RETURN TRUE;
+    END IF;
+
+    RETURN userIsSuperuser(theUser);
+  END;
+
+DROP FUNCTION IF EXISTS userIsSiteAdmin;
+CREATE FUNCTION userIsSiteAdmin(theUser BIGINT)
+  RETURNS BOOLEAN
+  BEGIN
+    IF (thingIsTagged(theUser, tagIDFromText('SiteAdmin')))
+    THEN
+      RETURN TRUE;
+    END IF;
+
+    RETURN userIsSuperuser(theUser);
+  END;
+
+DROP FUNCTION IF EXISTS userIsSuperuser;
+CREATE FUNCTION userIsSuperuser(theUser BIGINT)
+  RETURNS BOOLEAN
+  BEGIN
+    IF (thingIsTagged(theUser, tagIDFromText('Superuser')))
+    THEN
+      RETURN TRUE;
+    END IF;
+
+    RETURN FALSE;
   END;
 
 
@@ -686,8 +831,8 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
   END;
 
 DROP FUNCTION IF EXISTS contentInsert;
-CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, newExcerpt TEXT, newSummary TEXT,
-                              newFilename VARCHAR(256), theUserID BIGINT)
+CREATE FUNCTION contentInsert(newTitle   VARCHAR(256), newDescription TEXT, newExcerpt TEXT,
+                              newSummary TEXT, theUserID BIGINT)
   RETURNS BIGINT
   BEGIN
     DECLARE Result BIGINT;
@@ -696,8 +841,8 @@ CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, new
     -- Test if title exists
     -- Test if URL exists
 
-    INSERT INTO content (contentTitle, contentDescription, contentExcerpt, contentSummary, contentFilename, createBy, updateBy)
-    VALUES (newTitle, newDescription, newExcerpt, newSummary, newFilename, theUserID, theUserID);
+    INSERT INTO content (contentTitle, contentDescription, contentExcerpt, contentSummary, createBy, updateBy)
+    VALUES (newTitle, newDescription, newExcerpt, newSummary, theUserID, theUserID);
 
     -- TO DO: LAST_INSERT_ID() should be more efficient, but is not
     --  working here... Research if/when optimization is needed.
@@ -718,7 +863,7 @@ CREATE FUNCTION contentInsert(newTitle    VARCHAR(256), newDescription TEXT, new
 
 DROP FUNCTION IF EXISTS contentUpdate;
 CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDescription TEXT, newExcerpt TEXT,
-                              newSummary   TEXT, newFilename VARCHAR(256), theUserID BIGINT)
+                              newSummary   TEXT, theUserID BIGINT)
   RETURNS BIGINT
   BEGIN
     -- Test if content record  exists
@@ -740,7 +885,6 @@ CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDes
       contentDescription = newDescription,
       contentExcerpt     = newExcerpt,
       contentSummary     = newSummary,
-      contentFilename    = newFilename,
       updateBy           = theUserID
     WHERE contentID = theContentID;
     -- TO DO: Research and address. Unsure if ROW_COUNT() will
@@ -753,23 +897,6 @@ CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDes
     -- TO DO: This should be it's own function.
 
     RETURN theContentID;
-  END;
-
-DROP FUNCTION IF EXISTS fnGetLUID;
-CREATE FUNCTION fnGetLUID(newUse VARCHAR(128))
-  RETURNS BIGINT
-  BEGIN
-    -- ------------------------------------------------------
-    -- Generates, logs, and returns a new locally unique ID.
-    --
-    -- History:
-    --  2017-06-26 J. Hawkins: Initial Version
-    -- ------------------------------------------------------
-    INSERT INTO LUID (usedFor) VALUES (newUse);
-
-    -- Use of LAST_INSERT_ID() should be safe against race conditions
-    --  due to context... Worth testing.
-    RETURN LAST_INSERT_ID();
   END;
 
 
@@ -838,15 +965,15 @@ CREATE PROCEDURE procGetUserByID(theUserID BIGINT)
       userEmail,
       userName,
       saltHash,
-      DATEDIFF(saltHash.updateTime, NOW())                      AS saltHashAge,
+      DATEDIFF(saltHash.updateTime, NOW()) AS saltHashAge,
       sessionData,
       reputation,
-      userIsTagged(theUserID, tagIDFromText('Active'))          AS isActive,
-      userIsTagged(theUserID, tagIDFromText('TagEditor'))       AS isTagEditor,
-      userIsTagged(theUserID, tagIDFromText('ContentEditor'))   AS isContentEditor,
-      userIsTagged(theUserID, tagIDFromText('SiteAdmin'))       AS isSiteAdmin,
-      userIsTagged(theUserID, tagIDFromText('Superuser'))       AS isSuperuser,
-      userIsTagged(theUserID, tagIDFromText('LicenseAccepted')) AS isLicensed
+      userIsActive(theUserID)              AS isActive,
+      userIsTagEditor(theUserID)           AS isTagEditor,
+      userIsContentEditor(theUserID)       AS isContentEditor,
+      userIsSiteAdmin(theUserID)           AS isSiteAdmin,
+      userIsSuperuser(theUserID)           AS isSuperuser,
+      userIsLicensed(theUserID)            AS isLicensed
     FROM user
       LEFT OUTER JOIN saltHash ON user.saltHashID = saltHash.saltHashID
       LEFT OUTER JOIN session ON session.sessionID = user.sessionID
@@ -1009,7 +1136,6 @@ CREATE VIEW vContent AS
     v4l.content.contentDescription AS contentDescription,
     v4l.content.contentExcerpt     AS contentExcerpt,
     v4l.content.contentSummary     AS contentSummary,
-    v4l.content.contentFilename    AS contentFilename,
     v4l.content.createBy           AS createBy,
     v4l.content.createTime         AS createTime,
     v4l.content.updateBy           AS updateBy,
@@ -1035,8 +1161,21 @@ CREATE VIEW vTag AS
       ON ((CategoryUse.thingID = Category.tagID))) LEFT JOIN v4l.thingTag Protected
       ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected')))));
 
+
 -- Insert required tags to support further creation of tags, etc.
 INSERT INTO tag (tag, tagDescription)
 VALUES ('TagCategory', 'Applied to another tag, indicates that tag is a tag category');
+-- TagCategory is itself a tag category.
 INSERT INTO thingTag (tagID, thingID) VALUES (tagCategoryTagID(), tagCategoryTagID());
+
+-- Tags under the 'Status' tag category are used for system, row, content, and media status among other things.
+DO tagInsert('Status', tagIDFromText('TagCategory'),
+             'Indication of status including permission, such as Active or CanEdit.', 0);
+DO tagInsert('Protected', tagIDFromText('Status'), 'Record is protected from edit or delete.', 0);
+-- 'Protect' tag is in place, so can use tagProtect going forward.
+DO tagProtect(tagIDFromText('TagCategory'), 0);
+DO tagProtect(tagIDFromText('Status'), 0);
+DO tagProtect(tagIDFromText('Protected'), 0);
+
+
 

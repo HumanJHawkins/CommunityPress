@@ -24,7 +24,6 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
   $mg->sendMessage($GLOBALS['MAILGUN_MAIL_DOMAIN'], $sendArray);
 }
 
-
 function consolidatePageContentID() {
   if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
     debugOut('$_GET["pageContentID"]', $_GET["pageContentID"]);
