@@ -6,7 +6,6 @@ if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
 $sql = 'CALL procGetContentFiles(?, ?)';
-
 if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
   $sqlParamArray = [$_POST["pageContentID"], $_SESSION['userID']];
 } else {
@@ -14,42 +13,44 @@ if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
 }
 
 $result = getOnePDOTable($pdo, $sql, $sqlParamArray, PDO::FETCH_ASSOC);
-debugOut('*****************************************************************************************************');
-debugOut('*****************************************************************************************************');
-debugOut('*****************************************************************************************************');
-debugOut('*****************************************************************************************************');
-debugOut('*****************************************************************************************************');
-outputArray($result);
-
-echo '<div id="contentFiles">';
-foreach ($result as $index => $row) {
-  foreach ($row as $key => $value) {
-    echo 'Key: ' . $key . ' Value: ' . $value . '<br />';
-  }
-}
-
-/*
-if ($contentAvatarID != $value['uploadFileID']) {
-
-  echo '<br /><strong>' . $value['tagCategory'] . ':</strong> ';
-  if ($value['canEdit']) {
-    // First one has different punctuation, so keep inside the conditional
-    echo '<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' .
-        $value['tag'] . '&nbsp;&#9745;</a>';
-  } else {
-    echo $value['tag'];
-  }
-} else {
-  if ($value['canEdit']) {
-    // First one has different punctuation, so keep inside the conditional
-    echo '&nbsp;<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' .
-        $value['tag'] . '&nbsp;&#9745;</a>';
-  } else {
-    echo ', ' . $value['tag'];
-  }
-}
-*/
-
-echo '</div>';
-
 ?>
+
+<div id="contentFiles">
+    <table class="table table-striped table-bordered table-hover table-condensed table-responsive sortable">
+        <thead>
+        <tr>
+            <th data-defaultsign="AZ" width="1%">File ID</th>
+            <th data-defaultsign="AZ">Filename</th>
+            <th data-defaultsign="AZ">Size (MB)</th>
+            <th data-defaultsign="AZ" width="1%">Action(s)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php
+        foreach ($result as $index => $row) {
+          if ($row['uploadFileID'] != $contentAvatarID) {
+            debugOut('***************************************************************************************************************************');
+            debugOut('***************************************************************************************************************************');
+            debugOut('***************************************************************************************************************************');
+            debugOut('***************************************************************************************************************************');
+            debugOut('***************************************************************************************************************************');
+            debugOut('***************************************************************************************************************************');
+            outputArray($row);
+            echo '<tr>' . '<td data-value="1">' . $row['uploadFileID'] . '</td>' . '<td data-value="2">' .
+                $row['uploadFileName'] . '</td>' . '<td data-value="3">' . bytesToMegabytes($row['uploadFileSize']) .
+                '</td>' . '<td data-value="4">';
+            echo '<div style="white-space:nowrap;">';
+            // if (($row['canEdit']) && ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser'])) {
+            //   echo '<a href="./contentEdit.php?action=edit&pageContentID=' . $row['contentID'] .
+            //       '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;';
+            // }
+            echo '<a href="' . $row["uploadFilePath"] . '/' . $row["uploadFileID"] . '" download="' .
+                $row["uploadFileName"] . '">Download</a>';
+
+            echo '</div>' . '</td></tr>';
+          }
+        }
+        ?>
+        </tbody>
+    </table>
+</div>

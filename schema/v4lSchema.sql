@@ -925,7 +925,8 @@ CREATE PROCEDURE procGetContentFiles(theContentID BIGINT, theUser BIGINT)
         uploadFileID,
         uploadFileName,
         uploadFileSize,
-        uploadFileMimeType
+        uploadFileMimeType,
+        uploadFilePath
       FROM uploadFile
         LEFT OUTER JOIN thingTag ON uploadFile.uploadFileID = thingTag.tagID
       WHERE thingTag.thingID = theContentID

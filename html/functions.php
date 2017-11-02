@@ -479,6 +479,23 @@ function verifyCode($length = 4) {
 }
 
 
+function bytesToMegabytes($bytes) {
+  $megabytes = $bytes / 1048576;
+  if ($megabytes <= .001) {
+    $megabytes = .001;
+  } else if ($megabytes <= .01) {
+    $megabytes = round($megabytes, 3);
+  } else if ($megabytes <= .1) {
+    $megabytes = round($megabytes, 2);
+  } else if ($megabytes <= 1) {
+    $megabytes = round($megabytes, 1);
+  } else if ($megabytes < 10) {
+    $megabytes = round($megabytes, 0);
+  }
+
+  return $megabytes;
+}
+
 function htmlStart($string, $showBody = true) {
   include 'divHTMLHead.php';
   if ($showBody) {
