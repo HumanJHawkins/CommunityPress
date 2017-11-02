@@ -14,29 +14,41 @@ if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
 }
 
 $result = getOnePDOTable($pdo, $sql, $sqlParamArray, PDO::FETCH_ASSOC);
+debugOut('*****************************************************************************************************');
+debugOut('*****************************************************************************************************');
+debugOut('*****************************************************************************************************');
+debugOut('*****************************************************************************************************');
+debugOut('*****************************************************************************************************');
+outputArray($result);
 
 echo '<div id="contentFiles">';
-foreach ($result as $key => $value) {
-  if ($currentTagCategory != $value['tagCategory']) {
-    $currentTagCategory = $value['tagCategory'];
-    echo '<br /><strong>' . $value['tagCategory'] . ':</strong> ';
-    if ($value['canEdit']) {
-      // First one has different punctuation, so keep inside the conditional
-      echo '<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' .
-          $value['tag'] . '&nbsp;&#9745;</a>';
-    } else {
-      echo $value['tag'];
-    }
-  } else {
-    if ($value['canEdit']) {
-      // First one has different punctuation, so keep inside the conditional
-      echo '&nbsp;<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' .
-          $value['tag'] . '&nbsp;&#9745;</a>';
-    } else {
-      echo ', ' . $value['tag'];
-    }
+foreach ($result as $index => $row) {
+  foreach ($row as $key => $value) {
+    echo 'Key: ' . $key . ' Value: ' . $value . '<br />';
   }
 }
+
+/*
+if ($contentAvatarID != $value['uploadFileID']) {
+
+  echo '<br /><strong>' . $value['tagCategory'] . ':</strong> ';
+  if ($value['canEdit']) {
+    // First one has different punctuation, so keep inside the conditional
+    echo '<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' .
+        $value['tag'] . '&nbsp;&#9745;</a>';
+  } else {
+    echo $value['tag'];
+  }
+} else {
+  if ($value['canEdit']) {
+    // First one has different punctuation, so keep inside the conditional
+    echo '&nbsp;<a href = "" class="btn btn-default btn-xs" onclick="return confirm(\'Remove this tag?\');">' .
+        $value['tag'] . '&nbsp;&#9745;</a>';
+  } else {
+    echo ', ' . $value['tag'];
+  }
+}
+*/
 
 echo '</div>';
 

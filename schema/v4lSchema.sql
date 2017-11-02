@@ -916,6 +916,24 @@ CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDes
   END;
 
 
+DROP PROCEDURE IF EXISTS procGetContentFiles;
+CREATE PROCEDURE procGetContentFiles(theContentID BIGINT, theUser BIGINT)
+  BEGIN
+    IF (theContentID > 0)
+    THEN
+      SELECT
+        uploadFileID,
+        uploadFileName,
+        uploadFileSize,
+        uploadFileMimeType
+      FROM uploadFile
+        LEFT OUTER JOIN thingTag ON uploadFile.uploadFileID = thingTag.tagID
+      WHERE thingTag.thingID = theContentID
+      ORDER BY uploadFileName;
+    END IF;
+  END;
+
+
 DROP PROCEDURE IF EXISTS procGetContentTags;
 CREATE PROCEDURE procGetContentTags(theContentID BIGINT, theUserID BIGINT)
   BEGIN
