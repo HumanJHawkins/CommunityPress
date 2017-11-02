@@ -1043,16 +1043,36 @@ CREATE PROCEDURE procViewContent(theContentID BIGINT, theUser BIGINT)
     THEN
       SELECT
         *,
+        contentAvatar(theContentID)        AS contentAvatarID,
         contentCanEdit(contentID, theUser) AS canEdit
       FROM vContent
       WHERE contentID = theContentID;
     ELSE
       SELECT
         *,
+        contentAvatar(theContentID)        AS contentAvatarID,
         contentCanEdit(contentID, theUser) AS canEdit
       FROM vContent
-      WHERE contentID <> 0;
+      WHERE contentID > 0;
     END IF;
+  END;
+
+
+DROP FUNCTION IF EXISTS contentAvatar;
+CREATE FUNCTION contentAvatar(theContentID BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    DECLARE contentAvatarFileUploadID BIGINT;
+    DECLARE contentAvatarTagID BIGINT;
+
+    SET contentAvatarTagID = (SELECT tagIDFromText('ContentAvatar'));
+    SET contentAvatarFileUploadID = (
+      SELECT contentThing.tagID
+      FROM thingTag contentThing INNER JOIN thingTag avatarTag ON
+                                                                 contentThing.thingTagID = avatarTag.thingID
+      WHERE contentThing.thingID = theContentID
+            AND avatarTag.tagID = contentAvatarTagID);
+    RETURN contentAvatarFileUploadID;
   END;
 
 
@@ -1207,10 +1227,13 @@ DO tagProtect(tagIDFromText('Protected'), 0);
 
 -- Need status for graphics to indicate primary
 DO tagProtect(
-    tagInsert('ContentMainGraphic', tagIDFromText('Status'),
+    tagInsert('ContentAvatar', tagIDFromText('Status'),
               'Tag to indicate main (logo) graphic for a content record.', 0),
     0
 );
 
-
-
+-- TO DO:
+--   1. review contentCanEdit and userIsContentEditor
+--   2. procViewContent
+--   3. vContent
+--   4. Review tagCategory functions against contentAvatar... Can be more efficient now that we have thingTagID to work with.

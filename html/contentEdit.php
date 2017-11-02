@@ -107,7 +107,7 @@ if ($action == 'delete') {
 
     // And, tag the relationship between content and graphic to indicate this is the primary (avatar) graphic for this content.
     $sql = 'SELECT tagAttach(?, tagIDFromText(?), ?)';
-    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentMainGraphic', $userID];
+    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentAvatar', $userID];
     $cntntGrphRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   }
 
