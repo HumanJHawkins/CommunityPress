@@ -57,8 +57,8 @@ if ((isset($_POST["contentExcerpt"])) && ($_POST["contentExcerpt"] != '')) {
 }
 debugOut('$contentExcerpt', $contentExcerpt);
 
-if ((isset($_FILES['contentFile']['name'])) && ($_FILES['contentFile']['name'] != '')) {
-  $contentFilename = $_FILES['contentFile']['name'];
+if ((isset($_FILES['file_upload']['contentFile']['name'])) && ($_FILES['file_upload']['contentFile']['name'] != '')) {
+  $contentFilename = $_FILES['file_upload']['contentFile']['name'];
 } else {
   $contentFilename = null;
 }
@@ -88,38 +88,42 @@ if ($action == 'delete') {
 // ***** INSERT *****
 // ******************
 } else if ($action == 'insert') {
-  $sql = 'SELECT contentInsert(?, ?, ?, ?, ?, ?)';
-  if (isset($contentFile[name]) && $contentFile[name] != '') {
-    $sqlParamsArray =
-        [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $contentFile[name], $userID];
-  } else {
-    $sqlParamsArray = [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, null, $userID];
-  }
+  $sql = 'SELECT contentInsert(?, ?, ?, ?, ?)';
+  $sqlParamsArray = [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $userID];
+
   debugOut('******************************** SQL Info');
   debugOut('insert $sql', $sql);
   outputArray($sqlParamsArray);
 
-  $newID = getOnePDOValue($pdo, $sql, $sqlParamsArray);
-  debugOut('$newID', $newID);
+  $contentRecordID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+  debugOut('$contentRecordID', $contentRecordID);
 
-  // TO DO: This needs to be a file upload function, taking the name of the file. (Note: $_FILES is superglobal.)
-  // Same function for insert and update, with different input.
-  if (!isset($_FILES['file_upload']) || $_FILES['file_upload']['error'] == UPLOAD_ERR_NO_FILE) {
-    // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
-    // $path = $_FILES['image']['name'];
-    // $ext = pathinfo($path, PATHINFO_EXTENSION);
-    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' .
-        pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
-    if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
-      ;  // Success. Do nothing here.
-    } else {
-      echo '<pre><br />File upload error. File array dump follows. <br />';
-      outputArray($_FILES, true);
-      echo "<script>alert('Upload error. Press OK to return to page.')</script>";
-    }
+  $graphicFileID = fileUploadGraphic($pdo);
+  // If we uploaded the graphic, tag the content with it.
+  if ($graphicFileID > 0) {
+    $sql = 'SELECT tagAttach(?, ?, ?)';
+    $sqlParamsArray = [$contentRecordID, $graphicFileID, $userID];
+    $contentGraphicRelationshipID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+
+    // And, tag the relationship between content and graphic to indicate this is the primary (avatar) graphic for this content.
+    $sql = 'SELECT tagAttach(?, tagIDFromText(?), ?)';
+    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentMainGraphic', $userID];
+    $cntntGrphRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   }
 
-  $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $newID;
+  $contentFileID = fileUploadContent($pdo);
+  if ($contentFileID > 0) {
+    $sql = 'SELECT tagAttach(?, ?, ?)';
+    $sqlParamsArray = [$contentRecordID, $contentFileID, $userID];
+    $contentFileRelationshipID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+
+    // TO DO: Do we need to tag content files as being downloads for this content record? Or can this be assumed from
+    //   the relationship?
+    // $sqlParamsArray = [$contentFileRelationshipID, 'Need Tag to indicate content file', $userID];
+    // $cntntFileRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+  }
+
+  $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $contentRecordID;
   header('Location: ' . $_SESSION['lastURL']);
   exit();
 
@@ -127,37 +131,18 @@ if ($action == 'delete') {
 // ***** UPDATE *****
 // ******************
 } else if ($action == 'update') {
-  $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?, ?)';
-  if (isset($contentFile[name]) && $contentFile[name] != '') {
-    $sqlParamsArray =
-        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $contentFile[name], $userID];
-  } else {
-    $sqlParamsArray =
-        [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, null, $userID];
-  }
+  $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?)';
+
+  $sqlParamsArray =
+      [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $userID];
+
   debugOut('******************************** SQL Info');
   debugOut('update $sql', $sql);
   outputArray($sqlParamsArray);
 
   $result = getOnePDOValue($pdo, $sql, $sqlParamsArray);
 
-  if (!isset($_FILES['file_upload']) || $_FILES['file_upload']['error'] == UPLOAD_ERR_NO_FILE) {
-    // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
-    // $path = $_FILES['image']['name'];
-    // $ext = pathinfo($path, PATHINFO_EXTENSION);
-
-    $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $_POST["pageContentID"] . '.' .
-        pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
-
-    // echo '<pre>';
-    if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
-      ;  // Success. Do nothing here.
-    } else {
-      echo '<pre><br />File upload error. File array dump follows. <br />';
-      outputArray($_FILES, true);
-      echo "<script>alert('Upload error. Press OK to return to page.')</script>";
-    }
-  }
+  fileUploadContent($pdo);
 
   header('Location: ' . 'contentEdit.php?action=edit&pageContentID=' . $_POST["pageContentID"]);
   exit();
@@ -185,7 +170,7 @@ if ($action == 'edit') {
     $contentDescription = trim($row['contentDescription']);
     $contentExcerpt = trim($row['contentExcerpt']);
     $contentSummary = trim($row['contentSummary']);
-    $contentFilename = trim($row['contentFilename']);
+    $contentFilename = 'Temp... Load file'; // trim($row['contentFilename']);
     $canEdit = $row['canEdit'];
   } else {
     $contentTitle = 'Title';
@@ -251,7 +236,7 @@ htmlStart('Content View');
         <table id="contentEditTable" style="border-spacing:5em;">
 
             <tr>
-                <td class="contentInputLabel">ID:</td>
+                <td>ID:</td>
                 <td>
                   <?php
                   if ($ViewMode == ViewMode::Create) {
@@ -269,8 +254,41 @@ htmlStart('Content View');
                 <td>&nbsp;</td>
             </tr>
             <tr>
+                <td>
+                  <?php if ($ViewMode == ViewMode::Create) {
+                    echo 'File to upload:';
+                  } elseif ($ViewMode == ViewMode::Update) {
+                    echo 'New (Replacement) File:';
+                  } else {
+                    echo 'Filename: ';
+                  }
+                  ?>
+                </td>
+                <td>
+                  <?php
+                  if ($ViewMode == ViewMode::Create || $ViewMode == ViewMode::Update) {
+                    // <!-- MAX_FILE_SIZE must precede the file input field -->
+                    echo '<input type="hidden" name="MAX_FILE_SIZE" value="' . $GLOBALS["CONTENT_IMAGE_MAX_FILESIZE"] .
+                        '" "/>';
+                    // <!-- Name of input element determines name in $_FILES array -->
+                    echo '<input name="contentFileGraphic" type="file" /> ';
+                  } else {
+                    echo '<textarea name="contentFileGraphic" rows = "1" cols = "80"';
+                    if (is_null($contentFileGraphic) || $contentFileGraphic == '') {
+                      echo ' placeholder="Content Filename" id="inputContentFilename"></textarea>';
+                    } else {
+                      echo ' id="inputContentFilename">' . $contentFilename . '</textarea>';
+                    }
+                  }
+                  ?>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
                 <td class="contentInputLabel"><?= $GLOBALS['CONTENT_TITLE_LABEL'] ?>:</td>
-                <td><textarea name="contentTitle" class="form-control html5EditControl" style="min-width: 80%"
+                <td><textarea name="contentTitle" class="form-control" style="min-width: 80%"
                   <?php
                   if ($contentTitle == '') {
                     echo ' id="inputContentTitle"></textarea>';
@@ -337,7 +355,8 @@ htmlStart('Content View');
                   <?php
                   if ($ViewMode == ViewMode::Create || $ViewMode == ViewMode::Update) {
                     // <!-- MAX_FILE_SIZE must precede the file input field -->
-                    echo '<input type="hidden" name="MAX_FILE_SIZE" value="16777216"/>';
+                    echo '<input type="hidden" name="MAX_FILE_SIZE" value="' . $GLOBALS["CONTENT_STORE_MAX_FILESIZE"] .
+                        '" "/>';
                     // <!-- Name of input element determines name in $_FILES array -->
                     echo '<input name="contentFile" type="file" /> ';
                   } else {

@@ -24,6 +24,161 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
   $mg->sendMessage($GLOBALS['MAILGUN_MAIL_DOMAIN'], $sendArray);
 }
 
+function fileUploadGraphic($pdo) {
+  // Is this needed here?
+  // header('Content-Type: text/plain; charset=utf-8');
+
+  try {
+    // Consider rejecting cases where multiple files are in the graphic section of the upload.
+
+    switch ($_FILES['contentFileGraphic']['error']) {
+      case UPLOAD_ERR_OK:
+        break;
+      case UPLOAD_ERR_NO_FILE:
+        throw new RuntimeException('Error: UPLOAD_ERR_NO_FILE');
+      case UPLOAD_ERR_INI_SIZE:
+        throw new RuntimeException('Error: UPLOAD_ERR_INI_SIZE');
+      case UPLOAD_ERR_FORM_SIZE:
+        throw new RuntimeException('Error: UPLOAD_ERR_FORM_SIZE (File exceeds allowed size.)');
+      default:
+        throw new RuntimeException('Unknown error in $_FILES["file_upload"]["error"]');
+    }
+
+    // TO DO: Also check filesize here.
+    // if ($_FILES[contentFileGraphic]['size'] > 1000000) {
+    //   throw new RuntimeException('Exceeded filesize limit.');
+    // }
+
+    // Confirm MIME type.
+    $imageTypeConfirmed = false;
+    if ($_FILES['contentFileGraphic']['type'] == 'image/png') {
+      if (imagecreatefrompng($_FILES['contentFileGraphic']['tmp_name'])) {
+        $imageTypeConfirmed = true;
+      }
+    } else if ($_FILES['contentFileGraphic']['type'] == 'image/jpeg') {
+      if (imagecreatefromjpeg($_FILES['contentFileGraphic']['tmp_name'])) {
+        $imageTypeConfirmed = true;
+      }
+    }
+
+    if (!$imageTypeConfirmed) {
+      if ($_FILES['contentFileGraphic']['type'] == 'image/png' ||
+          $_FILES['contentFileGraphic']['type'] == 'image/jpeg'
+      ) {
+        debugOut('*** Image corrupt or malicious ***');
+      } else {
+        debugOut('*** Image format not supported ***');
+      }
+    }
+
+    // Reconstruct the name using basename, to prevent potential injection-type attack.
+    $theFileName = basename($_FILES['contentFileGraphic']['name']);
+    $theFileSize = $_FILES['contentFileGraphic']['size'];
+    $theMimeType = $_FILES['contentFileGraphic']['type'];
+    $theFilePath = $GLOBALS['CONTENT_IMAGE_DIRECTORY'];
+    $theUser = $_SESSION['userID'];
+
+    $sql = 'SELECT uploadFileInsert(?, ?, ?, ?, ?)';
+    $sqlParamArray = [$theFileName, $theFileSize, $theMimeType, $theFilePath, $theUser];
+    $uploadFileID = getOnePDOValue($pdo, $sql, $sqlParamArray, PDO::FETCH_NUM);
+    debugOut('$uploadFileID', $uploadFileID);
+
+    $theFilePathName = $theFilePath . strval($uploadFileID);
+    debugOut('$theFilePathName', $theFilePathName);
+
+    // Use of user's filename can create a security risk. Name by ID and restore on download.
+    if (move_uploaded_file($_FILES['contentFileGraphic']['tmp_name'], $theFilePathName)) {
+      ; // It worked.
+    } else {
+      throw new RuntimeException('Failed to move uploaded file.');
+    }
+
+    return $uploadFileID;
+  } catch (RuntimeException $e) {
+    debugOut('*** Graphic upload exception ********************************************************************************');
+    debugOut($e->getMessage());
+    debugOut();
+    echo $e->getMessage();
+  }
+}
+
+function fileUploadContent($pdo) {
+  try {
+    // Consider rejecting cases where multiple files are in the graphic section of the upload.
+
+    switch ($_FILES['contentFile']['error']) {
+      case UPLOAD_ERR_OK:
+        break;
+      case UPLOAD_ERR_NO_FILE:
+        throw new RuntimeException('Error: UPLOAD_ERR_NO_FILE');
+      case UPLOAD_ERR_INI_SIZE:
+        throw new RuntimeException('Error: UPLOAD_ERR_INI_SIZE');
+      case UPLOAD_ERR_FORM_SIZE:
+        throw new RuntimeException('Error: UPLOAD_ERR_FORM_SIZE (File exceeds allowed size.)');
+      default:
+        throw new RuntimeException('Unknown error in $_FILES["file_upload"]["error"]');
+    }
+
+    // TO DO: Also check filesize here.
+    // if ($_FILES[contentFile]['size'] > 1000000) {
+    //   throw new RuntimeException('Exceeded filesize limit.');
+    // }
+
+    // Confirm MIME type.
+    // TO DO: Need to identify which formats we support and add a filter to block the rest.
+
+    // Reconstruct the name using basename, to prevent potential injection-type attack.
+    $theFileName = basename($_FILES['contentFile']['name']);
+    $theFileSize = $_FILES['contentFile']['size'];
+    $theMimeType = $_FILES['contentFile']['type'];
+    $theFilePath = $GLOBALS['CONTENT_STORE_DIRECTORY'];
+    $theUser = $_SESSION['userID'];
+
+    $sql = 'SELECT uploadFileInsert(?, ?, ?, ?, ?)';
+    $sqlParamArray = [$theFileName, $theFileSize, $theMimeType, $theFilePath, $theUser];
+    $uploadFileID = getOnePDOValue($pdo, $sql, $sqlParamArray, PDO::FETCH_NUM);
+    debugOut('$uploadFileID', $uploadFileID);
+
+    $theFilePathName = $theFilePath . strval($uploadFileID);
+    debugOut('$theFilePathName', $theFilePathName);
+
+    // Use of user's filename can create a security risk. Name by ID and restore on download.
+    if (move_uploaded_file($_FILES['contentFile']['tmp_name'], $theFilePathName)) {
+      ; // It worked.
+    } else {
+      throw new RuntimeException('Failed to move uploaded file.');
+    }
+
+    return $uploadFileID;
+  } catch (RuntimeException $e) {
+    debugOut('*** Graphic upload exception ********************************************************************************');
+    debugOut($e->getMessage());
+    debugOut();
+    echo $e->getMessage();
+  }
+  /*
+  if ($_FILES['file_upload']['error'] == UPLOAD_ERR_OK) {
+
+      // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
+      // $path = $_FILES['image']['name'];
+      // $ext = pathinfo($path, PATHINFO_EXTENSION);
+      $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' .
+          pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
+      if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
+        ;  // Success. Do nothing here.
+      } else {
+        echo '<pre><br />File upload error. File array dump follows. <br />';
+        outputArray($_FILES, true);
+        echo "<script>alert('Upload error. Press OK to return to page.')</script>";
+      }
+    } else {
+      return $_FILES['file_upload']['error'];
+    }
+  }
+  */
+}
+
+
 function consolidatePageContentID() {
   if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
     debugOut('$_GET["pageContentID"]', $_GET["pageContentID"]);

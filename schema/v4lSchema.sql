@@ -85,6 +85,7 @@ CREATE TABLE uploadFile
 INSERT INTO uploadFile (uploadFileID, uploadFileName, uploadFileSize, uploadFileMimeType, uploadFilePath)
 VALUES (0, 'Placeholder: No File', 0, 'No File', '/var/www/none/');
 
+
 CREATE TRIGGER beforeInsertUploadFile
 BEFORE INSERT ON uploadFile
 FOR EACH ROW
@@ -815,6 +816,21 @@ CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
     END IF;
   END;
 
+DROP FUNCTION IF EXISTS uploadFileInsert;
+CREATE FUNCTION uploadFileInsert(theUploadFileName    VARCHAR(256), theUploadFileSize INT,
+                                 theploadFileMimeType VARCHAR(256), theUploadFilePath TEXT, theUser BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    INSERT INTO uploadFile (uploadFileID, uploadFileName, uploadFileSize, uploadFileMimeType, uploadFilePath, createBy, updateBy)
+    VALUES (theUploadFileID, theUploadFileName, theUploadFileSize, theploadFileMimeType, theUploadFilePath, theUser,
+            theUser);
+
+    RETURN (SELECT MAX(uploadFileID) AS uploadFileID
+            FROM uploadFile
+            WHERE uploadFileName = theUploadFileName AND uploadFileSize = theUploadFileSize);
+  END;
+
+
 
 DROP FUNCTION IF EXISTS contentDelete;
 CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
@@ -1079,20 +1095,32 @@ SELECT tagsToText(100238);
 
 DROP FUNCTION IF EXISTS tagAttach;
 CREATE FUNCTION tagAttach(theThing BIGINT, theTag BIGINT, theUser BIGINT)
-  RETURNS TINYINT
+  RETURNS BIGINT
   BEGIN
-    -- Test if tag exists
-    IF (IFNULL(tagTextFromID(theTag), '') = '')
-    THEN RETURN -1;
-    END IF;
+    DECLARE theNewThingTag BIGINT;
 
-    -- Apply theTag to theThing
-    INSERT INTO thingTag (thingID, tagID, createBy, updateBy) VALUES (theThing, theTag, theUser, theUser);
-    IF (ROW_COUNT() != 1)
+    -- Test if tag exists
+    -- NOTE: All things can be tags, so check against LUID table instead of tag table.
+    IF ((SELECT LUID
+         FROM LUID
+         WHERE LUID = theTag) > 0)
     THEN
-      RETURN -4;
+      -- Apply theTag to theThing
+      INSERT INTO thingTag (thingID, tagID, createBy, updateBy) VALUES (theThing, theTag, theUser, theUser);
+      SET theNewThingTag = (
+        SELECT MAX(thingTagID) AS theNewID
+        FROM thingTag
+        WHERE thingID = theThing
+              AND tagID = theTag);
+
+      IF (theNewThingTag > 0)
+      THEN
+        RETURN theNewThingTag;
+      ELSE
+        RETURN -2;
+      END IF;
     ELSE
-      RETURN 1;
+      RETURN -1;
     END IF;
   END;
 
@@ -1176,6 +1204,13 @@ DO tagInsert('Protected', tagIDFromText('Status'), 'Record is protected from edi
 DO tagProtect(tagIDFromText('TagCategory'), 0);
 DO tagProtect(tagIDFromText('Status'), 0);
 DO tagProtect(tagIDFromText('Protected'), 0);
+
+-- Need status for graphics to indicate primary
+DO tagProtect(
+    tagInsert('ContentMainGraphic', tagIDFromText('Status'),
+              'Tag to indicate main (logo) graphic for a content record.', 0),
+    0
+);
 
 
 
