@@ -19,14 +19,14 @@ if (!empty($row)) {
   $contentDescription = trim($row['contentDescription']);
   $contentExcerpt = trim($row['contentExcerpt']);
   $contentSummary = trim($row['contentSummary']);
-  $contentFilename = trim($row['contentFilename']);
+  $contentAvatarID = $row['contentAvatarID'];
   $canEdit = $row['canEdit'];
 } else {
   $contentTitle = 'Title';
   $contentDescription = 'Description.';
   $contentExcerpt = 'Excerpt';
   $contentSummary = 'URL';
-  $contentFilename = 'Select Filename with Browse Button.';
+  $contentAvatarID = 'Select graphic file (avatar for content) with Browse Button.';
   // $canEdit = true;
 }
 
@@ -42,28 +42,32 @@ debugOut('$contentTitle', $contentTitle);
 debugOut('$contentDescription', $contentDescription);
 debugOut('$contentExcerpt', $contentExcerpt);
 debugOut('$contentSummary', $contentSummary);
-debugOut('$contentFilename', $contentFilename);
+debugOut('$contentAvatarID', $contentAvatarID);
 debugOut('$sql', $sql);
 
+echo '<p><img class="img-thumbnail left avatar" src="./userImage/' . $contentAvatarID . '" /></p>';
 echo '<h1>' . $contentTitle . '</h1>';
-echo '<br/><br/>';
+// echo '<br/><br/>';
 
 echo '<h3>' . $GLOBALS['CONTENT_SUMMARY_LABEL'] . '</h3>';
 echo $contentSummary;
-echo '<br/><hr/>';
+echo '<hr/>';
 
 echo '<h3>' . $GLOBALS['CONTENT_EXCERPT_LABEL'] . '</h3>';
 echo $contentExcerpt;
-echo '<br/><hr/>';
+echo '<hr/>';
 
 echo '<h3>' . $GLOBALS['CONTENT_DESCRIPTION_LABEL'] . '</h3>';
 echo $contentDescription;
-echo '<br/><hr/>';
+echo '<hr/>';
 
-echo '<h3>Download</h3>';
-echo $contentFilename;
-echo '<br/><hr/>';
+echo '<h3>Available Files</h3>';
 
+include 'divContentFiles.php';
+
+echo '<hr/>';
+
+echo '<h3>Metadata</h3>';
 if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
   include 'divContentTags.php';
 }
