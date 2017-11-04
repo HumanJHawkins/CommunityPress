@@ -24,160 +24,173 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
   $mg->sendMessage($GLOBALS['MAILGUN_MAIL_DOMAIN'], $sendArray);
 }
 
-function fileUploadGraphic($pdo) {
-  // Is this needed here?
-  // header('Content-Type: text/plain; charset=utf-8');
-
-  try {
-    // Consider rejecting cases where multiple files are in the graphic section of the upload.
-
-    switch ($_FILES['contentFileGraphic']['error']) {
-      case UPLOAD_ERR_OK:
-        break;
-      case UPLOAD_ERR_NO_FILE:
-        throw new RuntimeException('Error: UPLOAD_ERR_NO_FILE');
-      case UPLOAD_ERR_INI_SIZE:
-        throw new RuntimeException('Error: UPLOAD_ERR_INI_SIZE');
-      case UPLOAD_ERR_FORM_SIZE:
-        throw new RuntimeException('Error: UPLOAD_ERR_FORM_SIZE (File exceeds allowed size.)');
-      default:
-        throw new RuntimeException('Unknown error in $_FILES["file_upload"]["error"]');
+function handleUploadAvatar($pdo) {
+  /* -----------------------------------------------------------------------------
+  -- Author       Jeff Hawkins
+  -- Created      2017/11/04
+  -- Purpose      Handle upload of content avatar graphic.
+  -- Copyright © 2017, Jeff Hawkins.
+  --
+  -- RETURN VALUES:
+  --   SUCCESS: uploadFileID of uploaded file.
+  --   FAILURE:
+  --     0 : No content to handle.
+  --     -1 to -9 : See return values of handleUploadFile.
+  --     -11: File exceeds configured limit for avatar files.
+  --     -12: Image corrupt or malicious.
+  --     -13: Image format not supported.
+  --
+  -- -----------------------------------------------------------------------------
+  -- Modification History
+  --
+  -- 2017/11/03  Jeff Hawkins
+  --      Initial version. Replaces separate functions for graphic and content
+  --      files.
+  -- ---------------------------------------------------------------------------*/
+  if (isset($_FILES['contentFileGraphic']['size'])) {
+    if ($_FILES['contentFileGraphic']['size'] > $GLOBALS['CONTENT_IMAGE_MAX_FILESIZE']) {
+      return -11; // File exceeds configured limit for avatar files.
     }
-
-    // TO DO: Also check filesize here.
-    // if ($_FILES[contentFileGraphic]['size'] > 1000000) {
-    //   throw new RuntimeException('Exceeded filesize limit.');
-    // }
-
-    // Confirm MIME type.
-    $imageTypeConfirmed = false;
-    if ($_FILES['contentFileGraphic']['type'] == 'image/png') {
-      if (imagecreatefrompng($_FILES['contentFileGraphic']['tmp_name'])) {
-        $imageTypeConfirmed = true;
-      }
-    } else if ($_FILES['contentFileGraphic']['type'] == 'image/jpeg') {
-      if (imagecreatefromjpeg($_FILES['contentFileGraphic']['tmp_name'])) {
-        $imageTypeConfirmed = true;
-      }
-    }
-
-    if (!$imageTypeConfirmed) {
-      if ($_FILES['contentFileGraphic']['type'] == 'image/png' ||
-          $_FILES['contentFileGraphic']['type'] == 'image/jpeg'
-      ) {
-        debugOut('*** Image corrupt or malicious ***');
-      } else {
-        debugOut('*** Image format not supported ***');
-      }
-    }
-
-    // Reconstruct the name using basename, to prevent potential injection-type attack.
-    $theFileName = basename($_FILES['contentFileGraphic']['name']);
-    $theFileSize = $_FILES['contentFileGraphic']['size'];
-    $theMimeType = $_FILES['contentFileGraphic']['type'];
-    $theFilePath = $GLOBALS['CONTENT_IMAGE_DIRECTORY'];
-    $theUser = $_SESSION['userID'];
-
-    $sql = 'SELECT uploadFileInsert(?, ?, ?, ?, ?)';
-    $sqlParamArray = [$theFileName, $theFileSize, $theMimeType, $theFilePath, $theUser];
-    $uploadFileID = getOnePDOValue($pdo, $sql, $sqlParamArray, PDO::FETCH_NUM);
-    debugOut('$uploadFileID', $uploadFileID);
-
-    $theFilePathName = $theFilePath . strval($uploadFileID);
-    debugOut('$theFilePathName', $theFilePathName);
-
-    // Use of user's filename can create a security risk. Name by ID and restore on download.
-    if (move_uploaded_file($_FILES['contentFileGraphic']['tmp_name'], $theFilePathName)) {
-      ; // It worked.
-    } else {
-      throw new RuntimeException('Failed to move uploaded file.');
-    }
-
-    return $uploadFileID;
-  } catch (RuntimeException $e) {
-    debugOut('*** Graphic upload exception ********************************************************************************');
-    debugOut($e->getMessage());
-    debugOut();
-    echo $e->getMessage();
+  } else {
+    return 0; // No content to handle.
   }
+
+  // Confirm MIME type.
+  $imageTypeConfirmed = false;
+  if ($_FILES['contentFileGraphic']['type'] == 'image/png') {
+    if (imagecreatefrompng($_FILES['contentFileGraphic']['tmp_name'])) {
+      $imageTypeConfirmed = true;
+    }
+  } else if ($_FILES['contentFileGraphic']['type'] == 'image/jpeg') {
+    if (imagecreatefromjpeg($_FILES['contentFileGraphic']['tmp_name'])) {
+      $imageTypeConfirmed = true;
+    }
+  }
+
+  if (!$imageTypeConfirmed) {
+    if ($_FILES['contentFileGraphic']['type'] == 'image/png' || $_FILES['contentFileGraphic']['type'] == 'image/jpeg') {
+      debugOut('*** Image corrupt or malicious ***');
+
+      return -12; // Image corrupt or malicious.
+    } else {
+      debugOut('*** Image format not supported ***');
+
+      return -13; // Image format not supported.
+    }
+  }
+
+  return handleUploadFile($pdo, 'contentFileGraphic', $GLOBALS['CONTENT_IMAGE_DIRECTORY']);
 }
 
-function fileUploadContent($pdo) {
-  try {
-    // Consider rejecting cases where multiple files are in the graphic section of the upload.
-
-    switch ($_FILES['contentFile']['error']) {
-      case UPLOAD_ERR_OK:
-        break;
-      case UPLOAD_ERR_NO_FILE:
-        throw new RuntimeException('Error: UPLOAD_ERR_NO_FILE');
-      case UPLOAD_ERR_INI_SIZE:
-        throw new RuntimeException('Error: UPLOAD_ERR_INI_SIZE');
-      case UPLOAD_ERR_FORM_SIZE:
-        throw new RuntimeException('Error: UPLOAD_ERR_FORM_SIZE (File exceeds allowed size.)');
-      default:
-        throw new RuntimeException('Unknown error in $_FILES["file_upload"]["error"]');
+function handleUploadContent($pdo) {
+  /* -----------------------------------------------------------------------------
+  -- Author       Jeff Hawkins
+  -- Created      2017/11/04
+  -- Purpose      Handle upload of content file. (Handle multiple not supported
+  --              yet.
+  -- Copyright © 2017, Jeff Hawkins.
+  --
+  -- RETURN VALUES:
+  --   SUCCESS: uploadFileID of uploaded file.
+  --   FAILURE:
+  --     0 : No content to handle.
+  --     -1 to -9 : See return values of handleUploadFile.
+  --     -10: File exceeds configured limit for content files.
+  --
+  -- -----------------------------------------------------------------------------
+  -- Modification History
+  --
+  -- 2017/11/03  Jeff Hawkins
+  --      Initial version.
+  -- ---------------------------------------------------------------------------*/
+  if (isset($_FILES['contentFile']['size'])) {
+    if ($_FILES['contentFile']['size'] > $GLOBALS['CONTENT_STORE_MAX_FILESIZE']) {
+      return -10; // File exceeds configured limit for content files.
     }
-
-    // TO DO: Also check filesize here.
-    // if ($_FILES[contentFile]['size'] > 1000000) {
-    //   throw new RuntimeException('Exceeded filesize limit.');
-    // }
-
-    // Confirm MIME type.
-    // TO DO: Need to identify which formats we support and add a filter to block the rest.
-
-    // Reconstruct the name using basename, to prevent potential injection-type attack.
-    $theFileName = basename($_FILES['contentFile']['name']);
-    $theFileSize = $_FILES['contentFile']['size'];
-    $theMimeType = $_FILES['contentFile']['type'];
-    $theFilePath = $GLOBALS['CONTENT_STORE_DIRECTORY'];
-    $theUser = $_SESSION['userID'];
-
-    $sql = 'SELECT uploadFileInsert(?, ?, ?, ?, ?)';
-    $sqlParamArray = [$theFileName, $theFileSize, $theMimeType, $theFilePath, $theUser];
-    $uploadFileID = getOnePDOValue($pdo, $sql, $sqlParamArray, PDO::FETCH_NUM);
-    debugOut('$uploadFileID', $uploadFileID);
-
-    $theFilePathName = $theFilePath . strval($uploadFileID);
-    debugOut('$theFilePathName', $theFilePathName);
-
-    // Use of user's filename can create a security risk. Name by ID and restore on download.
-    if (move_uploaded_file($_FILES['contentFile']['tmp_name'], $theFilePathName)) {
-      ; // It worked.
-    } else {
-      throw new RuntimeException('Failed to move uploaded file.');
-    }
-
-    return $uploadFileID;
-  } catch (RuntimeException $e) {
-    debugOut('*** Graphic upload exception ********************************************************************************');
-    debugOut($e->getMessage());
-    debugOut();
-    echo $e->getMessage();
+  } else {
+    return 0; // No content to handle.
   }
-  /*
-  if ($_FILES['file_upload']['error'] == UPLOAD_ERR_OK) {
 
-      // $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . basename($_FILES['userUpload']['name']);
-      // $path = $_FILES['image']['name'];
-      // $ext = pathinfo($path, PATHINFO_EXTENSION);
-      $uploadfile = $GLOBALS['CONTENT_STORE_DIRECTORY'] . $newID . '.' .
-          pathinfo($_FILES['userUpload']['name'], PATHINFO_EXTENSION);
-      if (move_uploaded_file($_FILES['userUpload']['tmp_name'], $uploadfile)) {
-        ;  // Success. Do nothing here.
-      } else {
-        echo '<pre><br />File upload error. File array dump follows. <br />';
-        outputArray($_FILES, true);
-        echo "<script>alert('Upload error. Press OK to return to page.')</script>";
-      }
-    } else {
-      return $_FILES['file_upload']['error'];
-    }
-  }
-  */
+  return handleUploadFile($pdo, 'contentFile', $GLOBALS['CONTENT_STORE_DIRECTORY']);
 }
 
+function handleUploadFile($pdo, $theFormField, $theDestinationPath) {
+  /* -----------------------------------------------------------------------------
+  -- Author       Jeff Hawkins
+  -- Created      2017/11/04
+  -- Purpose      Handle upload of user files.
+  -- Copyright © 2017, Jeff Hawkins.
+  --
+  -- RETURN VALUES:
+  --   SUCCESS: uploadFileID of uploaded file.
+  --   FAILURE:
+  --     0 : No file to handle.
+  --     -1: HTTP file upload error. See debug log for specifics.
+  --     -2: Creation of uploadFile record failed. uploadFileID is invalid or
+  --         null. NOTE: Failed SQL is copied to debug output.
+  --     -3: Failed to move uploaded file. Check permissions.
+  --     Or: Return value of mysql uploadFileInsert (Could also be 0.)
+  --
+  -- -----------------------------------------------------------------------------
+  -- Modification History
+  --
+  -- 2017/11/03  Jeff Hawkins
+  --      Initial version. Replaces separate functions for graphic and content
+  --      files.
+  -- ---------------------------------------------------------------------------*/
+  if (isset($_FILES[$theFormField]['name']) && $_FILES[$theFormField]['name'] != '') {
+    if ($_FILES[$theFormField]['error'] == '' || $_FILES[$theFormField]['error'] == UPLOAD_ERR_OK) {
+
+      debugOut('**************************************************************************************************');
+      debugOut('**************************************************************************************************');
+      debugOut('*** handleUploadFile *****************************************************************************');
+      debugOut('tmp_name', $_FILES[$theFormField]['tmp_name']);
+      debugOut('basename(name)', basename($_FILES[$theFormField]['name']));
+      debugOut('size', $_FILES[$theFormField]['size']);
+      debugOut('type', $_FILES[$theFormField]['type']);
+      debugOut('$theDestinationPath', $theDestinationPath);
+      debugOut('$_SESSION["userID"]', $_SESSION["userID"]);
+
+      $sql = 'SELECT uploadFileInsert(?, ?, ?, ?, ?)';
+      $sqlParamArray =
+          [basename($_FILES[$theFormField]['name']), $_FILES[$theFormField]['size'], $_FILES[$theFormField]['type'], $theDestinationPath, $_SESSION["userID"]];
+      debugOut('$sqlParamArray follows: ');
+      outputArray($sqlParamArray);
+      $uploadFileID = getOnePDOValue($pdo, $sql, $sqlParamArray, PDO::FETCH_NUM);
+      debugOut('$uploadFileID', $uploadFileID);
+
+      if ($uploadFileID > 0) {
+        // Use of user's filename can create a security risk. Name by ID and restore on download.
+        $theFilePathName = $theDestinationPath . strval($uploadFileID);
+        debugOut('$theFilePathName', $theFilePathName);
+        if (move_uploaded_file($_FILES[$theFormField]['tmp_name'], $theFilePathName)) {
+          return $uploadFileID; // It worked.
+        } else {
+          debugOut('Failed to move uploaded file. Check permissions.');
+
+          return -3;
+        }
+      } else {
+        debugOut('Creation of uploadFile record failed. uploadFileID is invalid or null.');
+        $sql = 'SELECT uploadFileInsert(\'' . basename($_FILES[$theFormField]['name']) . '\', ' .
+            $_FILES[$theFormField]['size'] . ', \'' . $_FILES[$theFormField]['type'] . '\', \'' . $theDestinationPath .
+            '\', ' . $_SESSION["userID"] . ');';
+        debugOut('The SQL was: ', $sql);
+
+        return -2;
+      }
+    } else {
+      debugOut('HTTP file upload error', $_FILES[$theFormField]['error']);
+
+      return -1;
+    }
+  } else {
+    // File upload is optional. Return if no file.
+    debugOut('No file to handle.');
+
+    return 0;
+  }
+}
 
 function consolidatePageContentID() {
   if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
@@ -190,7 +203,6 @@ function consolidatePageContentID() {
   }
   debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
 }
-
 
 function tagCategorySelector($pdo) {
   $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
@@ -206,7 +218,6 @@ function tagCategorySelector($pdo) {
   }
   echo '</select>';
 }
-
 
 function tagSelector($pdo, $tagCategoryID) {
   $sql = 'SELECT DISTINCT tagID, tag FROM vTag';
@@ -227,7 +238,6 @@ function tagSelector($pdo, $tagCategoryID) {
   echo '</select>';
 }
 
-
 function getMySQLiConnection() {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   $connection =
@@ -243,20 +253,18 @@ function getMySQLiConnection() {
   return $connection;
 }
 
-
 function getDBPDO() {
   $pdo = new PDO($GLOBALS['DB_DSN'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_OPTIONS']);
 
   return $pdo;
 }
 
-
 function getPDOResults($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   $statement = $pdo->prepare($sql);
   try {
     $statement->execute($sqlParamArray);
   } catch (PDOException $exception) {
-    debugOut("PDOException", $exception->getMessage());
+    debugOut("getPDOResults PDOException", $exception->getMessage());
     // This catch just to make the error visible via tail. Throw to make sure
     // it also receives normal handling.
     throw $exception;
@@ -270,21 +278,17 @@ function getPDOResults($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETC
   return $resultSet;
 }
 
-
 function getOnePDOTable($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   return getPDOResults($pdo, $sql, $sqlParamArray, $arrayType)[0];
 }
-
 
 function getOnePDORow($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   return getPDOResults($pdo, $sql, $sqlParamArray, $arrayType)[0][0];
 }
 
-
 function getOnePDOValue($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   return getPDOResults($pdo, $sql, $sqlParamArray, $arrayType)[0][0][0];
 }
-
 
 function getMySQLiResults($connection, $sql) {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
@@ -314,25 +318,21 @@ function getMySQLiResults($connection, $sql) {
   return $resultSet;
 }
 
-
 function getOneMySQLiTable($connection, $sql) {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   return getMySQLiResults($connection, $sql)[0];
 }
-
 
 function getOneMySQLiRow($connection, $sql) {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   return getMySQLiResults($connection, $sql)[0][0];
 }
 
-
 function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null, $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null) {
   // Abstracted here to allow easy switch to other mail services.
   // Write and use an AmazonSESSend() function for example, if needed.
   mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML, $mailCC, $mailBCC, $mailAttachmentsArray);
 }
-
 
 function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $showRowCount = true) {
   // Will this make the world explode? Let's see...
@@ -378,7 +378,6 @@ function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $
   return $rowCount;
 }
 
-
 function debugPrefix() {
   $debugPrefix = ltrim($_SERVER['DOCUMENT_URI'], '/');
   if (isset($_SESSION['loginStep'])) {
@@ -388,13 +387,11 @@ function debugPrefix() {
   return $debugPrefix;
 }
 
-
 function debugTimestamp() {
   $time = new DateTime();
 
   return $time->format('YmdHis');
 }
-
 
 function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $timestamp = true) {
   if ($prefix) {
@@ -420,7 +417,6 @@ function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $t
   error_log($heading . PHP_EOL, 3, $GLOBALS['LOG_FILE_PATH']);
 }
 
-
 function debugSectionOut($sectionTitle) {
   debugOut('', '', false, false, false);
   debugOut('***** ' . $sectionTitle . ':');
@@ -430,13 +426,11 @@ function debugSectionOut($sectionTitle) {
   outputArray($_POST);
 }
 
-
 function logout() {
   destroySession();
   header('Location: ' . $GLOBALS['SITE_URL']);
   exit();
 }
-
 
 function destroySession() {
   // Unset all of the session variables.
@@ -450,7 +444,6 @@ function destroySession() {
   session_destroy();
 }
 
-
 function getSaltHashTimeCost($iterations) {
   $timeStart = round(microtime(true) * 1000);
   password_hash('TestPassword', PASSWORD_DEFAULT, ["cost" => $iterations]);
@@ -459,12 +452,10 @@ function getSaltHashTimeCost($iterations) {
   return $timeEnd - $timeStart;
 }
 
-
 function ipAddress() {
   if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP)) return $_SERVER['HTTP_CLIENT_IP']; elseif (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP)) return $_SERVER['HTTP_X_FORWARDED_FOR'];
   else return $_SERVER['REMOTE_ADDR'];
 }
-
 
 // Adapted from Stephen Watkins answer at https://stackoverflow.com/questions/4356289/php-random-string-generator
 function verifyCode($length = 4) {
@@ -477,7 +468,6 @@ function verifyCode($length = 4) {
 
   return $code;
 }
-
 
 function bytesToMegabytes($bytes) {
   $megabytes = $bytes / 1048576;
@@ -503,12 +493,10 @@ function htmlStart($string, $showBody = true) {
   }
 }
 
-
 function htmlEnd($showFooter = true) {
   // Footer TBD.
   echo '</body></html>';
 }
-
 
 ?>
 

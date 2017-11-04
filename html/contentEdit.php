@@ -22,12 +22,10 @@ debugOut('$action', $action);
 consolidatePageContentID();
 
 // UserID needed for validating permission to edit.
-if ((isset($_SESSION["userID"])) && ($_SESSION["userID"] > 0)) {
-  $userID = $_SESSION["userID"];
-} else {
-  $userID = 0;
+if ((!isset($_SESSION["userID"])) || ($_SESSION["userID"] < 1)) {
+  $_SESSION["userID"] = 0;
 }
-debugOut('$userID', $userID);
+debugOut('$_SESSION["userID"]', $_SESSION["userID"]);
 
 if ((isset($_POST["contentTitle"])) && ($_POST["contentTitle"] != '')) {
   $contentTitle = trim(stripslashes($_POST["contentTitle"]));
@@ -62,66 +60,51 @@ if ((isset($_FILES['file_upload']['contentFile']['name'])) && ($_FILES['file_upl
 } else {
   $contentFilename = null;
 }
-debugOut('******************************** File Info');
-outputArray($_FILES);
-debugOut('****************');
+
 if (isset($contentFile)) {
   outputArray($contentFile);
 } else {
   debugOut('$contentFile is not set.');
 }
-debugOut('****************');
-debugOut('$contentFilename', $contentFilename);
-debugOut('********************************');
 
 // Set variables for input form and continue to display.
 $sql = '';
 if ($action == 'delete') {
   // TO DO: Handle file delete too!
   $sql = 'SELECT contentDelete(?, ?)';
-  $sqlParamsArray = [$_POST["pageContentID"], $userID];
+  $sqlParamsArray = [$_POST["pageContentID"], $_SESSION["userID"]];
   $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
   header('Location: ' . '/content.php');
   exit();
 } else if ($action == 'insert' || $action == 'update') {
   $sql = 'SELECT contentInsertUpdate(?, ?, ?, ?, ?, ?)';
   $sqlParamsArray =
-      [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $userID];
-
-  debugOut('******************************************************************************************************');
-  debugOut('******************************************************************************************************');
-  debugOut('******************************************************************************************************');
-  debugOut('******************************************************************************************************');
-  debugOut('******************************************************************************************************');
-  debugOut('******************************** SQL Info');
-  debugOut('insert $sql', $sql);
-  outputArray($sqlParamsArray);
-
+      [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $_SESSION["userID"]];
   $contentRecordID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   debugOut('$contentRecordID', $contentRecordID);
 
-  $graphicFileID = fileUploadGraphic($pdo);
+  $graphicFileID = handleUploadAvatar($pdo);
   // If we uploaded the graphic, tag the content with it.
   if ($graphicFileID > 0) {
     $sql = 'SELECT tagAttach(?, ?, ?)';
-    $sqlParamsArray = [$contentRecordID, $graphicFileID, $userID];
+    $sqlParamsArray = [$contentRecordID, $graphicFileID, $_SESSION["userID"]];
     $contentGraphicRelationshipID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
 
     // And, tag the relationship between content and graphic to indicate this is the primary (avatar) graphic for this content.
     $sql = 'SELECT tagAttach(?, tagIDFromText(?), ?)';
-    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentAvatar', $userID];
+    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentAvatar', $_SESSION["userID"]];
     $cntntGrphRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   }
 
-  $contentFileID = fileUploadContent($pdo);
+  $contentFileID = handleUploadContent($pdo);
   if ($contentFileID > 0) {
     $sql = 'SELECT tagAttach(?, ?, ?)';
-    $sqlParamsArray = [$contentRecordID, $contentFileID, $userID];
+    $sqlParamsArray = [$contentRecordID, $contentFileID, $_SESSION["userID"]];
     $contentFileRelationshipID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
 
     // TO DO: Do we need to tag content files as being downloads for this content record? Or can this be assumed from
     //   the relationship?
-    // $sqlParamsArray = [$contentFileRelationshipID, 'Need Tag to indicate content file', $userID];
+    // $sqlParamsArray = [$contentFileRelationshipID, 'Need Tag to indicate content file', $_SESSION["userID"]];
     // $cntntFileRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   }
 
@@ -205,7 +188,7 @@ htmlStart('Content View');
   <?php
   debugSectionOut("Edit Content");
   debugOut('$action', $action);
-  debugOut('$userID', $userID);
+  debugOut('$_SESSION["userID"]', $_SESSION["userID"]);
   debugOut('$contentTitle', $contentTitle);
   debugOut('$contentDescription', $contentDescription);
   debugOut('$contentExcerpt', $contentExcerpt);
