@@ -83,14 +83,16 @@ if ($action == 'delete') {
   $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
   header('Location: ' . '/content.php');
   exit();
+} else if ($action == 'insert' || $action == 'update') {
+  $sql = 'SELECT contentInsertUpdate(?, ?, ?, ?, ?, ?)';
+  $sqlParamsArray =
+      [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $userID];
 
-// ******************
-// ***** INSERT *****
-// ******************
-} else if ($action == 'insert') {
-  $sql = 'SELECT contentInsert(?, ?, ?, ?, ?)';
-  $sqlParamsArray = [$contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $userID];
-
+  debugOut('******************************************************************************************************');
+  debugOut('******************************************************************************************************');
+  debugOut('******************************************************************************************************');
+  debugOut('******************************************************************************************************');
+  debugOut('******************************************************************************************************');
   debugOut('******************************** SQL Info');
   debugOut('insert $sql', $sql);
   outputArray($sqlParamsArray);
@@ -125,26 +127,6 @@ if ($action == 'delete') {
 
   $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $contentRecordID;
   header('Location: ' . $_SESSION['lastURL']);
-  exit();
-
-// ******************
-// ***** UPDATE *****
-// ******************
-} else if ($action == 'update') {
-  $sql = 'SELECT contentUpdate(?, ?, ?, ?, ?, ?)';
-
-  $sqlParamsArray =
-      [$_POST["pageContentID"], $contentTitle, $contentDescription, $contentExcerpt, $contentSummary, $userID];
-
-  debugOut('******************************** SQL Info');
-  debugOut('update $sql', $sql);
-  outputArray($sqlParamsArray);
-
-  $result = getOnePDOValue($pdo, $sql, $sqlParamsArray);
-
-  fileUploadContent($pdo);
-
-  header('Location: ' . 'contentEdit.php?action=edit&pageContentID=' . $_POST["pageContentID"]);
   exit();
 }
 

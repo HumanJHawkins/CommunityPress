@@ -53,7 +53,9 @@ CREATE TABLE content
   createBy           BIGINT DEFAULT '0'                  NOT NULL,
   createTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updateBy           BIGINT DEFAULT '0'                  NOT NULL,
-  updateTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  updateTime         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT content_contentTitle_uindex
+  UNIQUE (contentTitle)
 );
 
 INSERT INTO content (contentID, contentTitle, contentDescription, contentExcerpt, contentSummary)
@@ -791,30 +793,38 @@ CREATE FUNCTION permitUserRole(theUserID BIGINT, theUserRole VARCHAR(128))
     );
   END;
 
+
 DROP FUNCTION IF EXISTS contentCanEdit;
 CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
   RETURNS BOOLEAN
   BEGIN
-    DECLARE canEdit BIGINT;
-    SET canEdit = (
-      SELECT createBy
-      FROM content
-      WHERE contentID = theContentID AND createBy = theUserID);
-    IF (IFNULL(canEdit, 0) = 0)
+    IF (userIsContentEditor(theUserID))
     THEN
-      SET canEdit = (
-        SELECT thingID
-        FROM thingTag
-        WHERE thingID = theContentID AND tagID = theUserID);
+      IF (IFNULL(theContentID, 0) < 1)
+      THEN
+        RETURN TRUE; -- Editor creating a new item is always allowed.
+      END IF;
+    ELSE
+      RETURN FALSE; -- If user is not content editor, user is not permitted.
     END IF;
 
-    IF (IFNULL(canEdit, 0) = 0)
+    IF (SELECT TRUE
+        FROM content
+        WHERE contentID = theContentID AND createBy = theUserID)
     THEN
-      RETURN FALSE;
-    ELSE
-      RETURN TRUE;
+      RETURN TRUE; -- This user is editor and created this item. So is allowed.
     END IF;
+
+    IF (SELECT TRUE
+        FROM thingTag
+        WHERE thingID = theContentID AND tagID = theUserID)
+    THEN
+      RETURN TRUE; -- User is tagged on the item, so allow edits.
+    END IF;
+
+    RETURN FALSE; -- No permission to edit was found.
   END;
+
 
 DROP FUNCTION IF EXISTS uploadFileInsert;
 CREATE FUNCTION uploadFileInsert(theUploadFileName    VARCHAR(256), theUploadFileSize INT,
@@ -831,7 +841,6 @@ CREATE FUNCTION uploadFileInsert(theUploadFileName    VARCHAR(256), theUploadFil
   END;
 
 
-
 DROP FUNCTION IF EXISTS contentDelete;
 CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
   RETURNS INT
@@ -846,72 +855,87 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
     END IF;
   END;
 
-DROP FUNCTION IF EXISTS contentInsert;
-CREATE FUNCTION contentInsert(newTitle   VARCHAR(256), newDescription TEXT, newExcerpt TEXT,
-                              newSummary TEXT, theUserID BIGINT)
+
+DROP FUNCTION IF EXISTS contentInsertUpdate;
+CREATE FUNCTION contentInsertUpdate(theContentID BIGINT, theTitle VARCHAR(256), theDescription TEXT, theExcerpt TEXT,
+                                    theSummary   TEXT, theUserID BIGINT)
   RETURNS BIGINT
+  -- -----------------------------------------------------------------------------
+  -- Author       Jeff Hawkins
+  -- Created      2017/11/03
+  -- Purpose      Update or insert content records, insuring permissions and
+  --              content rules are followed.
+  -- Copyright © 2017, Jeff Hawkins.
+  --
+  -- RETURN VALUES:
+  --   SUCCESS: contentID of inserted or modified record.
+  --   Failure:
+  --     -1: Insert permission denied by site (not SQL) rules.
+  --     -2: Update permission denied by site (not SQL) rules.
+  --     -3: Title already exists. Must update instead of insert.
+  --     -4: Record to be updated does not exist.
+  --     Any other value < 1 (including null): Unknown Error
+  --
+  -- -----------------------------------------------------------------------------
+  -- Modification History
+  --
+  -- 2017/11/03  Jeff Hawkins
+  --      Initial version. Consolidates separate insert and update functions
+  --      toward improved ability to maintain code.
+  -- -----------------------------------------------------------------------------
   BEGIN
-    DECLARE Result BIGINT;
+    DECLARE bInsertMode BOOLEAN DEFAULT TRUE; -- TRUE for insert. FALSE for update.
+    DECLARE bCanEdit BOOLEAN DEFAULT FALSE;
 
-    -- TO DO:
-    -- Test if title exists
-    -- Test if URL exists
-
-    INSERT INTO content (contentTitle, contentDescription, contentExcerpt, contentSummary, createBy, updateBy)
-    VALUES (newTitle, newDescription, newExcerpt, newSummary, theUserID, theUserID);
-
-    -- TO DO: LAST_INSERT_ID() should be more efficient, but is not
-    --  working here... Research if/when optimization is needed.
-    --  Until then, just looking up the insert.
-
-    -- TO DO: Work out issues around identical titles... Probably make titles unique.
-    SET Result = (
-      SELECT MAX(contentID) AS contentID
-      FROM content
-      WHERE contentTitle = newTitle);
-    IF (Result < 1)
-    THEN RETURN -3;
-    END IF;
-
-    RETURN Result;
-  END;
-
-
-DROP FUNCTION IF EXISTS contentUpdate;
-CREATE FUNCTION contentUpdate(theContentID BIGINT, newTitle VARCHAR(256), newDescription TEXT, newExcerpt TEXT,
-                              newSummary   TEXT, theUserID BIGINT)
-  RETURNS BIGINT
-  BEGIN
-    -- Test if content record  exists
-    IF ((
-          SELECT contentID
-          FROM content
-          WHERE contentTitle = newTitle) < 1)
-    THEN RETURN -2;
-    END IF;
-
-    IF NOT (contentCanEdit(theContentID, theUserID))
+    IF (IFNULL(theContentID, 0) > 0)
     THEN
-      RETURN -1;
+      SET bInsertMode = FALSE;
     END IF;
 
-    UPDATE content
-    SET
-      contentTitle       = newTitle,
-      contentDescription = newDescription,
-      contentExcerpt     = newExcerpt,
-      contentSummary     = newSummary,
-      updateBy           = theUserID
-    WHERE contentID = theContentID;
-    -- TO DO: Research and address. Unsure if ROW_COUNT() will
-    --   be > 0 if the update was category only... So, omitting
-    --   this test for now.
-    -- IF (ROW_COUNT() != 1) THEN RETURN -3;
-    -- END IF;
+    SET bCanEdit = contentCanEdit(theContentID, theUserID);
 
-    -- Replace tag category if different...
-    -- TO DO: This should be it's own function.
+    IF NOT (bCanEdit)
+    THEN
+      IF (bInsertMode)
+      THEN
+        RETURN -1; -- Insert permission denied by site (not SQL) rules.
+      ELSE
+        RETURN -2; -- Update permission denied by site (not SQL) rules.
+      END IF;
+    END IF;
 
+    IF (bInsertMode)
+    THEN
+      IF (SELECT (IFNULL((SELECT TRUE
+                          FROM content
+                          WHERE contentTitle = 'ThePig!'), FALSE)) AS bTitleExists)
+      THEN
+        RETURN -3; -- Title already exists. Must update instead of insert.
+      END IF;
+
+      INSERT INTO content (contentTitle, contentDescription, contentExcerpt, contentSummary, createBy, updateBy)
+      VALUES (theTitle, theDescription, theExcerpt, theSummary, theUserID, theUserID);
+
+      SET theContentID = (SELECT contentID
+                          FROM content
+                          WHERE contentTitle = theTitle);
+    ELSE
+      IF (SELECT (IFNULL((SELECT FALSE
+                          FROM content
+                          WHERE contentID = theContentID), TRUE)) AS bRecordNotFound)
+      THEN
+        RETURN -4; -- Record to be updated does not exist.
+      ELSE
+        UPDATE content
+        SET
+          contentTitle       = theTitle,
+          contentDescription = theDescription,
+          contentExcerpt     = theExcerpt,
+          contentSummary     = theSummary,
+          updateBy           = theUserID
+        WHERE contentID = theContentID;
+      END IF;
+    END IF;
     RETURN theContentID;
   END;
 
@@ -1227,7 +1251,6 @@ CREATE VIEW vTag AS
            (CategoryUse.tagID = tagCategoryTagID())))) JOIN v4l.tag Category
       ON ((CategoryUse.thingID = Category.tagID))) LEFT JOIN v4l.thingTag Protected
       ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected')))));
-
 
 -- Insert required tags to support further creation of tags, etc.
 INSERT INTO tag (tag, tagDescription)

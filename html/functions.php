@@ -186,7 +186,7 @@ function consolidatePageContentID() {
   } elseif ((isset($_POST["pageContentID"]) && $_POST["pageContentID"] > 0)) {
     ; // Do nothing.
   } else {
-    $_POST["pageContentID"] = 0;
+    $_POST["pageContentID"] = null;
   }
   debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
 }

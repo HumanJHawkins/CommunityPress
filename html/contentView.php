@@ -51,7 +51,8 @@ echo '<h1>' . $contentTitle . '</h1>';
 
 echo '<h3>' . $GLOBALS['CONTENT_SUMMARY_LABEL'] . '</h3>';
 echo $contentSummary;
-echo '<hr/>';
+echo '<div style="clear: both;"></div>';
+// echo '<hr />';
 
 echo '<h3>' . $GLOBALS['CONTENT_EXCERPT_LABEL'] . '</h3>';
 echo $contentExcerpt;
