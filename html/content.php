@@ -9,7 +9,9 @@ htmlStart('Stories and Lessons');
   <?php include 'divV4LBanner.php'; ?>
   <br />
   <?php
-  if ($_SESSION['isContentEditor'] || $_SESSION['isSuperuser']) {
+  if ((isset($_SESSION['isContentEditor']) && $_SESSION['isContentEditor']) ||
+      (isset($_SESSION['isSuperuser']) && $_SESSION['isSuperuser'])
+  ) {
     echo '<a href="contentEdit.php" class="btn btn-primary">&nbsp;&nbsp;&nbsp;New...&nbsp;&nbsp;&nbsp;</a><br />';
   }
   ?>
