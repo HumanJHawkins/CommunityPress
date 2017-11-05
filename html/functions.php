@@ -24,7 +24,20 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
   $mg->sendMessage($GLOBALS['MAILGUN_MAIL_DOMAIN'], $sendArray);
 }
 
-function handleUploadAvatar($pdo) {
+function handleDeleteAvatar($pdo, $existingAvatarPath, $existingAvatarID) {
+  if ($existingAvatarID > 0) {
+    unlink(realpath($existingAvatarPath . strval($existingAvatarID)));
+
+    $sql = 'uploadFileDelete(?, ?)';
+    $sqlParamsArray = [$existingAvatarID, $_SESSION["userID"]];
+    $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+    debugOut('Rows deleted', $result);
+
+    return $result;
+  }
+}
+
+function handleUploadAvatar($pdo, $contentRecordID, $existingAvatarPath, $existingAvatarID) {
   /* -----------------------------------------------------------------------------
   -- Author       Jeff Hawkins
   -- Created      2017/11/04
@@ -79,7 +92,22 @@ function handleUploadAvatar($pdo) {
     }
   }
 
-  return handleUploadFile($pdo, 'contentFileGraphic', $GLOBALS['CONTENT_IMAGE_DIRECTORY']);
+  handleDeleteAvatar($pdo, $existingAvatarPath, $existingAvatarID);
+  $graphicFileID = handleUploadFile($pdo, 'contentFileGraphic', $GLOBALS['CONTENT_IMAGE_DIRECTORY']);
+
+  // If we uploaded the graphic, tag the content with it.
+  if ($graphicFileID > 0) {
+    $sql = 'SELECT tagAttach(?, ?, ?)';
+    $sqlParamsArray = [$contentRecordID, $graphicFileID, $_SESSION["userID"]];
+    $contentGraphicRelationshipID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+
+    // And, tag the relationship between content and graphic to indicate this is the avatar graphic for this content.
+    $sql = 'SELECT tagAttach(?, tagIDFromText(?), ?)';
+    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentAvatar', $_SESSION["userID"]];
+    $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+  }
+
+  return $graphicFileID;
 }
 
 function handleUploadContent($pdo) {
@@ -141,8 +169,6 @@ function handleUploadFile($pdo, $theFormField, $theDestinationPath) {
   if (isset($_FILES[$theFormField]['name']) && $_FILES[$theFormField]['name'] != '') {
     if ($_FILES[$theFormField]['error'] == '' || $_FILES[$theFormField]['error'] == UPLOAD_ERR_OK) {
 
-      debugOut('**************************************************************************************************');
-      debugOut('**************************************************************************************************');
       debugOut('*** handleUploadFile *****************************************************************************');
       debugOut('tmp_name', $_FILES[$theFormField]['tmp_name']);
       debugOut('basename(name)', basename($_FILES[$theFormField]['name']));
@@ -260,6 +286,11 @@ function getDBPDO() {
 }
 
 function getPDOResults($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
+  debugOut('***************************************************************************************************');
+  debugOut('***************************************************************************************************');
+  debugOut('*** getPDOResults *********************************************************************************');
+  debugOut('$sql', $sql);
+  outputArray($sqlParamArray);
   $statement = $pdo->prepare($sql);
   try {
     $statement->execute($sqlParamArray);
@@ -270,24 +301,40 @@ function getPDOResults($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETC
     throw $exception;
   }
   do {
-    $resultSet[] = $statement->fetchAll($arrayType);
+    $result[] = $statement->fetchAll($arrayType);
   } while ($statement->nextRowset());
   // Calling closeCursor() should not be necessary after fetch all from each Rowset.
   // It's possibly mildly counter-productive.
   // $statement->closeCursor();
-  return $resultSet;
+
+  // Debug output the array...
+  outputArray($result);
+
+  return $result;
 }
 
 function getOnePDOTable($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
-  return getPDOResults($pdo, $sql, $sqlParamArray, $arrayType)[0];
+  $result = getPDOResults($pdo, $sql, $sqlParamArray, $arrayType);
+  debugOut('Array returned via: getOnePDOTable as $result[0].');
+  if ($result) {
+    return $result[0];
+  }
 }
 
 function getOnePDORow($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
-  return getPDOResults($pdo, $sql, $sqlParamArray, $arrayType)[0][0];
+  $result = getPDOResults($pdo, $sql, $sqlParamArray, $arrayType);
+  debugOut('Array returned via: getOnePDORow as $result[0][0].');
+  if ($result) {
+    return $result[0][0];
+  }
 }
 
 function getOnePDOValue($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
-  return getPDOResults($pdo, $sql, $sqlParamArray, $arrayType)[0][0][0];
+  $result = getPDOResults($pdo, $sql, $sqlParamArray, $arrayType);
+  debugOut('Array returned via: getOnePDOValue as $result[0][0][0].');
+  if (!empty($result)) {
+    return $result[0][0][0];
+  }
 }
 
 function getMySQLiResults($connection, $sql) {

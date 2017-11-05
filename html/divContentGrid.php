@@ -31,9 +31,9 @@ if (!isset($pdo)) {
     <tbody>
     <?php
     if (isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
-      $sql = "CALL procViewContent(0," . $_SESSION['userID'] . ")";
+      $sql = "CALL procViewAllContent(" . $_SESSION['userID'] . ")";
     } else {
-      $sql = "CALL procViewContent(0,0)";
+      $sql = "CALL procViewAllContent(0)";
     }
     
     $result = getOnePDOTable($pdo, $sql);

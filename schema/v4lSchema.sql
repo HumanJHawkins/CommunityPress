@@ -841,17 +841,96 @@ CREATE FUNCTION uploadFileInsert(theUploadFileName    VARCHAR(256), theUploadFil
   END;
 
 
+DROP FUNCTION IF EXISTS uploadFileDelete;
+CREATE FUNCTION uploadFileDelete(theUploadFileID BIGINT, theUserID BIGINT)
+  RETURNS INT
+  BEGIN
+    -- NOTE: Does not delete files.
+    --       Delete files before deleting records with this function!!!
+    DECLARE rowsAffected INT DEFAULT 0;
+    DECLARE theContentRelationshipID BIGINT DEFAULT -1;
+    DECLARE theContentID BIGINT DEFAULT -1;
+    DECLARE bCanEdit BOOLEAN DEFAULT FALSE;
+
+    SELECT
+      thingTag.thingTagID,
+      content.contentID
+    INTO theContentRelationshipID, theContentID
+    FROM thingTag
+      LEFT OUTER JOIN content ON thingTag.thingID = content.contentID
+    WHERE thingTag.tagID = theUploadFileID;
+
+    --    SET theContentID = (
+    --      SELECT contentID
+    --      FROM thingTag
+    --        LEFT OUTER JOIN content ON thingTag.thingID = content.contentID
+    --      WHERE thingTag.tagID = theUploadFileID);
+
+    --    SET theContentRelationshipID = (
+    --      SELECT thingTagID
+    --      FROM thingTag
+    --        WHERE thingID = theContentID AND tagID = theUploadFileID);
+
+    IF (contentCanEdit(theContentID, theUserID))
+    THEN
+      -- Delete tags on the file or on relationship to this file.
+      DELETE FROM thingTag
+      WHERE
+        thingTagID = theContentRelationshipID OR
+        thingID = theContentRelationshipID OR
+        tagID = theContentRelationshipID;
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
+      -- Delete the file record
+      DELETE FROM uploadFile
+      WHERE uploadFileID = theUploadFileID;
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
+      RETURN ROW_COUNT();
+    ELSE
+      RETURN 0;
+    END IF;
+  END;
+
+
 DROP FUNCTION IF EXISTS contentDelete;
 CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
   RETURNS INT
   BEGIN
+    -- NOTE: Does not delete files.
+    --       Delete files before deleting records with this function!!!
+    DECLARE rowsAffected INT DEFAULT 0;
+
     IF (contentCanEdit(theContentID, theUserID))
     THEN
+      -- Delete all tags indirectly related to this item... Tags on thingTag relationships.
+      DELETE FROM thingTag
+      WHERE thingID IN
+            (SELECT thingTagID
+             FROM thingTag
+             WHERE thingID = theContentID OR tagID = theContentID);
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
+      -- Delete direct tags directly related to this item.
+      DELETE FROM thingTag
+      WHERE thingID = theContentID OR tagID = theContentID;
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
+      -- Delete records for content and graphic files associated with this item.
+      DELETE FROM uploadFile
+      WHERE uploadFileID IN (SELECT tagID
+                             FROM thingTag
+                             WHERE thingID = theContentID);
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
+      -- Delete the content record
       DELETE FROM content
       WHERE contentID = theContentID;
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
       RETURN ROW_COUNT();
     ELSE
-      RETURN -1;
+      RETURN 0;
     END IF;
   END;
 
@@ -1079,30 +1158,59 @@ CREATE PROCEDURE procServerConfig()
   END;
 
 
+DROP PROCEDURE IF EXISTS procViewAllContent;
+CREATE PROCEDURE procViewAllContent(theUser BIGINT)
+  BEGIN
+    SELECT
+      *,
+      contentAvatarID(contentID)         AS contentAvatarID,
+      contentCanEdit(contentID, theUser) AS canEdit
+    FROM vContent
+    WHERE contentID > 0;
+  END;
+
+
 DROP PROCEDURE IF EXISTS procViewContent;
 CREATE PROCEDURE procViewContent(theContentID BIGINT, theUser BIGINT)
   BEGIN
-    IF (IFNULL(theContentID, 0) != 0)
+    IF (IFNULL(theContentID, -1) != -1)
     THEN
       SELECT
-        *,
-        contentAvatar(theContentID)        AS contentAvatarID,
-        contentCanEdit(contentID, theUser) AS canEdit
+        contentID,
+        contentTitle,
+        contentDescription,
+        contentExcerpt,
+        contentSummary,
+        createBy,
+        createTime,
+        updateBy,
+        updateTime,
+        contentAvatarID(theContentID)         AS contentAvatarID,
+        contentCanEdit(theContentID, theUser) AS canEdit
       FROM vContent
       WHERE contentID = theContentID;
-    ELSE
+    ELSE -- If null, only canEdit has a value.
       SELECT
-        *,
-        contentAvatar(theContentID)        AS contentAvatarID,
-        contentCanEdit(contentID, theUser) AS canEdit
+        NULL                                  AS contentID,
+        NULL                                  AS contentTitle,
+        NULL                                  AS contentDescription,
+        NULL                                  AS contentExcerpt,
+        NULL                                  AS contentSummary,
+        NULL                                  AS createBy,
+        NULL                                  AS createTime,
+        NULL                                  AS updateBy,
+        NULL                                  AS updateTime,
+        NULL                                  AS contentAvatarID,
+        contentCanEdit(theContentID, theUser) AS canEdit
       FROM vContent
-      WHERE contentID > 0;
+      WHERE contentID = theContentID;
+
     END IF;
   END;
 
 
-DROP FUNCTION IF EXISTS contentAvatar;
-CREATE FUNCTION contentAvatar(theContentID BIGINT)
+DROP FUNCTION IF EXISTS contentAvatarID;
+CREATE FUNCTION contentAvatarID(theContentID BIGINT)
   RETURNS BIGINT
   BEGIN
     DECLARE contentAvatarFileUploadID BIGINT;
@@ -1274,8 +1382,7 @@ DO tagProtect(
     0
 );
 
--- TO DO:
---   1. review contentCanEdit and userIsContentEditor
---   2. procViewContent
---   3. vContent
---   4. Review tagCategory functions against contentAvatar... Can be more efficient now that we have thingTagID to work with.
+
+
+
+

@@ -20,6 +20,7 @@ debugOut('$action', $action);
 
 // pageContentID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST. Consolidate.
 consolidatePageContentID();
+debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
 
 // UserID needed for validating permission to edit.
 if ((!isset($_SESSION["userID"])) || ($_SESSION["userID"] < 1)) {
@@ -27,50 +28,96 @@ if ((!isset($_SESSION["userID"])) || ($_SESSION["userID"] < 1)) {
 }
 debugOut('$_SESSION["userID"]', $_SESSION["userID"]);
 
+$contentFilename = 'Select File';
+$contentFileGraphic = 'Select Graphic';
+
+$contentTitle = '';
+$contentDescription = '';
+$contentExcerpt = '';
+$contentSummary = '';
+$existingAvatarID = 0;
+$existingAvatarPath = '';
+$existingAvatarFile = '';
+$canEdit = false;
+
+if ($_POST["pageContentID"] > 0) {
+  $sql = 'CALL procViewContent(?, ?)';
+  $sqlParamsArray = [$_POST["pageContentID"], $_SESSION["userID"]];
+  $row = getOnePDORow($pdo, $sql, $sqlParamsArray, PDO::FETCH_ASSOC);
+  if (!empty($row)) {
+    $contentTitle = $row['contentTitle'];
+    $contentSummary = $row['contentSummary'];
+    $contentExcerpt = $row['contentExcerpt'];
+    $contentDescription = $row['contentDescription'];
+    $existingAvatarID = $row['contentAvatarID'];
+    $canEdit = $row['canEdit'];
+  }
+
+  if ($existingAvatarID > 0) {
+    $sql = 'SELECT uploadFilePath, uploadFileName  FROM uploadFile WHERE uploadFileID = ?';
+    $sqlParamsArray = [$existingAvatarID];
+    $row = getOnePDORow($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+    $existingAvatarPath = $row[0];
+    $existingAvatarFile = $row[1];
+  }
+} else {
+  $sql = 'SELECT userIsContentEditor(?)';
+  $sqlParamsArray = [$_SESSION["userID"]];
+  $canEdit = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+}
+
+// Now, oveerids as needed from $_POST and $_GET
 if ((isset($_POST["contentTitle"])) && ($_POST["contentTitle"] != '')) {
   $contentTitle = trim(stripslashes($_POST["contentTitle"]));
-} else {
-  $contentTitle = '';
 }
 debugOut('$contentTitle', $contentTitle);
 
 if ((isset($_POST["contentSummary"])) && ($_POST["contentSummary"] != '')) {
   $contentSummary = trim(stripslashes($_POST["contentSummary"]));
-} else {
-  $contentSummary = '';
 }
 debugOut('contentSummary', $contentSummary);
 
-if ((isset($_POST["contentDescription"])) && ($_POST["contentDescription"] != '')) {
-  $contentDescription = trim(stripslashes($_POST["contentDescription"]));
-} else {
-  $contentDescription = '';
-}
-debugOut('$contentDescription', $contentDescription);
-
 if ((isset($_POST["contentExcerpt"])) && ($_POST["contentExcerpt"] != '')) {
   $contentExcerpt = trim(stripslashes($_POST["contentExcerpt"]));
-} else {
-  $contentExcerpt = '';
 }
 debugOut('$contentExcerpt', $contentExcerpt);
 
-if ((isset($_FILES['file_upload']['contentFile']['name'])) && ($_FILES['file_upload']['contentFile']['name'] != '')) {
-  $contentFilename = $_FILES['file_upload']['contentFile']['name'];
-} else {
-  $contentFilename = null;
+if ((isset($_POST["contentDescription"])) && ($_POST["contentDescription"] != '')) {
+  $contentDescription = trim(stripslashes($_POST["contentDescription"]));
 }
+debugOut('$contentDescription', $contentDescription);
 
-if (isset($contentFile)) {
-  outputArray($contentFile);
-} else {
-  debugOut('$contentFile is not set.');
-}
+debugOut('****************************************************************************************************');
+debugOut('****************************************************************************************************');
+debugOut('*** contentEdit.php ********************************************************************************');
+
+debugOut('$contentFilename', $contentFilename);
+debugOut('$contentFileGraphic', $contentFileGraphic);
+debugOut('$contentTitle', $contentTitle);
+debugOut('$contentDescription', $contentDescription);
+debugOut('$contentExcerpt', $contentExcerpt);
+debugOut('$contentSummary', $contentSummary);
+debugOut('$existingAvatarID', $existingAvatarID);
+debugOut('$existingAvatarPath', $existingAvatarPath);
+debugOut('$existingAvatarFile', $existingAvatarFile);
+debugOut('$canEdit', $canEdit);
 
 // Set variables for input form and continue to display.
-$sql = '';
-if ($action == 'delete') {
-  // TO DO: Handle file delete too!
+if ($action == 'delete' && $canEdit) {
+  // SQL contentDelete function handles delete of content record, uploadFile records, and thingTag records.
+  // First delete the files, then delete the records.
+  $sql = 'CALL procGetContentFiles(?, ?)';
+  $sqlParamArray = [$_POST["pageContentID"], $_SESSION['userID']];
+  $result = getOnePDOTable($pdo, $sql, $sqlParamArray, PDO::FETCH_ASSOC);
+
+  foreach ($result as $index => $row) {
+    unlink(realpath($row["uploadFilePath"] . strval($row['uploadFileID'])));
+
+    // The content avatar is in this list, so does not need to be handled separately.
+    // $contentAvatarPathName = realpath($existingAvatarPath . strval($existingAvatarID));
+    // unlink($contentAvatarPathName);
+  }
+
   $sql = 'SELECT contentDelete(?, ?)';
   $sqlParamsArray = [$_POST["pageContentID"], $_SESSION["userID"]];
   $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
@@ -83,19 +130,10 @@ if ($action == 'delete') {
   $contentRecordID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   debugOut('$contentRecordID', $contentRecordID);
 
-  $graphicFileID = handleUploadAvatar($pdo);
-  // If we uploaded the graphic, tag the content with it.
-  if ($graphicFileID > 0) {
-    $sql = 'SELECT tagAttach(?, ?, ?)';
-    $sqlParamsArray = [$contentRecordID, $graphicFileID, $_SESSION["userID"]];
-    $contentGraphicRelationshipID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+  // Handles delete of existing after validating new avatar, then uploads new avatar.
+  handleUploadAvatar($pdo, $contentRecordID, $existingAvatarPath, $existingAvatarID);
 
-    // And, tag the relationship between content and graphic to indicate this is the primary (avatar) graphic for this content.
-    $sql = 'SELECT tagAttach(?, tagIDFromText(?), ?)';
-    $sqlParamsArray = [$contentGraphicRelationshipID, 'ContentAvatar', $_SESSION["userID"]];
-    $cntntGrphRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
-  }
-
+  // Need delete content mechanism.
   $contentFileID = handleUploadContent($pdo);
   if ($contentFileID > 0) {
     $sql = 'SELECT tagAttach(?, ?, ?)';
@@ -113,40 +151,8 @@ if ($action == 'delete') {
   exit();
 }
 
-// action=edit&pageContentID=100257
-
-// If we are still here, we are displaying the content edit screen... So, if editing,
-//  load the content to edit. Otherwise just continue with defaults.
-if ($action == 'edit') {
-  $sql = 'CALL procViewContent(?, ?)';
-  if (isset($_SESSION['userID']) && ($_SESSION['userID'] > 0)) {
-    $sqlParamsArray = [$_POST["pageContentID"], $_SESSION['userID']];
-  } else {
-    $sqlParamsArray = [$_POST["pageContentID"], 0];
-  }
-  debugOut('$sql', $sql);
-  outputArray($sqlParamsArray);
-
-  $row = getOnePDORow($pdo, $sql, $sqlParamsArray, PDO::FETCH_ASSOC);
-  outputArray($row);
-
-  if (!empty($row)) {
-    $contentTitle = trim($row['contentTitle']);
-    $contentDescription = trim($row['contentDescription']);
-    $contentExcerpt = trim($row['contentExcerpt']);
-    $contentSummary = trim($row['contentSummary']);
-    $contentFilename = 'Temp... Load file'; // trim($row['contentFilename']);
-    $canEdit = $row['canEdit'];
-  } else {
-    $contentTitle = 'Title';
-    $contentDescription = 'Description.';
-    $contentExcerpt = 'Excerpt';
-    $contentSummary = 'URL';
-    $contentFilename = 'Select Filename with Browse Button.';
-    // $canEdit = true;
-  }
-}
-
+// If we are still here, we are displaying the content edit screen. Values loaded at the top of this file should
+// be valid. So continue.
 
 abstract class ViewMode {
   const View = 0;
@@ -161,6 +167,8 @@ if ($_POST["pageContentID"] < 1) {
 } else {
   if (isset($canEdit) && ($canEdit)) {
     $ViewMode = ViewMode::Update;
+  } else {
+    $ViewMode = ViewMode::View;
   }
 }
 
@@ -209,7 +217,7 @@ htmlStart('Content View');
                     echo '<textarea name="pageContentID" placeholder="ID" id="pageContentID" readonly>Auto-generated</textarea>';
                   } else {
                     // echo '<input type="text" name="contentID" value="' . $_POST["pageContentID"] . '" readonly/>';
-                    echo '<textarea name="pageContentID" required placeholder="ID" id="pageContentID" readonly>' .
+                    echo '<textarea name="pageContentID" placeholder="ID" id="pageContentID" readonly>' .
                         $_POST["pageContentID"] . '</textarea>';
                   }
                   ?>
@@ -219,15 +227,9 @@ htmlStart('Content View');
                 <td>&nbsp;</td>
             </tr>
             <tr>
-                <td>
-                  <?php if ($ViewMode == ViewMode::Create) {
-                    echo 'File to upload:';
-                  } elseif ($ViewMode == ViewMode::Update) {
-                    echo 'New (Replacement) File:';
-                  } else {
-                    echo 'Filename: ';
-                  }
-                  ?>
+                <td>Content Avatar: <br/>
+                    <img class="img-thumbnail left avatar" style="max-width:100px;max-height:100px;"
+                         src="./userImage/<?= $existingAvatarID ?>"/>
                 </td>
                 <td>
                   <?php
@@ -242,7 +244,7 @@ htmlStart('Content View');
                     if (is_null($contentFileGraphic) || $contentFileGraphic == '') {
                       echo ' placeholder="Content Filename" id="inputContentFilename"></textarea>';
                     } else {
-                      echo ' id="inputContentFilename">' . $contentFilename . '</textarea>';
+                      echo ' placeholder="Content Filename" id="inputContentFilename"></textarea>';
                     }
                   }
                   ?>
