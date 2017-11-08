@@ -800,33 +800,39 @@ DROP FUNCTION IF EXISTS contentCanEdit;
 CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
   RETURNS BOOLEAN
   BEGIN
+    DECLARE canEdit BIGINT DEFAULT FALSE;
+    DECLARE result BIGINT DEFAULT 0;
+
+    -- If user is contentEditor, they may be permitted.
     IF (userIsContentEditor(theUserID))
     THEN
-      IF (IFNULL(theContentID, 0) < 1)
+      -- If we are inserting a new item, permit contentEditor to act.
+      IF (IFNULL(theContentID, 0) > 0)
       THEN
-        RETURN TRUE; -- Editor creating a new item is always allowed.
+        SET canEdit = TRUE;
+      ELSE
+        -- If item was created by this user, permit contentEditor to act.
+        SET result = (SELECT createBy
+                      FROM content
+                      WHERE contentID = theContentID AND createBy = theUserID);
+        IF (IFNULL(result, 0) > 0)
+        THEN
+          SET canEdit = TRUE;
+        ELSE
+          -- It item is tagged with the user, permit contentEditor to act.
+          SET result = (
+            SELECT thingID
+            FROM thingTag
+            WHERE thingID = theContentID AND tagID = theUserID);
+          IF (IFNULL(result, 0) > 0)
+          THEN
+            SET canEdit = TRUE;
+          END IF;
+        END IF;
       END IF;
-    ELSE
-      RETURN FALSE; -- If user is not content editor, user is not permitted.
     END IF;
 
-    IF (
-      SELECT TRUE
-      FROM content
-      WHERE contentID = theContentID AND createBy = theUserID)
-    THEN
-      RETURN TRUE; -- This user is editor and created this item. So is allowed.
-    END IF;
-
-    IF (
-      SELECT TRUE
-      FROM thingTag
-      WHERE thingID = theContentID AND tagID = theUserID)
-    THEN
-      RETURN TRUE; -- User is tagged on the item, so allow edits.
-    END IF;
-
-    RETURN FALSE; -- No permission to edit was found.
+    RETURN canEdit;
   END;
 
 
@@ -935,7 +941,7 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       WHERE contentID = theContentID;
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
-      RETURN ROW_COUNT();
+      RETURN rowsAffected;
     ELSE
       RETURN 0;
     END IF;
@@ -1216,7 +1222,6 @@ CREATE PROCEDURE procViewContent(theContentID BIGINT, theUser BIGINT)
         contentCanEdit(theContentID, theUser) AS canEdit
       FROM vContent
       WHERE contentID = theContentID;
-
     END IF;
   END;
 
