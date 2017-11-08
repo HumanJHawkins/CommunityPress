@@ -394,13 +394,14 @@ CREATE FUNCTION tagDelete(theTagID BIGINT, theUser BIGINT)
     --  2017-07-14 J. Hawkins: Initial Version
     --  2017-10-30 J. Hawkins: Added tag protection check
     -- ------------------------------------------------------
+    DECLARE affectedRecordCount BIGINT;
+
     IF NOT (userIsTagEditor(theUser))
     THEN
       RETURN 0;
     END IF;
 
     -- Do not delete tags that are in (actual) use.
-    DECLARE affectedRecordCount BIGINT;
     SET affectedRecordCount = (
       SELECT COUNT(*)
       FROM thingTag
@@ -419,6 +420,7 @@ CREATE FUNCTION tagDelete(theTagID BIGINT, theUser BIGINT)
       RETURN ROW_COUNT();
     END IF;
   END;
+
 
 DROP FUNCTION IF EXISTS tagIDFromText;
 CREATE FUNCTION tagIDFromText(theTag VARCHAR(128))
@@ -808,16 +810,18 @@ CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
       RETURN FALSE; -- If user is not content editor, user is not permitted.
     END IF;
 
-    IF (SELECT TRUE
-        FROM content
-        WHERE contentID = theContentID AND createBy = theUserID)
+    IF (
+      SELECT TRUE
+      FROM content
+      WHERE contentID = theContentID AND createBy = theUserID)
     THEN
       RETURN TRUE; -- This user is editor and created this item. So is allowed.
     END IF;
 
-    IF (SELECT TRUE
-        FROM thingTag
-        WHERE thingID = theContentID AND tagID = theUserID)
+    IF (
+      SELECT TRUE
+      FROM thingTag
+      WHERE thingID = theContentID AND tagID = theUserID)
     THEN
       RETURN TRUE; -- User is tagged on the item, so allow edits.
     END IF;
@@ -835,9 +839,10 @@ CREATE FUNCTION uploadFileInsert(theUploadFileName    VARCHAR(256), theUploadFil
     VALUES (theUploadFileID, theUploadFileName, theUploadFileSize, theploadFileMimeType, theUploadFilePath, theUser,
             theUser);
 
-    RETURN (SELECT MAX(uploadFileID) AS uploadFileID
-            FROM uploadFile
-            WHERE uploadFileName = theUploadFileName AND uploadFileSize = theUploadFileSize);
+    RETURN (
+      SELECT MAX(uploadFileID) AS uploadFileID
+      FROM uploadFile
+      WHERE uploadFileName = theUploadFileName AND uploadFileSize = theUploadFileSize);
   END;
 
 
@@ -906,9 +911,10 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       -- Delete all tags indirectly related to this item... Tags on thingTag relationships.
       DELETE FROM thingTag
       WHERE thingID IN
-            (SELECT thingTagID
-             FROM thingTag
-             WHERE thingID = theContentID OR tagID = theContentID);
+            (
+              SELECT thingTagID
+              FROM thingTag
+              WHERE thingID = theContentID OR tagID = theContentID);
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       -- Delete direct tags directly related to this item.
@@ -918,9 +924,10 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
 
       -- Delete records for content and graphic files associated with this item.
       DELETE FROM uploadFile
-      WHERE uploadFileID IN (SELECT tagID
-                             FROM thingTag
-                             WHERE thingID = theContentID);
+      WHERE uploadFileID IN (
+        SELECT tagID
+        FROM thingTag
+        WHERE thingID = theContentID);
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       -- Delete the content record
@@ -985,9 +992,11 @@ CREATE FUNCTION contentInsertUpdate(theContentID BIGINT, theTitle VARCHAR(256), 
 
     IF (bInsertMode)
     THEN
-      IF (SELECT (IFNULL((SELECT TRUE
-                          FROM content
-                          WHERE contentTitle = 'ThePig!'), FALSE)) AS bTitleExists)
+      IF (
+        SELECT (IFNULL((
+                         SELECT TRUE
+                         FROM content
+                         WHERE contentTitle = 'ThePig!'), FALSE)) AS bTitleExists)
       THEN
         RETURN -3; -- Title already exists. Must update instead of insert.
       END IF;
@@ -995,13 +1004,16 @@ CREATE FUNCTION contentInsertUpdate(theContentID BIGINT, theTitle VARCHAR(256), 
       INSERT INTO content (contentTitle, contentDescription, contentExcerpt, contentSummary, createBy, updateBy)
       VALUES (theTitle, theDescription, theExcerpt, theSummary, theUserID, theUserID);
 
-      SET theContentID = (SELECT contentID
-                          FROM content
-                          WHERE contentTitle = theTitle);
+      SET theContentID = (
+        SELECT contentID
+        FROM content
+        WHERE contentTitle = theTitle);
     ELSE
-      IF (SELECT (IFNULL((SELECT FALSE
-                          FROM content
-                          WHERE contentID = theContentID), TRUE)) AS bRecordNotFound)
+      IF (
+        SELECT (IFNULL((
+                         SELECT FALSE
+                         FROM content
+                         WHERE contentID = theContentID), TRUE)) AS bRecordNotFound)
       THEN
         RETURN -4; -- Record to be updated does not exist.
       ELSE
@@ -1216,7 +1228,8 @@ CREATE FUNCTION contentAvatarID(theContentID BIGINT)
     DECLARE contentAvatarFileUploadID BIGINT;
     DECLARE contentAvatarTagID BIGINT;
 
-    SET contentAvatarTagID = (SELECT tagIDFromText('ContentAvatar'));
+    SET contentAvatarTagID = (
+      SELECT tagIDFromText('ContentAvatar'));
     SET contentAvatarFileUploadID = (
       SELECT contentThing.tagID
       FROM thingTag contentThing INNER JOIN thingTag avatarTag ON
@@ -1272,9 +1285,10 @@ CREATE FUNCTION tagAttach(theThing BIGINT, theTag BIGINT, theUser BIGINT)
 
     -- Test if tag exists
     -- NOTE: All things can be tags, so check against LUID table instead of tag table.
-    IF ((SELECT LUID
-         FROM LUID
-         WHERE LUID = theTag) > 0)
+    IF ((
+          SELECT LUID
+          FROM LUID
+          WHERE LUID = theTag) > 0)
     THEN
       -- Apply theTag to theThing
       INSERT INTO thingTag (thingID, tagID, createBy, updateBy) VALUES (theThing, theTag, theUser, theUser);
