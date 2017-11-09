@@ -344,7 +344,7 @@ CREATE FUNCTION tagCategoryIDFromTagText(theTag VARCHAR(128))
 
 DROP FUNCTION IF EXISTS tagCategoryInsert;
 CREATE FUNCTION tagCategoryInsert(theTag BIGINT, theCategory BIGINT, theUser BIGINT)
-  RETURNS TINYINT
+  RETURNS BIGINT
   BEGIN
     -- Test if category exists
     IF (tagIsTagCategory(theCategory) = 0)
@@ -482,7 +482,7 @@ CREATE FUNCTION tagInsert(newTag VARCHAR(128), newCategory BIGINT, newDescriptio
     END IF;
 
     -- Associate tag with category...
-    IF (tagCategoryInsert(Result, newCategory, theUser) != 1)
+    IF (tagCategoryInsert(Result, newCategory, theUser) < 1)
     THEN RETURN -5;
     END IF;
 
@@ -494,7 +494,7 @@ DROP FUNCTION IF EXISTS tagProtect;
 CREATE FUNCTION tagProtect(theTag BIGINT, theUser BIGINT)
   RETURNS BIGINT
   BEGIN
-    DECLARE result TINYINT;
+    DECLARE result BIGINT;
     SET result = tagAttach(theTag, tagIDFromText('Protected'), theUser);
 
     IF (result > 0)
@@ -585,9 +585,9 @@ CREATE FUNCTION thingIsTagged(theThing BIGINT, theTag BIGINT)
   RETURNS BOOLEAN
   BEGIN
     IF ((
-          SELECT IFNULL(thingID, FALSE)
+          SELECT IFNULL(thingID, -1)
           FROM thingTag
-          WHERE tagID = theTag AND thingID = theThing) > 0)
+          WHERE tagID = theTag AND thingID = theThing) > -1)
     THEN
       RETURN TRUE;
     ELSE
@@ -812,9 +812,10 @@ CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
         SET canEdit = TRUE;
       ELSE
         -- If item was created by this user, permit contentEditor to act.
-        SET result = (SELECT createBy
-                      FROM content
-                      WHERE contentID = theContentID AND createBy = theUserID);
+        SET result = (
+          SELECT createBy
+          FROM content
+          WHERE contentID = theContentID AND createBy = theUserID);
         IF (IFNULL(result, 0) > 0)
         THEN
           SET canEdit = TRUE;
@@ -1381,20 +1382,26 @@ CREATE VIEW vTag AS
 
 -- Insert required tags to support further creation of tags, etc.
 INSERT INTO tag (tag, tagDescription)
-VALUES ('TagCategory', 'Applied to another tag, indicates that tag is a tag category');
--- TagCategory is itself a tag category.
-INSERT INTO thingTag (tagID, thingID) VALUES (tagCategoryTagID(), tagCategoryTagID());
+VALUES ('TagCategory', 'Applied to another tag, indicates that tag is a tag category.'),
+  ('Status', 'Indication of status including permission, such as Active or CanEdit.'),
+  ('Superuser', 'Superuser has unrestricted ability to modify site data and content, and must be very careful.');
+
+-- TagCategory is itself a tag category. Set category for initial tags.
+INSERT INTO thingTag (thingID, tagID) VALUES (tagCategoryTagID(), tagCategoryTagID()),
+  (tagIDFromText('Status'), tagCategoryTagID()),
+  (tagIDFromText('Superuser'), tagIDFromText('Status')),
+  -- Temporarily make user zero a superuser to enable tagInsert permissions for the rest of initial setup.
+  (0, tagIDFromText('Superuser'));
 
 -- Tags under the 'Status' tag category are used for system, row, content, and media status among other things.
-DO tagInsert('Status', tagIDFromText('TagCategory'),
-             'Indication of status including permission, such as Active or CanEdit.', 0);
 DO tagInsert('Protected', tagIDFromText('Status'), 'Record is protected from edit or delete.', 0);
+
 -- 'Protect' tag is in place, so can use tagProtect going forward.
 DO tagProtect(tagIDFromText('TagCategory'), 0);
 DO tagProtect(tagIDFromText('Status'), 0);
 DO tagProtect(tagIDFromText('Protected'), 0);
 
--- Need status for graphics to indicate primary
+-- Need status for graphics to indicate content avatar
 DO tagProtect(
     tagInsert('ContentAvatar', tagIDFromText('Status'),
               'Tag to indicate main (logo) graphic for a content record.', 0),
@@ -1402,6 +1409,40 @@ DO tagProtect(
 );
 
 
+DROP FUNCTION IF EXISTS userMakeSuperuser;
+CREATE FUNCTION userMakeSuperuser(theUserEmail VARCHAR(256), theUser BIGINT)
+  RETURNS INT
+  BEGIN
+    -- RETURNS:
+    --   Success: 1
+    --   Failure:
+    --     0: Not permitted to make this change, or no roles assigned.
+    --     -1 and lower: Negative count of roles assigned.
+    IF (userIsSuperuser())
+    THEN
+      IF (permitUserRole(userIDFromEmail(theUserEmail), 'TagEditor') > 0)
+      THEN
+        IF (permitUserRole(userIDFromEmail(theUserEmail), 'ContentEditor') > 0)
+        THEN
+          IF (permitUserRole(userIDFromEmail(theUserEmail), 'SiteAdmin') > 0)
+          THEN
+            IF (permitUserRole(userIDFromEmail(theUserEmail), 'Superuser') > 0)
+            THEN
+              RETURN 1;
+            ELSE
+              RETURN -3;
+            END IF;
+          ELSE
+            RETURN -2;
+          END IF;
+        ELSE
+          RETURN -1;
+        END IF;
+      ELSE
+        RETURN 0;
+      END IF;
+    END IF;
+  END;
 
-
+-- TO DO: Create a userRevokeSuperuser function.
 
