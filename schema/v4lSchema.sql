@@ -917,6 +917,21 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
 
     IF (contentCanEdit(theContentID, theUserID))
     THEN
+      -- Delete non-tag records first, since tag records are how we find them.
+      -- Delete records for content and graphic files associated with this item.
+      DELETE FROM uploadFile
+      WHERE uploadFileID IN (
+        SELECT *
+        FROM (SELECT tagID
+              FROM thingTag
+              WHERE thingID = theContentID) AS toDelete);
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
+      -- Delete the content record
+      DELETE FROM content
+      WHERE contentID = theContentID;
+      SET rowsAffected = rowsAffected + ROW_COUNT();
+
       -- Delete all tags indirectly related to this item... Tags on thingTag relationships.
       DELETE FROM thingTag
       WHERE thingID IN
@@ -930,20 +945,6 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       -- Delete direct tags directly related to this item.
       DELETE FROM thingTag
       WHERE thingID = theContentID OR tagID = theContentID;
-      SET rowsAffected = rowsAffected + ROW_COUNT();
-
-      -- Delete records for content and graphic files associated with this item.
-      DELETE FROM uploadFile
-      WHERE uploadFileID IN (
-        SELECT *
-        FROM (SELECT tagID
-              FROM thingTag
-              WHERE thingID = theContentID) AS toDelete);
-      SET rowsAffected = rowsAffected + ROW_COUNT();
-
-      -- Delete the content record
-      DELETE FROM content
-      WHERE contentID = theContentID;
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       RETURN rowsAffected;
