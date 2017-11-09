@@ -1409,40 +1409,55 @@ DO tagProtect(
 );
 
 
-DROP FUNCTION IF EXISTS userMakeSuperuser;
-CREATE FUNCTION userMakeSuperuser(theUserEmail VARCHAR(256), theUser BIGINT)
+DROP FUNCTION IF EXISTS userGrantSuperuser;
+CREATE FUNCTION userGrantSuperuser(grantTo BIGINT, grantBy BIGINT)
   RETURNS INT
   BEGIN
     -- RETURNS:
-    --   Success: 1
-    --   Failure:
-    --     0: Not permitted to make this change, or no roles assigned.
-    --     -1 and lower: Negative count of roles assigned.
-    IF (userIsSuperuser())
+    --   Success: The thingTagID of the user-role relationship.
+    --   Failure: The failure result of tagAttach for the user and role.
+    IF (userIsSuperuser(grantBy))
     THEN
-      IF (permitUserRole(userIDFromEmail(theUserEmail), 'TagEditor') > 0)
-      THEN
-        IF (permitUserRole(userIDFromEmail(theUserEmail), 'ContentEditor') > 0)
-        THEN
-          IF (permitUserRole(userIDFromEmail(theUserEmail), 'SiteAdmin') > 0)
-          THEN
-            IF (permitUserRole(userIDFromEmail(theUserEmail), 'Superuser') > 0)
-            THEN
-              RETURN 1;
-            ELSE
-              RETURN -3;
-            END IF;
-          ELSE
-            RETURN -2;
-          END IF;
-        ELSE
-          RETURN -1;
-        END IF;
-      ELSE
-        RETURN 0;
-      END IF;
+      RETURN permitUserRole(grantTo, 'Superuser');
     END IF;
   END;
 
--- TO DO: Create a userRevokeSuperuser function.
+DROP FUNCTION IF EXISTS userRevokeSuperuser;
+CREATE FUNCTION userRevokeSuperuser(revokeFrom BIGINT, revokeBy BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    -- RETURNS:
+    --   Success: thingTagID for row that was deleted.
+    --   Failure:
+    --     0: User 'revokeBy' is not authorized to revoke this permission.
+    --     -1: Permission not found to revoke.
+    DECLARE permissionTagID BIGINT;
+    DECLARE roleTagID BIGINT;
+    IF (userIsSuperuser(revokeBy))
+    THEN
+      SET roleTagID = tagIDFromText('Superuser');
+      SET permissionTagID = (SELECT thingTagID
+                             FROM thingTag
+                             WHERE thingID = revokeFrom AND tagID = roleTagID);
+      IF (permissionTagID > 0)
+      THEN
+        DELETE FROM thingTag
+        WHERE thingID = revokeFrom AND tagID = roleTagID;
+        RETURN permissionTagID;
+      ELSE
+        RETURN -1;
+      END IF;
+    ELSE
+      RETURN 0;
+    END IF;
+  END;
 
+/* -- ---------------------------------------------------------------------------------------------------------------
+-- AT THIS POINT: Administrator should self-register an account via the web site. then return here to continue data
+--                setup under their own account.
+--
+-- IMPORTANT:     Superuser privileges must be removed from user zero.
+--
+SELECT userGrantSuperuser(userIDFromEmail('jhawkins@locutius.com'), 0);
+SELECT userRevokeSuperuser(0, 0);
+*/ -- ---------------------------------------------------------------------------------------------------------------
