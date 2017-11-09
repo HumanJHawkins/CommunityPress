@@ -682,6 +682,9 @@ CREATE FUNCTION addOrUpdateSession(newSessionID BINARY(43), newSessionIPAddress 
     -- RETURNS:
     --   sessionID.
     -- ------------------------------------------------------
+
+    -- TO DO: Add check for password included in session. Either strip from data, or fail if password included.
+
     IF (
       SELECT sessionID IS NOT NULL
       FROM session
@@ -807,7 +810,7 @@ CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
     IF (userIsContentEditor(theUserID))
     THEN
       -- If we are inserting a new item, permit contentEditor to act.
-      IF (IFNULL(theContentID, 0) > 0)
+      IF (IFNULL(theContentID, 0) < 1)
       THEN
         SET canEdit = TRUE;
       ELSE
@@ -842,8 +845,8 @@ CREATE FUNCTION uploadFileInsert(theUploadFileName    VARCHAR(256), theUploadFil
                                  theploadFileMimeType VARCHAR(256), theUploadFilePath TEXT, theUser BIGINT)
   RETURNS BIGINT
   BEGIN
-    INSERT INTO uploadFile (uploadFileID, uploadFileName, uploadFileSize, uploadFileMimeType, uploadFilePath, createBy, updateBy)
-    VALUES (theUploadFileID, theUploadFileName, theUploadFileSize, theploadFileMimeType, theUploadFilePath, theUser,
+    INSERT INTO uploadFile (uploadFileName, uploadFileSize, uploadFileMimeType, uploadFilePath, createBy, updateBy)
+    VALUES (theUploadFileName, theUploadFileSize, theploadFileMimeType, theUploadFilePath, theUser,
             theUser);
 
     RETURN (
@@ -862,7 +865,6 @@ CREATE FUNCTION uploadFileDelete(theUploadFileID BIGINT, theUserID BIGINT)
     DECLARE rowsAffected INT DEFAULT 0;
     DECLARE theContentRelationshipID BIGINT DEFAULT -1;
     DECLARE theContentID BIGINT DEFAULT -1;
-    DECLARE bCanEdit BOOLEAN DEFAULT FALSE;
 
     SELECT
       thingTag.thingTagID,
@@ -918,10 +920,11 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       -- Delete all tags indirectly related to this item... Tags on thingTag relationships.
       DELETE FROM thingTag
       WHERE thingID IN
-            (
-              SELECT thingTagID
-              FROM thingTag
-              WHERE thingID = theContentID OR tagID = theContentID);
+            (SELECT *
+             FROM (
+                    SELECT thingTagID
+                    FROM thingTag
+                    WHERE thingID = theContentID OR tagID = theContentID) AS toDelete);
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       -- Delete direct tags directly related to this item.
@@ -932,9 +935,10 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       -- Delete records for content and graphic files associated with this item.
       DELETE FROM uploadFile
       WHERE uploadFileID IN (
-        SELECT tagID
-        FROM thingTag
-        WHERE thingID = theContentID);
+        SELECT *
+        FROM (SELECT tagID
+              FROM thingTag
+              WHERE thingID = theContentID) AS toDelete);
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       -- Delete the content record
@@ -1458,6 +1462,6 @@ CREATE FUNCTION userRevokeSuperuser(revokeFrom BIGINT, revokeBy BIGINT)
 --
 -- IMPORTANT:     Superuser privileges must be removed from user zero.
 --
-SELECT userGrantSuperuser(userIDFromEmail('jhawkins@locutius.com'), 0);
+SELECT userGrantSuperuser(userIDFromEmail('v4l.webmaster@gmail.com'), 0);
 SELECT userRevokeSuperuser(0, 0);
 */ -- ---------------------------------------------------------------------------------------------------------------

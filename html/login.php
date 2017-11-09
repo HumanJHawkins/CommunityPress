@@ -112,7 +112,8 @@ function updateUserSession()
   if ((isset($_SESSION["userID"])) && $_SESSION["userID"] > 1) {
     $theUserID = $_SESSION["userID"];
   }
-  
+
+  // TO DO: Add check for inclusion of password in session. Strip from data before encoding if password is present.
   $sql = 'SELECT addOrUpdateUser(
     \'' . $_SESSION["userEmail"] .
     '\', \'' . $_SESSION['saltHash'] .

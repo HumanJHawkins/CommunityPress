@@ -20,7 +20,6 @@ debugOut('$action', $action);
 
 // pageContentID for Edit/Delete comes from $_GET. For Update and insert comes from $_POST. Consolidate.
 consolidatePageContentID();
-debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
 
 // UserID needed for validating permission to edit.
 if ((!isset($_SESSION["userID"])) || ($_SESSION["userID"] < 1)) {
@@ -30,7 +29,6 @@ debugOut('$_SESSION["userID"]', $_SESSION["userID"]);
 
 $contentFilename = 'Select File';
 $contentFileGraphic = 'Select Graphic';
-
 $contentTitle = '';
 $contentDescription = '';
 $contentExcerpt = '';
@@ -104,12 +102,16 @@ debugOut('$canEdit', $canEdit);
 
 // Set variables for input form and continue to display.
 if ($action == 'delete' && $canEdit) {
+  debugOut('************************************************************************************************');
+  debugOut('************************************************************************************************');
+  debugOut('*** In content delete! *************************************************************************');
   // SQL contentDelete function handles delete of content record, uploadFile records, and thingTag records.
   // First delete the files, then delete the records.
   $sql = 'CALL procGetContentFiles(?, ?)';
   $sqlParamArray = [$_POST["pageContentID"], $_SESSION['userID']];
   $result = getOnePDOTable($pdo, $sql, $sqlParamArray, PDO::FETCH_ASSOC);
-
+  debugOut('Array of files to delete');
+  outputArray($result);
   foreach ($result as $index => $row) {
     unlink(realpath($row["uploadFilePath"] . strval($row['uploadFileID'])));
 
@@ -120,7 +122,8 @@ if ($action == 'delete' && $canEdit) {
 
   $sql = 'SELECT contentDelete(?, ?)';
   $sqlParamsArray = [$_POST["pageContentID"], $_SESSION["userID"]];
-  $result = getOnePDORow($pdo, $sql, $sqlParamsArray);
+  $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+  debugOut('$result (of delete)', $result);
   header('Location: ' . '/content.php');
   exit();
 } else if ($action == 'insert' || $action == 'update') {
