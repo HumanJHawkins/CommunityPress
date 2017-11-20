@@ -639,9 +639,9 @@ function updateUserSession($pdo) {
     $theUserID = $_SESSION["userID"];
   }
 
-  tempPass = '';
+  $tempPass = '';
   if (isset($_SESSION["password"])) {
-    tempPass = $_SESSION["password"];
+    $tempPass = $_SESSION["password"];
     $_SESSION["password"] = '';
     unset($_SESSION["password"]);
   }
@@ -651,10 +651,10 @@ function updateUserSession($pdo) {
       '\', \'' . session_encode() . '\',' . $theUserID . ')';
   debugOut($sql);
 
-  if (tempPass !== '') {
-    $_SESSION["password"] = tempPass;
-    tempPass = '';
-    unset(tempPass);
+  if ($tempPass !== '') {
+    $_SESSION["password"] = $tempPass;
+    $tempPass = '';
+    unset($tempPass);
   }
 
   return getOnePDORow($pdo, $sql);
