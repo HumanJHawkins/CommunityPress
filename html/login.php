@@ -1,10 +1,5 @@
 <?php
 include_once 'sessionStart.php';
-/*
-if((!isset($_SESSION['lastURL'])) || ($_SESSION['lastURL'] == '')) {
-  $_SESSION['lastURL'] == $GLOBALS['SITE_URL'];
-}
-*/
 
 $pdo        = getDBPDO();
 
@@ -18,7 +13,6 @@ const LOGIN_VERIFY_DIALOG_CODE_INCORRECT = 'LOGIN_VERIFY_DIALOG_CODE_INCORRECT';
 const LOGIN_VERIFY_CODE = 'LOGIN_VERIFY_CODE';
 const LOGIN_PASSWORD_RESET = 'LOGIN_PASSWORD_RESET';
 const LOGIN_LOGOUT = 'LOGIN_LOGOUT';
-
 
 
 $dlgHTML = '';
