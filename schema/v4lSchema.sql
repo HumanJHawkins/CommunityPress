@@ -216,7 +216,7 @@ CREATE TABLE user
   CONSTRAINT user_userName_uindex
   UNIQUE (userName)
 )
-  COMMENT 'Active status and LicenseAccepted are tags. LicenseAcceptDate is updateTime of TagUse for user / LicenseAccept';
+  COMMENT 'Confirmed status and LicenseAccepted are tags. LicenseAcceptDate is updateTime of TagUse for user / LicenseAccept';
 
 INSERT INTO user (userEmail, userName, sessionID) VALUES ('nobody@nowhere.none', 'nobody', 0);
 
@@ -596,11 +596,11 @@ CREATE FUNCTION thingIsTagged(theThing BIGINT, theTag BIGINT)
   END;
 
 
-DROP FUNCTION IF EXISTS userIsActive;
-CREATE FUNCTION userIsActive(theUser BIGINT)
+DROP FUNCTION IF EXISTS userIsConfirmed;
+CREATE FUNCTION userIsConfirmed(theUser BIGINT)
   RETURNS BOOLEAN
   BEGIN
-    IF (thingIsTagged(theUser, tagIDFromText('Active')))
+    IF (thingIsTagged(theUser, tagIDFromText('Confirmed')))
     THEN
       RETURN TRUE;
     END IF;
@@ -1130,7 +1130,7 @@ CREATE PROCEDURE procGetUserByID(theUserID BIGINT)
       DATEDIFF(saltHash.updateTime, NOW()) AS saltHashAge,
       sessionData,
       reputation,
-      userIsActive(theUserID)              AS isActive,
+      userIsConfirmed(theUserID)           AS isConfirmed,
       userIsTagEditor(theUserID)           AS isTagEditor,
       userIsContentEditor(theUserID)       AS isContentEditor,
       userIsSiteAdmin(theUserID)           AS isSiteAdmin,
@@ -1173,11 +1173,10 @@ CREATE PROCEDURE procServerConfig()
   BEGIN
     SELECT
       tagCategoryTagID()               AS tagCategoryTagID,
-      tagIDFromText('Active')          AS tagActiveID,
-      tagIDFromText('Inactive')        AS tagInactiveID,
+      tagIDFromText('Confirmed')       AS tagConfirmedID,
       tagIDFromText('TagEditor')       AS tagEditorID,
       tagIDFromText('Superuser')       AS tagSuperuserID,
-      tagIDFromText('LicenseAccepted') AS tagLicenseAccepted,
+      tagIDFromText('LicenseAccepted') AS tagLicenseAcceptedID,
       CURRENT_TIMESTAMP()              AS sessionTimestamp;
   END;
 
@@ -1388,7 +1387,7 @@ CREATE VIEW vTag AS
 -- Insert required tags to support further creation of tags, etc.
 INSERT INTO tag (tag, tagDescription)
 VALUES ('TagCategory', 'Applied to another tag, indicates that tag is a tag category.'),
-  ('Status', 'Indication of status including permission, such as Active or CanEdit.'),
+  ('Status', 'Indication of status including permission, such as Confirmed or CanEdit.'),
   ('Superuser', 'Superuser has unrestricted ability to modify site data and content, and must be very careful.');
 
 -- TagCategory is itself a tag category. Set category for initial tags.

@@ -41,23 +41,28 @@ echo '<br />Email: '.$_SESSION["userEmail"];
 // echo '<br />Reputation: '.$_SESSION["userReputation"];
 echo '<p></p>';
 
-IF (!$_SESSION["isActive"]) {
-    echo '<p>Registration is inactive. Please check your e-mail for a verification code.</p>';
+// TO DO: Reorganize this message. Include licence status and date.
+if (!$_SESSION["isConfirmed"]) {
+  echo '<p>Registration is not confirmed. Please check your e-mail for a verification code.</p>';
 } else {
-    echo '<p>Registration is active with verified email.</p>'.
-        '<p>All active users are encouraged to create and share content, comment '.
-        'and discuss, write reviews, and join in our community.</p>';
-  IF ($_SESSION["isSuperuser"]) {
+  echo '<p>Registration/email is confirmed.</p>';
+  if ($_SESSION["isSuperuser"]) {
         echo '<p>Additionally, you are a superuser, permitted for all functions.</p>';
     } elseif ($_SESSION["isTagEditor"] || $_SESSION["isUserEditor"] || $_SESSION["isSiteDeveloper"]) {
       echo '<p>Additionally, you have the following permissions:</p><ul>';
-      if($_SESSION["isTagEditor"]) {echo 'You are a Tag Editor, permitted to create and modify tags.';}
-      if($_SESSION["isUserEditor"]) {echo 'You are a User Editor, permitted to modify user accounts.';}
-      if($_SESSION["isSiteDeveloper"]) {echo 'You are a Site Developer, permitted to view and change most data.';}
+    if ($_SESSION["isTagEditor"]) {
+      echo '<li>You are a Tag Editor, permitted to create and modify tags.</li>';
+    }
+    if ($_SESSION["isContentEditor"]) {
+      echo '<li>You are a Content Editor, permitted to create and modify content.</li>';
+    }
+    if ($_SESSION["isSiteAdmin"]) {
+      echo '<li>You are a Site Administrator, permitted to view and edit users and other data.</li>';
+    }
       echo '</ul>';
     }
 
- //   IF (!$_SESSION["isLicensed"]) {
+  //   if (!$_SESSION["isLicensed"]) {
  //       echo '<p>User has accepted the site license agreement.</p>';
  //   }
 }

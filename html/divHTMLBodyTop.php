@@ -19,7 +19,7 @@ if (isset($_SESSION['userID']) && $_SESSION['userID'] > 0) {
 
   echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="login.php?action=logout">Logout</a></div>';
 
-  if (!$_SESSION['isActive']) {
+  if (!$_SESSION['isConfirmed']) {
     echo '<div class="form-inline">';
     echo '<form action="login.php" method="post">';
     echo '<input type="hidden" name="loginStep" value="LOGIN_VERIFY_CODE" />';

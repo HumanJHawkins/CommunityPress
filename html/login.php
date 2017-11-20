@@ -19,135 +19,12 @@ const LOGIN_VERIFY_CODE = 'LOGIN_VERIFY_CODE';
 const LOGIN_PASSWORD_RESET = 'LOGIN_PASSWORD_RESET';
 const LOGIN_LOGOUT = 'LOGIN_LOGOUT';
 
-function loginDisplayLoginDialog()
-{
-  // Display the login dialog with password text conditional on error status.
-  $placeholder = 'Enter Password';
-  if (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_DIALOG_PASSWORD_INCORRECT)) {
-    $placeholder = 'Password Invalid. Please try again.';
-  }
-  $dlgHTML = file_get_contents('loginDlgMain.html');
-  $dlgHTML = str_replace("STRING_REPLACE_LAST_URL", $_SESSION['lastURL'], $dlgHTML);
-  $dlgHTML = str_replace("STRING_REPLACE_PLACEHOLDER", $placeholder, $dlgHTML);
-  
-  htmlStart('Login or Register', false);
-  echo $dlgHTML;
-}
-
-function loginDisplayVerifyDialog()
-{
-  // Display the verification dialog with verification code text conditional on error status.
-  $placeholder = 'Enter Verification Code';
-  if (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_VERIFY_DIALOG_CODE_INCORRECT)) {
-    $placeholder = 'Verification Code Invalid. Please try again.';
-  }
-  $dlgHTML = file_get_contents('loginDlgVerify.html');
-  $dlgHTML = str_replace("STRING_REPLACE_EMAIL", $_SESSION['userEmail'], $dlgHTML);
-  $dlgHTML = str_replace("STRING_REPLACE_LAST_URL", $_SESSION['lastURL'], $dlgHTML);
-  $dlgHTML = str_replace("STRING_REPLACE_PLACEHOLDER", $placeholder, $dlgHTML);
-  
-  htmlStart('Confirm Account', false);
-  echo $dlgHTML;
-}
-
-function resetLoginProcess($errorText = '')
-{
-  destroySession();
-  if ($errorText != '') {
-    debugOut('ERROR: ' . $errorText);
-  }
-  
-  // NOTE: Technically some cases might be LOGIN_DIALOG_PASSWORD_INCORRECT.
-  //  However, we shouldn't get here without an error, so that would be a false message more often than not.
-  $_SESSION["loginStep"] = LOGIN_DIALOG_STANDARD;
-  returnToLogin();
-  exit();
-}
-
-function getVerifyCodeEmailHTML($verifyCode, $htmlFile)
-{
-  $dlgHTML = file_get_contents($htmlFile);
-  
-  $dlgHTML = str_replace("PLACEHOLDER_SALUTATION", $_SESSION["userEmail"], $dlgHTML);
-  $dlgHTML = str_replace("PLACEHOLDER_SITENAME_CASUAL", $GLOBALS["SITE_URL_CASUAL"], $dlgHTML);
-  $dlgHTML = str_replace("PLACEHOLDER_CONFIRM_CODE", $verifyCode, $dlgHTML);
-  $dlgHTML = str_replace("PLACEHOLDER_VERIFICATION_EMAIL_SIGNATURE", $GLOBALS["VERIFICATION_EMAIL_SIGNATURE"], $dlgHTML);
-  
-  return $dlgHTML;
-}
-
-function sendVerifyCode($mailBodyText, $htmlFile)
-{
-  debugOut('Creating and sending verification code.');
-  $verifyCode = verifyCode();
-  $_SESSION["verifyCodeHash"] = password_hash($verifyCode, PASSWORD_DEFAULT,
-    ["cost" => $GLOBALS['VERIFYCODE_HASH_COST']]);
-  
-  // $mailBodyText = file_get_contents('verifyCodeEmailText.text');
-  $mailBodyHTML = getVerifyCodeEmailHTML($verifyCode, $htmlFile);
-  
-  debugOut('$_SESSION["userEmail"]', $_SESSION["userEmail"]);
-  debugOut('$_SESSION["verifyCodeHash"]', $_SESSION["verifyCodeHash"]);
-  debugOut('$verifyCode', $verifyCode);
-  // Uses Mailgun. Mailgun object created in config to keep security and access keys in the same file.
-  //
-  // TO DO:
-  //   Add text message option.
-  //   Switch to Amazon's mail solution?
-  
-  sendEmail($GLOBALS['VERIFICATION_EMAIL_FROM'], $_SESSION["userEmail"], $GLOBALS['VERIFICATION_EMAIL_SUBJECT'],
-    $mailBodyText, $mailBodyHTML);
-}
-
-function returnToLogin()
-{
-  debugOut('function returnToLogin(), DOCUMENT_URI', $_SERVER['DOCUMENT_URI']);
-  header('Location: ' . $GLOBALS['SITE_URL'] . '/login.php');
-}
-
-function updateUserSession()
-{
-  $pdo        = getDBPDO();
-  $theUserID = 0;
-  if ((isset($_SESSION["userID"])) && $_SESSION["userID"] > 1) {
-    $theUserID = $_SESSION["userID"];
-  }
-
-  // TO DO: Add check for inclusion of password in session. Strip from data before encoding if password is present.
-  $sql = 'SELECT addOrUpdateUser(
-    \'' . $_SESSION["userEmail"] .
-    '\', \'' . $_SESSION['saltHash'] .
-    '\', \'' . session_id() .
-    '\', \'' . ipAddress() .
-    '\', \'' . session_encode() .
-    '\',' . $theUserID . ')';
-  
-  debugOut($sql);
-  
-  return getOnePDORow($pdo, $sql);
-}
-
-function registerUser()
-{
-  $_SESSION['saltHash'] = password_hash($_POST["password"], PASSWORD_DEFAULT, ["cost" => $GLOBALS['PASSWORD_HASH_COST']]);
-  debugOut('$_SESSION[\'saltHash\']', $_SESSION['saltHash']);
-  
-  $row = updateUserSession();
-  if ($row) {
-    // Temporarily save the password for a reload.
-    $_SESSION["password"] = $_POST["password"];
-    $_POST["password"] = '';
-    unset($_POST["password"]);
-  } else {
-    debugOut('registerUser', 'No result returned. Handle error.');
-  }
-}
 
 
 $dlgHTML = '';
 $sql = '';
 $debugMsg = '';
-$_SESSION["isActive"] = false;
+$_SESSION["isConfirmed"] = false;
 
 // Use $_POST consistently for passwords because because POST is
 //   unset automatically if we forget.
@@ -165,6 +42,7 @@ if ((isset($_POST["loginStep"])) && ($_POST["loginStep"] != '')) {
 } else {
   // $_SESSION["loginStep"] = '';
 }
+
 // Allow $_GET to override $_POST from loginDlgVerify, etc. Allows handling of
 //  various related functionality.
 if (isset($_GET["action"])) {
@@ -219,17 +97,17 @@ if (
         $_SESSION[$key] = $val;
       }
       debugSectionOut('LOGIN_VERIFY_PASSWORD: After the kluge **************************************');
-      
-      updateUserSession();
-      
-      if ($_SESSION['isActive']) {
+
+      updateUserSession($pdo);
+
+      if ($_SESSION['isConfirmed']) {
         if(isset($_SESSION["loginStep"])) {
           unset($_SESSION["loginStep"]);
         }
         header('Location: ' . $_SESSION['lastURL']);
         exit();
       } else {
-        debugOut('Password verified, but user inactive (not validated/confirmed).');
+        debugOut('Password verified, but user unconfirmed).');
         $_SESSION["loginStep"] = LOGIN_VERIFY_SEND_CODE;
         returnToLogin();
         exit();
@@ -261,7 +139,7 @@ if (
   }
 } elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_REGISTER_USER)) {
   debugSectionOut('LOGIN_REGISTER_USER');
-  registerUser();
+  registerUser($pdo);
   $_SESSION["loginStep"] = LOGIN_VERIFY_PASSWORD; // Need to run through LOGIN_VERIFY_PASSWORD to load data for new user.
   returnToLogin();
   exit();
@@ -302,10 +180,12 @@ if (
       
       debugOut('Email Verified.');
       // Confirm the user
-      $sql = 'SELECT tagAttach(' . $_SESSION["userID"] . ', ' . $_SESSION["tagActiveID"] . ', ' . $_SESSION["userID"] . ')';
+      $sql =
+          'SELECT tagAttach(' . $_SESSION["userID"] . ', ' . $_SESSION["tagConfirmedID"] . ', ' . $_SESSION["userID"] .
+          ')';
       $result = getOnePDORow($pdo, $sql);
-      
-      $_SESSION['isActive'] = true;
+
+      $_SESSION['isConfirmed'] = true;
       header('Location: ' . $_SESSION['lastURL']);
       exit();
     } else {
