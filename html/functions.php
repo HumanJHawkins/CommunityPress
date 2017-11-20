@@ -639,11 +639,23 @@ function updateUserSession($pdo) {
     $theUserID = $_SESSION["userID"];
   }
 
-  // TO DO: Add check for inclusion of password in session. Strip from data before encoding if password is present.
+  tempPass = '';
+  if (isset($_SESSION["password"])) {
+    tempPass = $_SESSION["password"];
+    $_SESSION["password"] = '';
+    unset($_SESSION["password"]);
+  }
+
   $sql = 'SELECT addOrUpdateUser(
     \'' . $_SESSION["userEmail"] . '\', \'' . $_SESSION['saltHash'] . '\', \'' . session_id() . '\', \'' . ipAddress() .
       '\', \'' . session_encode() . '\',' . $theUserID . ')';
   debugOut($sql);
+
+  if (tempPass !== '') {
+    $_SESSION["password"] = tempPass;
+    tempPass = '';
+    unset(tempPass);
+  }
 
   return getOnePDORow($pdo, $sql);
 }
