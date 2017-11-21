@@ -79,12 +79,19 @@ if (
       $_POST["password"] = '';
       unset($_POST["password"]);
       debugOut('Password verified.');
-      
+
+      debugOut('Before session_decode()', '', false, true, true, 3);
+      outputArray($_SESSION, false, null, true, 3);
+
       session_decode($row['sessionData']); // Cover anything we may not have saved directly in the DB.
       // TO DO: This is unnecessarily complex, and probably already unnecessary (added debugOut test below)
       //  1. Create a function to update the $_SESSION record in the database
       //  2. Make sure everywhere we are saving one-off variables, we are storing them in the session and saving the session.
       //  3. remove this
+
+      debugOut('After session_decode()', '', false, true, true, 3);
+      outputArray($_SESSION);
+
       debugSectionOut('LOGIN_VERIFY_PASSWORD: Before the kluge *************************************');
       unset($row['sessionData']);
       foreach ($row as $key => $val) {

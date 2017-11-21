@@ -381,9 +381,13 @@ function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null
   mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML, $mailCC, $mailBCC, $mailAttachmentsArray);
 }
 
-function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $showRowCount = true) {
-  // Will this make the world explode? Let's see...
-  // ksort($GLOBALS);
+
+function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $showRowCount = true, $debugLevel = 1) {
+  // Filter output based on config debug level.
+  if ($GLOBALS['DEBUG_FILTER'] < $debugLevel) {
+    return;
+  }
+
   $rowCount = 0;
   $prefix = '';
   if (is_array($theArray)) {
@@ -440,7 +444,13 @@ function debugTimestamp() {
   return $time->format('YmdHis');
 }
 
-function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $timestamp = true) {
+
+function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $timestamp = true, $debugLevel = 1) {
+  // Filter output based on config debug level.
+  if ($GLOBALS['DEBUG_FILTER'] < $debugLevel) {
+    return;
+  }
+
   if ($prefix) {
     if ($heading == '') {
       $heading = debugPrefix();
@@ -464,7 +474,13 @@ function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $t
   error_log($heading . PHP_EOL, 3, $GLOBALS['LOG_FILE_PATH']);
 }
 
-function debugSectionOut($sectionTitle) {
+
+function debugSectionOut($sectionTitle, $debugLevel = 1) {
+  // Filter output based on config debug level.
+  if ($GLOBALS['DEBUG_FILTER'] < $debugLevel) {
+    return;
+  }
+
   debugOut('', '', false, false, false);
   debugOut('***** ' . $sectionTitle . ':');
   debugOut('*****   $_SESSION:');
