@@ -1,5 +1,5 @@
 <?php
-include 'pageHeader.php';
+include_once 'sessionStart.php';
 htmlStart('Terms and Conditions');
 ?>
 

@@ -43,3 +43,4 @@ if (session_start()) {
   }
 };
 
+setLastURL();

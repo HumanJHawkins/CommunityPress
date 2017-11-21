@@ -1,5 +1,5 @@
 <?php
-include 'pageHeader.php';
+include_once 'sessionStart.php';
 $pdo        = getDBPDO();
 
 // Action determined from GET directly, else via POST. Will be:

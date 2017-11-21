@@ -24,6 +24,7 @@ function mailgunSend($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = nu
   $mg->sendMessage($GLOBALS['MAILGUN_MAIL_DOMAIN'], $sendArray);
 }
 
+
 function handleDeleteAvatar($pdo, $existingAvatarPath, $existingAvatarID) {
   if ($existingAvatarID > 0) {
     unlink(realpath($existingAvatarPath . strval($existingAvatarID)));
@@ -36,6 +37,7 @@ function handleDeleteAvatar($pdo, $existingAvatarPath, $existingAvatarID) {
     return $result;
   }
 }
+
 
 function handleUploadAvatar($pdo, $contentRecordID, $existingAvatarPath, $existingAvatarID) {
   /* -----------------------------------------------------------------------------
@@ -110,6 +112,7 @@ function handleUploadAvatar($pdo, $contentRecordID, $existingAvatarPath, $existi
   return $graphicFileID;
 }
 
+
 function handleUploadContent($pdo) {
   /* -----------------------------------------------------------------------------
   -- Author       Jeff Hawkins
@@ -142,6 +145,7 @@ function handleUploadContent($pdo) {
   return handleUploadFile($pdo, 'contentFile', $GLOBALS['CONTENT_STORE_DIRECTORY']);
 }
 
+
 function handleUploadFile($pdo, $theFormField, $theDestinationPath) {
   /* -----------------------------------------------------------------------------
   -- Author       Jeff Hawkins
@@ -168,7 +172,6 @@ function handleUploadFile($pdo, $theFormField, $theDestinationPath) {
   -- ---------------------------------------------------------------------------*/
   if (isset($_FILES[$theFormField]['name']) && $_FILES[$theFormField]['name'] != '') {
     if ($_FILES[$theFormField]['error'] == '' || $_FILES[$theFormField]['error'] == UPLOAD_ERR_OK) {
-
       debugOut('*** handleUploadFile *****************************************************************************');
       debugOut('tmp_name', $_FILES[$theFormField]['tmp_name']);
       debugOut('basename(name)', basename($_FILES[$theFormField]['name']));
@@ -218,6 +221,7 @@ function handleUploadFile($pdo, $theFormField, $theDestinationPath) {
   }
 }
 
+
 function consolidatePageContentID() {
   if ((isset($_GET["pageContentID"])) && ($_GET["pageContentID"] > 0)) {
     debugOut('$_GET["pageContentID"]', $_GET["pageContentID"]);
@@ -229,6 +233,7 @@ function consolidatePageContentID() {
   }
   debugOut('$_POST["pageContentID"]', $_POST["pageContentID"]);
 }
+
 
 function tagCategorySelector($pdo) {
   $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
@@ -244,6 +249,7 @@ function tagCategorySelector($pdo) {
   }
   echo '</select>';
 }
+
 
 function tagSelector($pdo, $tagCategoryID) {
   $sql = 'SELECT DISTINCT tagID, tag FROM vTag';
@@ -264,6 +270,7 @@ function tagSelector($pdo, $tagCategoryID) {
   echo '</select>';
 }
 
+
 function getMySQLiConnection() {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   $connection =
@@ -279,11 +286,13 @@ function getMySQLiConnection() {
   return $connection;
 }
 
+
 function getDBPDO() {
   $pdo = new PDO($GLOBALS['DB_DSN'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], $GLOBALS['DB_OPTIONS']);
 
   return $pdo;
 }
+
 
 function getPDOResults($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   debugOut('***************************************************************************************************');
@@ -313,6 +322,7 @@ function getPDOResults($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETC
   return $result;
 }
 
+
 function getOnePDOTable($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   $result = getPDOResults($pdo, $sql, $sqlParamArray, $arrayType);
   debugOut('Array returned via: getOnePDOTable as $result[0].');
@@ -320,6 +330,7 @@ function getOnePDOTable($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FET
     return $result[0];
   }
 }
+
 
 function getOnePDORow($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   $result = getPDOResults($pdo, $sql, $sqlParamArray, $arrayType);
@@ -329,6 +340,7 @@ function getOnePDORow($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH
   }
 }
 
+
 function getOnePDOValue($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FETCH_BOTH) {
   $result = getPDOResults($pdo, $sql, $sqlParamArray, $arrayType);
   debugOut('Array returned via: getOnePDOValue as $result[0][0][0].');
@@ -336,6 +348,7 @@ function getOnePDOValue($pdo, $sql, $sqlParamArray = null, $arrayType = PDO::FET
     return $result[0][0][0];
   }
 }
+
 
 function getMySQLiResults($connection, $sql) {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
@@ -365,15 +378,18 @@ function getMySQLiResults($connection, $sql) {
   return $resultSet;
 }
 
+
 function getOneMySQLiTable($connection, $sql) {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   return getMySQLiResults($connection, $sql)[0];
 }
 
+
 function getOneMySQLiRow($connection, $sql) {
   // This and all other MySQLi use is deprecated in this repo. See PDO equivalents.
   return getMySQLiResults($connection, $sql)[0][0];
 }
+
 
 function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null, $mailCC = null, $mailBCC = null, $mailAttachmentsArray = null) {
   // Abstracted here to allow easy switch to other mail services.
@@ -384,7 +400,7 @@ function sendEmail($mailFrom, $mailTo, $mailSubject, $mailText, $mailHTML = null
 
 function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $showRowCount = true, $debugLevel = 1) {
   // Filter output based on config debug level.
-  if ($GLOBALS['DEBUG_FILTER'] < $debugLevel) {
+  if ($GLOBALS['DEBUG_FILTER'] >= $debugLevel) {
     return;
   }
 
@@ -402,20 +418,21 @@ function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $
       if (is_object($val)) {
         $arrayBreadcrumbs[] = $key;
         $val = get_object_vars($val);
-        debugOut($prefix . $key, 'Object (row count: ' . count($val) . ')', $echo);
+        debugOut($prefix . $key, 'Object (row count: ' . count($val) . ')', $echo, true, true, $debugLevel);
       } elseif (is_array($val)) {
         $arrayBreadcrumbs[] = $key;
-        debugOut($prefix . $key, 'Array  (row count: ' . count($val) . ')', $echo);
+        debugOut($prefix . $key, 'Array  (row count: ' . count($val) . ')', $echo, true, true, $debugLevel);
       } else {
         // Avoid output of DB_PASSWORD, etc.
         if (strpos(strtolower($key), 'password') !== false) {
           $val = '*******************';
         }
-        debugOut($prefix . $key, $val, $echo);
+        debugOut($prefix . $key, $val, $echo, true, true, $debugLevel);
       }
       if (is_array($val)) {
         if ($theArray == $val) { // Arrays can contain references to themselves. Prevent endless recursion
-          debugOut($prefix . $key, 'Not shown. Recursing this would create an infinite loop', $echo);
+          debugOut($prefix .
+              $key, 'Not shown. Recursing this would create an infinite loop', $echo, true, true, $debugLevel);
         } else {
           $rowCount += outputArray($val, $echo, $arrayBreadcrumbs);
         }
@@ -429,6 +446,7 @@ function outputArray($theArray, $echo = false, array $arrayBreadcrumbs = null, $
   return $rowCount;
 }
 
+
 function debugPrefix() {
   $debugPrefix = ltrim($_SERVER['DOCUMENT_URI'], '/');
   if (isset($_SESSION['loginStep'])) {
@@ -437,6 +455,7 @@ function debugPrefix() {
 
   return $debugPrefix;
 }
+
 
 function debugTimestamp() {
   $time = new DateTime();
@@ -447,7 +466,7 @@ function debugTimestamp() {
 
 function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $timestamp = true, $debugLevel = 1) {
   // Filter output based on config debug level.
-  if ($GLOBALS['DEBUG_FILTER'] < $debugLevel) {
+  if ($GLOBALS['DEBUG_FILTER'] >= $debugLevel) {
     return;
   }
 
@@ -477,23 +496,25 @@ function debugOut($heading = '', $detail = '', $echo = false, $prefix = true, $t
 
 function debugSectionOut($sectionTitle, $debugLevel = 1) {
   // Filter output based on config debug level.
-  if ($GLOBALS['DEBUG_FILTER'] < $debugLevel) {
+  if ($GLOBALS['DEBUG_FILTER'] >= $debugLevel) {
     return;
   }
 
-  debugOut('', '', false, false, false);
-  debugOut('***** ' . $sectionTitle . ':');
-  debugOut('*****   $_SESSION:');
-  outputArray($_SESSION);
-  debugOut('*****   $_POST:');
-  outputArray($_POST);
+  debugOut('', '', false, false, false, $debugLevel);
+  debugOut('***** ' . $sectionTitle . ':', '', false, false, false, $debugLevel);
+  debugOut('*****   $_SESSION:', '', false, false, false, $debugLevel);
+  outputArray($_SESSION, false, null, true, $debugLevel);
+  debugOut('*****   $_POST:', '', false, false, false, $debugLevel);
+  outputArray($_POST, false, null, true, $debugLevel);
 }
+
 
 function logout() {
   destroySession();
   header('Location: ' . $GLOBALS['SITE_URL']);
   exit();
 }
+
 
 function destroySession() {
   // Unset all of the session variables.
@@ -507,6 +528,7 @@ function destroySession() {
   session_destroy();
 }
 
+
 function getSaltHashTimeCost($iterations) {
   $timeStart = round(microtime(true) * 1000);
   password_hash('TestPassword', PASSWORD_DEFAULT, ["cost" => $iterations]);
@@ -515,10 +537,12 @@ function getSaltHashTimeCost($iterations) {
   return $timeEnd - $timeStart;
 }
 
+
 function ipAddress() {
   if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP)) return $_SERVER['HTTP_CLIENT_IP']; elseif (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP)) return $_SERVER['HTTP_X_FORWARDED_FOR'];
   else return $_SERVER['REMOTE_ADDR'];
 }
+
 
 // Adapted from Stephen Watkins answer at https://stackoverflow.com/questions/4356289/php-random-string-generator
 function verifyCode($length = 4) {
@@ -531,6 +555,7 @@ function verifyCode($length = 4) {
 
   return $code;
 }
+
 
 function bytesToMegabytes($bytes) {
   $megabytes = $bytes / 1048576;
@@ -549,12 +574,14 @@ function bytesToMegabytes($bytes) {
   return $megabytes;
 }
 
+
 function htmlStart($string, $showBody = true) {
   include 'divHTMLHead.php';
   if ($showBody) {
     include 'divHTMLBodyTop.php';
   }
 }
+
 
 function htmlEnd($showFooter = true) {
   // Footer TBD.
@@ -693,6 +720,36 @@ function registerUser($pdo) {
   }
 }
 
+
+function getLastURL() {
+  return $_SESSION['lastURL'];
+}
+
+
+function setLastURL() {
+  // Temporarily turning this off... Just send users to home page.
+  $_SESSION['lastURL'] = $GLOBALS['SITE_URL'];
+
+  return;
+  /*
+  $lastThreeChars = substr($_SERVER['REQUEST_URI'], 0, -3);
+  if ($lastThreeChars == 'ico' ||                                // Don't save a .ico location
+      $lastThreeChars == 'css' ||                                // Don't save a .css location
+      $lastThreeChars == '.js' ||                                // Don't save a .js location
+      strpos($_SERVER['REQUEST_URI'], 'icon/') === false ||      // Don't save an icon/ location
+      stripos($_SESSION['lastURL'], "login.php") === false ||    // Don't save at the login page.
+      stripos($_SESSION['lastURL'], "logout.php") === false      // Don't save at the logout page.
+  ) {
+    if ((!isset($_SESSION['lastURL']))                           // We don't have a last URL
+        || ($_SESSION['lastURL'] == '')                          // Or the URL is blank
+    ) {
+      $_SESSION['lastURL'] = $GLOBALS['SITE_URL'];
+    }
+  } else {
+    $_SESSION['lastURL'] = $_SERVER['REQUEST_URI'];
+  }
+  */
+}
 
 
 ?>

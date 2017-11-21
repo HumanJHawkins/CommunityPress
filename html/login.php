@@ -80,25 +80,17 @@ if (
       unset($_POST["password"]);
       debugOut('Password verified.');
 
-      debugOut('Before session_decode()', '', false, true, true, 3);
-      outputArray($_SESSION, false, null, true, 3);
-
-      session_decode($row['sessionData']); // Cover anything we may not have saved directly in the DB.
-      // TO DO: This is unnecessarily complex, and probably already unnecessary (added debugOut test below)
-      //  1. Create a function to update the $_SESSION record in the database
-      //  2. Make sure everywhere we are saving one-off variables, we are storing them in the session and saving the session.
-      //  3. remove this
-
-      debugOut('After session_decode()', '', false, true, true, 3);
-      outputArray($_SESSION);
-
-      debugSectionOut('LOGIN_VERIFY_PASSWORD: Before the kluge *************************************');
+      // User data should be stored in the $_SESSION array.
+      // TO DO: Migrate more (all?) data to $_SESSION, so this is all that is necessary.
+      session_decode($row['sessionData']);
       unset($row['sessionData']);
+
+      // Get everything not in $_SESSION. This should not be necessary.
       foreach ($row as $key => $val) {
         $_SESSION[$key] = $val;
       }
-      debugSectionOut('LOGIN_VERIFY_PASSWORD: After the kluge **************************************');
 
+      // We just loaded the $_SESSION, so this really really should not be necessary.
       updateUserSession($pdo);
 
       if ($_SESSION['isConfirmed']) {
