@@ -277,8 +277,6 @@ CREATE FUNCTION LogSession(theSessionID BINARY(43), theIPAddress VARCHAR(45), th
       - Refactor to storeIP only sessions as their own record.
       - If same session becomes known user session, log that.
          (Can relate where sessionID is same)
-      - Also store session data in user table... Or refactor that too
-         so we just pull it from the session log table
      */
 
     DECLARE result BIGINT;
@@ -554,11 +552,6 @@ CREATE FUNCTION tagUpdate(theTagID BIGINT, newTag VARCHAR(128), newCategory BIGI
     UPDATE tag
     SET tag = newTag, tagDescription = newDescription, updateBy = theUser
     WHERE tagID = theTagID;
-    -- TO DO: Research and address. Unsure if ROW_COUNT() will
-    --   be > 0 if the update was category only... So, omitting
-    --   this test for now.
-    -- IF (ROW_COUNT() != 1) THEN RETURN -3;
-    -- END IF;
 
     IF (oldCategory != newCategory)
     THEN
@@ -683,7 +676,11 @@ CREATE FUNCTION addOrUpdateSession(newSessionID BINARY(43), newSessionIPAddress 
     --   sessionID.
     -- ------------------------------------------------------
 
-    -- TO DO: Add check for password included in session. Either strip from data, or fail if password included.
+    -- Check for password included in session. Fail if password included.
+    IF (POSITION(";password|" IN newSessionData) > 0)
+    THEN
+      RETURN -1;
+    END IF;
 
     IF (
       SELECT sessionID IS NOT NULL

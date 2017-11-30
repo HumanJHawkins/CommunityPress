@@ -83,6 +83,10 @@ if (
       // User data should be stored in the $_SESSION array.
       // TO DO: Migrate more (all?) data to $_SESSION, so this is all that is necessary.
       session_decode($row['sessionData']);
+      if (isset($_SESSION['password'])) {
+        $_SESSION["password"] = '';
+        unset($_SESSION["password"]);
+      }
       unset($row['sessionData']);
 
       // Get everything not in $_SESSION. This should not be necessary.
@@ -172,13 +176,23 @@ if (
       unset($_POST["verifyCode"]);
       
       debugOut('Email Verified.');
+
       // Confirm the user
-      $sql =
-          'SELECT tagAttach(' . $_SESSION["userID"] . ', ' . $_SESSION["tagConfirmedID"] . ', ' . $_SESSION["userID"] .
-          ')';
-      $result = getOnePDORow($pdo, $sql);
+      $sql = 'SELECT tagAttach(?, ?, ?)';
+      $sqlParamsArray = [$_SESSION["userID"], $_SESSION["tagConfirmedID"], $_SESSION["userID"]];
+      $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
 
       $_SESSION['isConfirmed'] = true;
+
+      // Update session
+      // TO DO: This shouldn't be necessary... May not be already. Whether user is confirmed or not should be
+      //  purely a tag thing.
+      updateUserSession($pdo);
+
+      $sql = 'SELECT tagAttach(?, ?, ?)';
+      $sqlParamsArray = [$_SESSION["userID"], $_SESSION["tagConfirmedID"], $_SESSION["userID"]];
+      $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+
       header('Location: ' . $_SESSION['lastURL']);
       exit();
     } else {
