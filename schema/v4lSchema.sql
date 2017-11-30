@@ -786,15 +786,6 @@ CREATE FUNCTION addPasswordHash(theUserID BIGINT, newSaltHash BINARY(60))
       WHERE saltHash = newSaltHash);
   END;
 
-DROP FUNCTION IF EXISTS permitUserRole;
-CREATE FUNCTION permitUserRole(theUserID BIGINT, theUserRole VARCHAR(128))
-  RETURNS BIGINT
-  BEGIN
-    RETURN (
-      SELECT tagAttach(theUserID, tagIDFromText(theUserRole), theUserID)
-    );
-  END;
-
 
 DROP FUNCTION IF EXISTS contentCanEdit;
 CREATE FUNCTION contentCanEdit(theContentID BIGINT, theUserID BIGINT)
@@ -1292,6 +1283,9 @@ CREATE FUNCTION tagAttach(theThing BIGINT, theTag BIGINT, theUser BIGINT)
 
     -- Test if tag exists
     -- NOTE: All things can be tags, so check against LUID table instead of tag table.
+
+    -- TO DO: Move permission check from permitUserRole (and elsewhere) to here. Check if tag category is of a type
+    --   needing permission to use, then check permission before proceeding.
     IF ((
           SELECT LUID
           FROM LUID
@@ -1410,36 +1404,49 @@ DO tagProtect(
 );
 
 
+DROP FUNCTION IF EXISTS permitUserRole;
+CREATE FUNCTION permitUserRole(grantTo BIGINT, theUserRole VARCHAR(128), grantBy BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    IF (userIsSuperuser(grantBy))     -- If grantBy has permission to do this.
+    THEN
+      RETURN (
+        SELECT tagAttach(grantTo, tagIDFromText(theUserRole), grantBy));
+    ELSE
+      RETURN -1;
+    END IF;
+  END;
+
+
 DROP FUNCTION IF EXISTS userGrantSuperuser;
 CREATE FUNCTION userGrantSuperuser(grantTo BIGINT, grantBy BIGINT)
   RETURNS INT
   BEGIN
-    -- RETURNS:
-    --   Success: The thingTagID of the user-role relationship.
-    --   Failure: The failure result of tagAttach for the user and role.
-    IF (userIsSuperuser(grantBy))
-    THEN
-      RETURN permitUserRole(grantTo, 'Superuser');
-    END IF;
+    RETURN permitUserRole(grantTo, 'Superuser', grantBy);
   END;
 
-DROP FUNCTION IF EXISTS userRevokeSuperuser;
-CREATE FUNCTION userRevokeSuperuser(revokeFrom BIGINT, revokeBy BIGINT)
+DROP FUNCTION IF EXISTS userGrantContentEditor;
+CREATE FUNCTION userGrantContentEditor(grantTo BIGINT, grantBy BIGINT)
+  RETURNS INT
+  BEGIN
+    RETURN permitUserRole(grantTo, 'ContentEditor', grantBy);
+  END;
+
+
+DROP FUNCTION IF EXISTS revokeUserRole;
+CREATE FUNCTION revokeUserRole(revokeFrom BIGINT, theUserRole VARCHAR(128), revokeBy BIGINT)
   RETURNS BIGINT
   BEGIN
-    -- RETURNS:
-    --   Success: thingTagID for row that was deleted.
-    --   Failure:
-    --     0: User 'revokeBy' is not authorized to revoke this permission.
-    --     -1: Permission not found to revoke.
     DECLARE permissionTagID BIGINT;
     DECLARE roleTagID BIGINT;
+
     IF (userIsSuperuser(revokeBy))
-    THEN
-      SET roleTagID = tagIDFromText('Superuser');
-      SET permissionTagID = (SELECT thingTagID
-                             FROM thingTag
-                             WHERE thingID = revokeFrom AND tagID = roleTagID);
+    THEN -- If revokeBy has permission to do this.
+      SET roleTagID = tagIDFromText(theUserRole);
+      SET permissionTagID = (
+        SELECT thingTagID
+        FROM thingTag
+        WHERE thingID = revokeFrom AND tagID = roleTagID);
       IF (permissionTagID > 0)
       THEN
         DELETE FROM thingTag
@@ -1453,6 +1460,22 @@ CREATE FUNCTION userRevokeSuperuser(revokeFrom BIGINT, revokeBy BIGINT)
     END IF;
   END;
 
+
+DROP FUNCTION IF EXISTS userRevokeSuperuser;
+CREATE FUNCTION userRevokeSuperuser(revokeFrom BIGINT, revokeBy BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    RETURN revokeUserRole(revokeFrom, tagIDFromText('Superuser'), revokeBy);
+  END;
+
+
+DROP FUNCTION IF EXISTS userRevokeContentEditor;
+CREATE FUNCTION userRevokeContentEditor(revokeFrom BIGINT, revokeBy BIGINT)
+  RETURNS BIGINT
+  BEGIN
+    RETURN revokeUserRole(revokeFrom, tagIDFromText('ContentEditor'), revokeBy);
+  END;
+
 /* -- ---------------------------------------------------------------------------------------------------------------
 -- AT THIS POINT: Administrator should self-register an account via the web site. then return here to continue data
 --                setup under their own account.
@@ -1461,4 +1484,8 @@ CREATE FUNCTION userRevokeSuperuser(revokeFrom BIGINT, revokeBy BIGINT)
 --
 SELECT userGrantSuperuser(userIDFromEmail('v4l.webmaster@gmail.com'), 0);
 SELECT userRevokeSuperuser(0, 0);
+
+-- Further setup should be under the authorized account, such as:
+SELECT userGrantContentEditor(userIDFromEmail('jhawkins@locutius.com'), userIDFromEmail('v4l.webmaster@gmail.com'));
+--
 */ -- ---------------------------------------------------------------------------------------------------------------
