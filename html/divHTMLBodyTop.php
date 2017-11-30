@@ -23,7 +23,7 @@ if (isset($_SESSION['userID']) && $_SESSION['userID'] > 0) {
     echo '<div class="form-inline">';
     echo '<form action="login.php" method="post">';
     echo '<input type="hidden" name="loginStep" value="LOGIN_VERIFY_CODE" />';
-    echo '<label for="verifyCode">Please Verify Your Account:&nbsp;</label>';
+    echo '<label for="verifyCode">&nbsp;&nbsp;&nbsp;Please Verify Your Account:&nbsp;</label>';
     echo '<input type="text" class="form-control" placeholder="Enter Verification Code" name="verifyCode" required>&nbsp;&nbsp;';
     echo '<button type="submit" class="btn btn-primary btn-xs">Verify</button>';
     echo '<button type="button" class="btn btn-info btn-xs" onclick="location.href=\'login.php?action=resend\'">Re-send Code</button>';
