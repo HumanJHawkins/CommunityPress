@@ -1,6 +1,8 @@
 <?php
 include_once 'sessionStart.php';
-$pdo = getDBPDO();
+if (!isset($pdo)) {
+  $pdo = getDBPDO();
+}
 
 // View $_POST["pageContentID"]
 consolidatePageContentID();

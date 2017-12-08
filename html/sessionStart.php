@@ -12,7 +12,9 @@ if (session_start()) {
   
   // We won't have user ID at this point, so log the session without it. On login, update
   //  the session record.
-  $pdo = getDBPDO();
+  if (!isset($pdo)) {
+    $pdo = getDBPDO();
+  }
   $sql = 'SELECT addOrUpdateSession(?, ?, ?)';
   $sqlParamArray = [session_id(), $_SESSION['ipAddress'], session_encode()];
   $row = getOnePDORow($pdo, $sql, $sqlParamArray);

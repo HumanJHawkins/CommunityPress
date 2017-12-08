@@ -1,7 +1,8 @@
 <?php
 include_once 'sessionStart.php';
-
-$pdo        = getDBPDO();
+if (!isset($pdo)) {
+  $pdo = getDBPDO();
+}
 
 const LOGIN_DIALOG_STANDARD = 'LOGIN_DIALOG_STANDARD';
 const LOGIN_DIALOG_PASSWORD_INCORRECT = 'LOGIN_DIALOG_PASSWORD_INCORRECT';

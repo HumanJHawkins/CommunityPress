@@ -1,10 +1,10 @@
 <?php
 include_once 'sessionStart.php';
 consolidatePageContentID();
-
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
+
 $sql = 'CALL procGetContentFiles(?, ?)';
 if ((isset($_SESSION['userID'])) && ($_SESSION['userID'] > 0)) {
   $sqlParamArray = [$_POST["pageContentID"], $_SESSION['userID']];

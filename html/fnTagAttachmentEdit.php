@@ -11,6 +11,9 @@
  *   FUNCTION v4l.tagRemove(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
 */
 include_once 'sessionStart.php';
+if (!isset($pdo)) {
+  $pdo = getDBPDO();
+}
 
 if (
   (!((isset($_POST["action"]))    && (($_POST["action"] == 'attach') || ($_POST["action"] == 'remove')))) ||
@@ -22,8 +25,6 @@ if (
   debugOut($ErrorMsg);
   exit($ErrorMsg);
 }
-
-$pdo = getDBPDO();
 
 if($_POST['action'] == 'attach') {
   $sql = 'SELECT tagAttach(?, ?, ?)';

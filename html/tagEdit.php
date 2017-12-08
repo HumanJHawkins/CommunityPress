@@ -1,6 +1,8 @@
 <?php
 include_once 'sessionStart.php';
-$pdo        = getDBPDO();
+if (!isset($pdo)) {
+  $pdo = getDBPDO();
+}
 
 // Action determined from GET directly, else via POST. Will be:
 //  Update or Insert (Same function): Data is set, so update DB.

@@ -3,6 +3,7 @@ include_once 'sessionStart.php';
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
+
 ?>
 
 <div id="contentGrid">
