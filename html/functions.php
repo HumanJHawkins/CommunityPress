@@ -236,7 +236,8 @@ function consolidatePageContentID() {
 
 
 function tagCategorySelector($pdo) {
-  $sql = 'SELECT DISTINCT tagCategoryID, tagCategory FROM vTag';
+  $sql = 'CALL procTagCategories()';
+  $arrayParams = null;
   $result = getOnePDOTable($pdo, $sql, null, PDO::FETCH_ASSOC);
   echo '<select name="tagCategoryIDSelector" id="tagCategoryIDSelector">';
   echo '<option value="0">Select Category...</option>';
@@ -727,11 +728,6 @@ function getLastURL() {
 
 
 function setLastURL() {
-  // Temporarily turning this off... Just send users to home page.
-  $_SESSION['lastURL'] = $GLOBALS['SITE_URL'];
-
-  return;
-  /*
   $lastThreeChars = substr($_SERVER['REQUEST_URI'], 0, -3);
   if ($lastThreeChars == 'ico' ||                                // Don't save a .ico location
       $lastThreeChars == 'css' ||                                // Don't save a .css location
@@ -748,7 +744,6 @@ function setLastURL() {
   } else {
     $_SESSION['lastURL'] = $_SERVER['REQUEST_URI'];
   }
-  */
 }
 
 

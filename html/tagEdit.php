@@ -80,6 +80,7 @@ debugOut('$sql', $sql);
 // If we have SQL at this point, we are updating the DB via stored function. So run SQL and exit.
 if ($sql != '') {
   $result = getOnePDOTable($pdo, $sql);
+  debugOut('Location: ' . $_SESSION['lastURL']);
   header('Location: ' . $_SESSION['lastURL']);
   exit();
 }
