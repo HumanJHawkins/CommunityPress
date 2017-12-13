@@ -1487,5 +1487,7 @@ SELECT userRevokeSuperuser(0, 0);
 
 -- Further setup should be under the authorized account, such as:
 SELECT userGrantContentEditor(userIDFromEmail('jhawkins@locutius.com'), userIDFromEmail('v4l.webmaster@gmail.com'));
+
+SELECT permitUserRole(userIDFromEmail('kmadian@yahoo.com'), 'TagEditor', userIDFromEmail('v4l.webmaster@gmail.com'));
 --
 */ -- ---------------------------------------------------------------------------------------------------------------

@@ -4,6 +4,8 @@ if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
 
+$EMPTY_TINYMCE_FIELD_LENGTH = 68;
+
 // View $_POST["pageContentID"]
 consolidatePageContentID();
 
@@ -47,22 +49,32 @@ debugOut('$contentSummary', $contentSummary);
 debugOut('$contentAvatarID', $contentAvatarID);
 debugOut('$sql', $sql);
 
-echo '<p><img class="img-thumbnail left avatar" src="./userImage/' . $contentAvatarID . '" /></p>';
+if ($contentAvatarID > 0) {
+  echo '<p><img class="img-thumbnail left avatar" src="./userImage/' . $contentAvatarID . '" /></p>';
+}
+
 echo '<h1>' . $contentTitle . '</h1>';
+
 // echo '<br/><br/>';
 
-echo '<h3>' . $GLOBALS['CONTENT_SUMMARY_LABEL'] . '</h3>';
-echo $contentSummary;
-echo '<div style="clear: both;"></div>';
+if (strlen($contentSummary) > $EMPTY_TINYMCE_FIELD_LENGTH) {
+  echo '<h3>' . $GLOBALS['CONTENT_SUMMARY_LABEL'] . '</h3>';
+  echo $contentSummary;
+  echo '<div style="clear: both;"></div>';
+}
 // echo '<hr />';
 
-echo '<h3>' . $GLOBALS['CONTENT_EXCERPT_LABEL'] . '</h3>';
-echo $contentExcerpt;
-echo '<hr/>';
+if (strlen($contentExcerpt) > $EMPTY_TINYMCE_FIELD_LENGTH) {
+  echo '<h3>' . $GLOBALS['CONTENT_EXCERPT_LABEL'] . '</h3>';
+  echo $contentExcerpt;
+  echo '<hr/>';
+}
 
-echo '<h3>' . $GLOBALS['CONTENT_DESCRIPTION_LABEL'] . '</h3>';
-echo $contentDescription;
-echo '<hr/>';
+if (strlen($contentDescription) > $EMPTY_TINYMCE_FIELD_LENGTH) {
+  echo '<h3>' . $GLOBALS['CONTENT_DESCRIPTION_LABEL'] . '</h3>';
+  echo $contentDescription;
+  echo '<hr/>';
+}
 
 echo '<h3>Available Files</h3>';
 
