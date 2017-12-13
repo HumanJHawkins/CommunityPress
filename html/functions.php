@@ -728,19 +728,7 @@ function getLastURL() {
 
 
 function setLastURL() {
-  debugOut('...');
-  debugOut('...');
-  debugOut('...');
-  debugOut('...');
-  debugOut('...');
-  debugOut('Server Request URI: ' . $_SERVER['REQUEST_URI']);
-  debugOut('Session last URL  : ' . $_SESSION['lastURL']);
   $fileExtension = pathinfo($_SERVER['REQUEST_URI'], PATHINFO_EXTENSION);
-  debugOut('$fileExtension    : ' . $fileExtension);
-  debugOut('icon: ' . strpos($_SERVER['REQUEST_URI'], 'icon/'));
-  debugOut('login: ' . stripos($_SESSION['lastURL'], "login.php"));
-  debugOut('logout: ' . stripos($_SESSION['lastURL'], "logout.php"));
-
   if ($fileExtension == '' || $fileExtension == 'ico' || $fileExtension == 'css' || $fileExtension == 'js' ||
       strpos($_SERVER['REQUEST_URI'], 'icon/') !== false || strpos($_SERVER['REQUEST_URI'], 'login.php') !== false ||
       strpos($_SERVER['REQUEST_URI'], 'logout.php') !== false
@@ -749,12 +737,6 @@ function setLastURL() {
   } else {
     $_SESSION['lastURL'] = $_SERVER['REQUEST_URI'];
   }
-  debugOut('Session last URL  : ' . $_SESSION['lastURL']);
-  debugOut('...');
-  debugOut('...');
-  debugOut('...');
-  debugOut('...');
-  debugOut('...');
 }
 
 

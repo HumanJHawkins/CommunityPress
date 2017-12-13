@@ -151,7 +151,8 @@ if ($action == 'delete' && $canEdit) {
     // $cntntFileRelRelID = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
   }
 
-  $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $contentRecordID;
+  $_SESSION['lastURL'] = 'contentView.php?pageContentID=' . $contentRecordID;
+  // $_SESSION['lastURL'] = 'contentEdit.php?action=edit&pageContentID=' . $contentRecordID;
   header('Location: ' . $_SESSION['lastURL']);
   exit();
 }
