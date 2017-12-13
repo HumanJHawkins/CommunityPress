@@ -75,7 +75,11 @@ if (isset($_POST["pageContentID"]) && ($_POST["pageContentID"] > 0)) {
   include 'divContentTags.php';
 }
 
-echo '<br /><hr /><input type="button" class="btn btn-default" name="back" value="    Back    " onClick="window.location=\'./content.php\';" />';
+echo '<br /><hr /><input type="button" class="btn btn-default" name="back" value="    Back    " onClick="window.location=\'./content.php\';" />&nbsp;';
+if ($canEdit) {
+  echo '<input type="button" class="btn btn-default" name="edit" value="    Edit    " onClick="window.location=\'./contentEdit.php?action=edit&pageContentID=' .
+      $_POST["pageContentID"] . '\';" />';
+}
 
 ?>
 
