@@ -1,5 +1,5 @@
 <?php
-include_once 'sessionStart.php';
+include 'sessionStart.php';
   // Show the ID, etc.
   htmlStart('Dev Info');
   echo '<span style="font-family:\'Courier New\',monospace">';

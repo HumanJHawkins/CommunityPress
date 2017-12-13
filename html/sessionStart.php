@@ -1,12 +1,17 @@
 <?php
 include_once("config.php");
+$isNewSession = session_start();
+if (!isset($_SESSION['lastURL'])) {
+  $_SESSION['lastURL'] = $GLOBALS['SITE_URL'];
+}
+
 include_once("functions.php");
 
 // Put a blank line in the log at the top of each page.
 debugOut('', '', false, false, false);
 
 // If session_start created a new session, log it.
-if (session_start()) {
+if ($isNewSession) {
   $_SESSION['ipAddress'] = ipAddress();
   debugOut('$_SESSION[\'ipAddress\']', $_SESSION['ipAddress']);
   
@@ -18,7 +23,8 @@ if (session_start()) {
   $sql = 'SELECT addOrUpdateSession(?, ?, ?)';
   $sqlParamArray = [session_id(), $_SESSION['ipAddress'], session_encode()];
   $row = getOnePDORow($pdo, $sql, $sqlParamArray);
-  
+
+  // TO DO: Rethink this WTF moment...
   // Store these in the session, but allow refresh once per hour just to be safe.
   if (isset($_SESSION['sessionTimestamp'])) {
     $sessionStartTime = new DateTime($_SESSION['sessionTimestamp']);
@@ -28,7 +34,6 @@ if (session_start()) {
   $timeDiff = $sessionStartTime->diff(new DateTime());
   $sessionAge = ($timeDiff->days * 1440) + ($timeDiff->h * 60) + ($timeDiff->i);
   debugOut('sessionAge', $sessionAge . ' minutes and ' . ($timeDiff->s) . 'seconds');
-  
   if (
     !isset($_SESSION["tagCategoryTagID"]) ||
     ($_SESSION["tagCategoryTagID"] == '') ||

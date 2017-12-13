@@ -728,24 +728,35 @@ function getLastURL() {
 
 
 function setLastURL() {
-  $lastThreeChars = substr($_SERVER['REQUEST_URI'], 0, -3);
-  if ($lastThreeChars == 'ico' ||                                // Don't save a .ico location
-      $lastThreeChars == 'css' ||                                // Don't save a .css location
-      $lastThreeChars == '.js' ||                                // Don't save a .js location
-      strpos($_SERVER['REQUEST_URI'], 'icon/') === false ||      // Don't save an icon/ location
-      stripos($_SESSION['lastURL'], "login.php") === false ||    // Don't save at the login page.
-      stripos($_SESSION['lastURL'], "logout.php") === false      // Don't save at the logout page.
+  debugOut('...');
+  debugOut('...');
+  debugOut('...');
+  debugOut('...');
+  debugOut('...');
+  debugOut('Server Request URI: ' . $_SERVER['REQUEST_URI']);
+  debugOut('Session last URL  : ' . $_SESSION['lastURL']);
+  $fileExtension = pathinfo($_SERVER['REQUEST_URI'], PATHINFO_EXTENSION);
+  debugOut('$fileExtension    : ' . $fileExtension);
+  debugOut('icon: ' . strpos($_SERVER['REQUEST_URI'], 'icon/'));
+  debugOut('login: ' . stripos($_SESSION['lastURL'], "login.php"));
+  debugOut('logout: ' . stripos($_SESSION['lastURL'], "logout.php"));
+
+  if ($fileExtension == '' || $fileExtension == 'ico' || $fileExtension == 'css' || $fileExtension == 'js' ||
+      strpos($_SERVER['REQUEST_URI'], 'icon/') !== false || strpos($_SERVER['REQUEST_URI'], 'login.php') !== false ||
+      strpos($_SERVER['REQUEST_URI'], 'logout.php') !== false
   ) {
-    if ((!isset($_SESSION['lastURL']))                           // We don't have a last URL
-        || ($_SESSION['lastURL'] == '')                          // Or the URL is blank
-    ) {
-      $_SESSION['lastURL'] = $GLOBALS['SITE_URL'];
-    }
+    ; // Do nothing
   } else {
     $_SESSION['lastURL'] = $_SERVER['REQUEST_URI'];
   }
+  debugOut('Session last URL  : ' . $_SESSION['lastURL']);
+  debugOut('...');
+  debugOut('...');
+  debugOut('...');
+  debugOut('...');
+  debugOut('...');
 }
 
 
-?>
+
 

@@ -10,6 +10,7 @@ echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
 echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.css" ' .
   'integrity="sha256-sxzrkOPuwljiVGWbxViPJ14ZewXLJHFJDn0bv+5hsDY=" crossorigin="anonymous" />';
 
+/*
 echo '<link rel="apple-touch-icon" sizes="57x57" href="icon/apple-icon-57x57.png">';
 echo '<link rel="apple-touch-icon" sizes="60x60" href="icon/apple-icon-60x60.png">';
 echo '<link rel="apple-touch-icon" sizes="72x72" href="icon/apple-icon-72x72.png">';
@@ -24,6 +25,7 @@ echo '<link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.p
 echo '<link rel="icon" type="image/png" sizes="96x96" href="icon/favicon-96x96.png">';
 echo '<link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">';
 echo '<link rel="manifest" href="icon/manifest.json">';
+*/
 echo '<meta name="msapplication-TileColor" content="#ffffff">';
 echo '<meta name="msapplication-TileImage" content="icon/ms-icon-144x144.png">';
 echo '<meta name="theme-color" content="#ffffff">';

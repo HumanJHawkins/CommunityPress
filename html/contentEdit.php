@@ -1,5 +1,5 @@
 <?php
-include_once 'sessionStart.php';
+include 'sessionStart.php';
 debugOut('**************************************************************** Beginning contentEdit.php');
 if (!isset($pdo)) {
   $pdo = getDBPDO();

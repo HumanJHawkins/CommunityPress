@@ -8,7 +8,7 @@
  *
  * Uses: FUNCTION v4l.TagUseInsert(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
  */
-include_once 'sessionStart.php';
+include 'sessionStart.php';
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }

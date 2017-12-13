@@ -1,5 +1,5 @@
 <?php
-include_once 'sessionStart.php';
+include 'sessionStart.php';
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
