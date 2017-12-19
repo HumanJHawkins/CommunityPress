@@ -1,0 +1,17 @@
+TO DO:
+  - Fix/Handle onClick for content tag display (remove, but only offer if permitted)
+  - Enable file delete
+  - Enable multiple file upload.
+  - Enable password change
+      + Add space between password change link and surround.
+  - Establish rules around UserName change, then enable it.
+  - Enable user avatar upload, functionality, and add to profile.
+  - Design and create blog capability.
+  - Design and create, or adopt, forums functionality.
+  - Add "About" screen
+  - Convert Carousel to data-driven model.
+      + Create CRUD for Carousel data.
+
+
+
+

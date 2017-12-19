@@ -910,9 +910,10 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       DELETE FROM uploadFile
       WHERE uploadFileID IN (
         SELECT *
-        FROM (SELECT tagID
-              FROM thingTag
-              WHERE thingID = theContentID) AS toDelete);
+        FROM (
+               SELECT tagID
+               FROM thingTag
+               WHERE thingID = theContentID) AS toDelete);
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       -- Delete the content record
@@ -923,11 +924,12 @@ CREATE FUNCTION contentDelete(theContentID BIGINT, theUserID BIGINT)
       -- Delete all tags indirectly related to this item... Tags on thingTag relationships.
       DELETE FROM thingTag
       WHERE thingID IN
-            (SELECT *
-             FROM (
-                    SELECT thingTagID
-                    FROM thingTag
-                    WHERE thingID = theContentID OR tagID = theContentID) AS toDelete);
+            (
+              SELECT *
+              FROM (
+                     SELECT thingTagID
+                     FROM thingTag
+                     WHERE thingID = theContentID OR tagID = theContentID) AS toDelete);
       SET rowsAffected = rowsAffected + ROW_COUNT();
 
       -- Delete direct tags directly related to this item.
@@ -1339,6 +1341,22 @@ CREATE FUNCTION tagRemove(theThing BIGINT, theTag BIGINT, theUser BIGINT)
     DELETE FROM thingTag
     WHERE tagID = theTag AND thingID = theThing;
     RETURN Result;
+  END;
+
+
+DROP PROCEDURE IF EXISTS procTagCategories;
+CREATE PROCEDURE procTagCategories()
+  BEGIN
+    DECLARE tagCategoryTagID BIGINT;
+    SET tagCategoryTagID = tagCategoryTagID();
+    SELECT DISTINCT
+      tag.tagID          AS tagCategoryID,
+      tag.tag            AS tagCategory,
+      tag.tagDescription AS tagCategoryDescription
+    FROM tag
+      JOIN thingTag ON
+                      tag.tagID = thingTag.thingID
+                      AND thingTag.tagID = tagCategoryTagID();
   END;
 
 

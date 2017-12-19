@@ -14,6 +14,15 @@ include_once 'sessionStart.php';
 if (!isset($pdo)) {
   $pdo = getDBPDO();
 }
+debugOut('.................................');
+debugOut('.................................');
+debugOut('.................................');
+debugOut('.................................');
+debugOut('.................................');
+debugOut('.................................');
+debugOut('$_POST["theTagged"]: ' . $_POST["theTagged"]);
+debugOut('$_POST["theTag"]: ' . $_POST["theTag"]);
+debugOut('$_POST["theUser"]: ' . $_POST["theUser"]);
 
 if (
   (!((isset($_POST["action"]))    && (($_POST["action"] == 'attach') || ($_POST["action"] == 'remove')))) ||
