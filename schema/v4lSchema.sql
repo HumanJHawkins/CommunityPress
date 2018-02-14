@@ -1408,11 +1408,14 @@ INSERT INTO thingTag (thingID, tagID) VALUES (tagCategoryTagID(), tagCategoryTag
 
 -- Tags under the 'Status' tag category are used for system, row, content, and media status among other things.
 DO tagInsert('Protected', tagIDFromText('Status'), 'Record is protected from edit or delete.', 0);
+DO tagInsert('Confirmed', tagIDFromText('Status'), 'User ID (typically email) is confirmed.', 0);
+
 
 -- 'Protect' tag is in place, so can use tagProtect going forward.
 DO tagProtect(tagIDFromText('TagCategory'), 0);
 DO tagProtect(tagIDFromText('Status'), 0);
 DO tagProtect(tagIDFromText('Protected'), 0);
+DO tagProtect(tagIDFromText('Confirmed'), 0);
 
 -- Need status for graphics to indicate content avatar
 DO tagProtect(

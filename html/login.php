@@ -168,8 +168,8 @@ if (
   loginDisplayVerifyDialog();
 } elseif (isset($_SESSION["loginStep"]) && ($_SESSION["loginStep"] == LOGIN_VERIFY_CODE)) {
   debugSectionOut('LOGIN_VERIFY_CODE');
-  
   if ((isset($_POST["verifyCode"])) && ($_POST["verifyCode"] != '')) {
+    debugOut("In verifyCode branch.");
     if (password_verify($_POST["verifyCode"], $_SESSION["verifyCodeHash"])) {
       
       // verifyCode is effectively a temp password. Clear when no longer needed..
@@ -188,11 +188,11 @@ if (
       // Update session
       // TO DO: This shouldn't be necessary... May not be already. Whether user is confirmed or not should be
       //  purely a tag thing.
-      updateUserSession($pdo);
-
-      $sql = 'SELECT tagAttach(?, ?, ?)';
-      $sqlParamsArray = [$_SESSION["userID"], $_SESSION["tagConfirmedID"], $_SESSION["userID"]];
-      $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
+      //      updateUserSession($pdo);
+      //
+      //      $sql = 'SELECT tagAttach(?, ?, ?)';
+      //      $sqlParamsArray = [$_SESSION["userID"], $_SESSION["tagConfirmedID"], $_SESSION["userID"]];
+      //      $result = getOnePDOValue($pdo, $sql, $sqlParamsArray, PDO::FETCH_NUM);
 
       header('Location: ' . $_SESSION['lastURL']);
       exit();
