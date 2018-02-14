@@ -1379,24 +1379,28 @@ CREATE VIEW vContent AS
 
 DROP VIEW IF EXISTS vTag;
 CREATE VIEW vTag AS
-  SELECT
-    Category.tagID                AS tagCategoryID,
-    Category.tag                  AS tagCategory,
-    v4l.tag.tagID                 AS tagID,
-    v4l.tag.tag                   AS tag,
-    v4l.tag.tagDescription        AS tagDescription,
-    v4l.tag.updateBy              AS updateBy,
-    user.userName                 AS updateByName,
-    v4l.tag.updateTime            AS updateTime,
-    (Protected.tagID IS NOT NULL) AS protected
-  FROM (((((v4l.tag
+  SELECT DISTINCT
+    Category.tagID                 AS tagCategoryID,
+    Category.tag                   AS tagCategory,
+    v4l.tag.tagID                  AS tagID,
+    v4l.tag.tag                    AS tag,
+    v4l.tag.tagDescription         AS tagDescription,
+    v4l.tag.updateBy               AS updateBy,
+    user.userName                  AS updateByName,
+    v4l.tag.updateTime             AS updateTime,
+    (Protected.tagID IS NOT NULL)  AS protected,
+    (tagUsage.thingID IS NOT NULL) AS inUse
+  FROM ((((((v4l.tag
     JOIN v4l.thingTag ON ((v4l.tag.tagID = v4l.thingTag.thingID)))
+    -- Tags ate tagged with their category as indicated in ThingTag. So CategoryUse is an intermediary table used to
+    -- get back to the actual category name.
     JOIN v4l.thingTag CategoryUse
       ON (((v4l.thingTag.tagID = CategoryUse.thingID) AND (CategoryUse.tagID = tagCategoryTagID()))))
     JOIN v4l.tag Category ON ((CategoryUse.thingID = Category.tagID)))
     JOIN v4l.user ON ((tag.updateBy = user.userID)))
     LEFT JOIN v4l.thingTag Protected
       ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected'))))
+    LEFT JOIN thingTag tagUsage ON (tag.tagID = tagUsage.tagID))
   );
 
 -- Insert required tags to support further creation of tags, etc.
@@ -1415,13 +1419,23 @@ INSERT INTO thingTag (thingID, tagID) VALUES (tagCategoryTagID(), tagCategoryTag
 -- Tags under the 'Status' tag category are used for system, row, content, and media status among other things.
 DO tagInsert('Protected', tagIDFromText('Status'), 'Record is protected from edit or delete.', 0);
 DO tagInsert('Confirmed', tagIDFromText('Status'), 'User ID (typically email) is confirmed.', 0);
-
+DO tagInsert('LicenseAccepted', tagIDFromText('Status'),
+             'User has accepted the license. Date accepted is tag creation date.', @adminUser);
+DO tagInsert('SiteAdmin', tagIDFromText('Status'),
+             'Site admin or developer. Can edit most data, including user info and status. ', @adminUser);
+DO tagInsert('TagEditor', tagIDFromText('Status'), 'Has permission to create and edit Tags.', @adminUser);
+DO tagInsert('ContentEditor', tagIDFromText('Status'), 'Has permission to create and edit content.', @adminUser);
 
 -- 'Protect' tag is in place, so can use tagProtect going forward.
 DO tagProtect(tagIDFromText('TagCategory'), 0);
 DO tagProtect(tagIDFromText('Status'), 0);
 DO tagProtect(tagIDFromText('Protected'), 0);
 DO tagProtect(tagIDFromText('Confirmed'), 0);
+DO tagProtect(tagIDFromText('LicenseAccepted'), 0);
+DO tagProtect(tagIDFromText('Superuser'), 0);
+DO tagProtect(tagIDFromText('SiteAdmin'), 0);
+DO tagProtect(tagIDFromText('TagEditor'), 0);
+DO tagProtect(tagIDFromText('ContentEditor'), 0);
 
 -- Need status for graphics to indicate content avatar
 DO tagProtect(

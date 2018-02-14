@@ -52,7 +52,6 @@ if ((isset($_POST["tagCategoryIDSelector"])) && ($_POST["tagCategoryIDSelector"]
 
 debugOut('$tagCategoryID', $tagCategoryID);
 
-
 if ((isset($_POST["tagDescription"])) && ($_POST["tagDescription"] != '')) {
   $tagDescription = trim($_POST["tagDescription"]);
 } else {
@@ -64,10 +63,9 @@ debugOut('$tagDescription', $tagDescription);
 $sql = '';
 if ($action == 'delete') {
   $sql = 'SELECT TagDelete(\'' . $pageTagID . '\', \'' . $userID . '\')';
-  
+
   // Our redirect to last requested URL will cause a failure due to the $_GET paramaters passed in. So, strip them.
   $_SESSION['lastURL'] = strtok($_SESSION['lastURL'], '?');
-  
 } else if ($action == 'insert') {
   $sql = 'SELECT TagInsert("' . $tag . '",' . $tagCategoryID . ',"' . $tagDescription . '",' . $userID . ')';
 } else if ($action == 'update') {
@@ -110,85 +108,85 @@ htmlStart('Tag Edit');
 ?>
 
 <form action="tagEdit.php" method="post" name="tagEditForm">
-  <input type="hidden" name="tagID" value="<?php echo $pageTagID ?>"/>
-  <table id="tagEditTable">
+    <input type="hidden" name="tagID" value="<?php echo $pageTagID ?>"/>
+    <table id="tagEditTable">
 
-    <tr>
-      <td>Category:</td>
-      <td>
-        <?php
-          tagCategorySelector($pdo);
-        ?>
-      </td>
-    </tr>
-    <tr>
-      <td>Tag:</td>
-      <td><textarea name="tag" rows="1" cols="80"
-        <?php
-        if ($tag == '') {
-          echo 'required placeholder="Tag" id="inputTag"></textarea>';
-        } else {
-          echo ' id="inputTag">' . $tag . '</textarea>';
-        }
-        ?>
-      </td>
-    </tr>
-    <tr>
-      <td>Description:</td>
-      <td><textarea name="tagDescription" rows="5" cols="80"
-        <?php if ($tagDescription == '') {
-          echo 'required placeholder="Tag Description" id="inputTagDescription"></textarea>';
-        } else {
-          echo ' id="inputTagDescription">' . $tagDescription . '</textarea>';
-        } ?>
-      </td>
-    </tr>
-    <tr>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td></td>
-      <td><?php
-        if ($pageTagID == 0) {
-          echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Tag " id="inputid1" />';
-        } else {
-          echo '<input type="submit" class="btn btn-danger" name="update" value=" Update " id="inputid1" /> ';
-          echo '<input type="button" class="btn btn-default" name="cancel" value=" Cancel " onClick="window.location=\'./tagEdit.php\';" />';
-          echo '&nbsp;<span class="bg-danger">&nbsp;Careful. You are updating an existing tag, not adding a new one.&nbsp;</span>';
-        }
-        ?>
-      </td>
-    </tr>
+        <tr>
+            <td>Category:</td>
+            <td>
+              <?php
+              tagCategorySelector($pdo);
+              ?>
+            </td>
+        </tr>
+        <tr>
+            <td>Tag:</td>
+            <td><textarea name="tag" rows="1" cols="80"
+              <?php
+              if ($tag == '') {
+                echo 'required placeholder="Tag" id="inputTag"></textarea>';
+              } else {
+                echo ' id="inputTag">' . $tag . '</textarea>';
+              }
+              ?>
+            </td>
+        </tr>
+        <tr>
+            <td>Description:</td>
+            <td><textarea name="tagDescription" rows="5" cols="80"
+              <?php if ($tagDescription == '') {
+                echo 'required placeholder="Tag Description" id="inputTagDescription"></textarea>';
+              } else {
+                echo ' id="inputTagDescription">' . $tagDescription . '</textarea>';
+              } ?>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><?php
+              if ($pageTagID == 0) {
+                echo '<input type="submit" class="btn btn-primary" name="insert" value=" Add Tag " id="inputid1" />';
+              } else {
+                echo '<input type="submit" class="btn btn-danger" name="update" value=" Update " id="inputid1" /> ';
+                echo '<input type="button" class="btn btn-default" name="cancel" value=" Cancel " onClick="window.location=\'./tagEdit.php\';" />';
+                echo '&nbsp;<span class="bg-danger">&nbsp;Careful. You are updating an existing tag, not adding a new one.&nbsp;</span>';
+              }
+              ?>
+            </td>
+        </tr>
 
-  </table>
+    </table>
 </form>
 <br/>
 <table id="tagView" class="table table-striped table-bordered table-hover table-condensed table-responsive sortable">
-  <!--  -->
+    <!--  -->
 
-  <thead>
-  <tr>
-    <th data-defaultsign="AZ" width="1%">Category</th>
-    <th data-defaultsign="AZ" width="1%">Tag</th>
-    <th data-defaultsign="AZ">Description</th>
-    <th data-defaultsign="AZ" width="1%">Actions</th>
-    <th data-defaultsign="AZ" width="1%">Update By</th>
-    <th data-defaultsign="month" width="1%">Update Date</th>
-  </tr>
-  </thead>
-  <tfoot>
-  <tr>
-    <th>Category</th>
-    <th>Tag</th>
-    <th>Description</th>
-    <th>Actions</th>
-    <th>Update By</th>
-    <th>Update Date</th>
-  </tr>
-  </tfoot>
-  <tbody>
-  <?php
+    <thead>
+    <tr>
+        <th data-defaultsign="AZ" width="1%">Category</th>
+        <th data-defaultsign="AZ" width="1%">Tag</th>
+        <th data-defaultsign="AZ">Description</th>
+        <th data-defaultsign="AZ" width="1%">Actions</th>
+        <th data-defaultsign="AZ" width="1%">Update By</th>
+        <th data-defaultsign="month" width="1%">Update Date</th>
+    </tr>
+    </thead>
+    <tfoot>
+    <tr>
+        <th>Category</th>
+        <th>Tag</th>
+        <th>Description</th>
+        <th>Actions</th>
+        <th>Update By</th>
+        <th>Update Date</th>
+    </tr>
+    </tfoot>
+    <tbody>
+    <?php
     $sql = "CALL procViewTags('')";
     $result = getOnePDOTable($pdo, $sql);
     foreach ($result as $key => $value) {
@@ -198,9 +196,26 @@ htmlStart('Tag Edit');
       $tagDescription = $value['tagDescription'];
       $updateBy = $value['updateByName'];
       $updateTime = $value['updateTime'];
-      echo '<tr>' . '<td data-value="1">' . $tagCategory . '</td>' . '<td data-value="2">' . $tag . '</td>' . '<td data-value="3">' . $tagDescription . '</td>' . '<td data-value="4">' . '<div style="white-space: nowrap;">' . '<a href="./tagEdit.php?action=edit&pageTagID=' . $tagID . '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' . '<a href="./tagEdit.php?action=delete&pageTagID=' . $tagID . '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>' . '</div>' . '</td>' . '<td data-value="5">' . '<div style="white-space: nowrap;">' . $updateBy . '</div>' . '</td>' . '<td data-value="6">' . '<div style="white-space: nowrap;">' . $updateTime . '</div>' . '</td>' . '</tr>';
-  } ?>
-  </tbody>
+      echo '<tr>' . '<td data-value="1">' . $tagCategory . '</td>' . '<td data-value="2">' . $tag . '</td>' .
+          '<td data-value="3">' . $tagDescription . '</td>' . '<td data-value="4">' .
+          '<div style="white-space: nowrap;">';
+      echo '<a href="./tagEdit.php?action=edit&pageTagID=' . $tagID . '" class="btn btn-default btn-xs';
+      if ($value['protected'] || !($_SESSION['isTagEditor'] || $_SESSION['isSuperuser'])) {
+        echo ' disabled';
+      }
+
+      echo '">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' . '<a href="./tagEdit.php?action=delete&pageTagID=' . $tagID .
+          '" class="btn btn-default btn-xs';
+      if ($value['inUse'] || $value['protected'] || !($_SESSION['isTagEditor'] || $_SESSION['isSuperuser'])) {
+        echo ' disabled';
+      }
+      echo '" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>';
+
+      echo '</div>' . '</td>' . '<td data-value="5">' . '<div style="white-space: nowrap;">' . $updateBy . '</div>' .
+          '</td>' . '<td data-value="6">' . '<div style="white-space: nowrap;">' . $updateTime . '</div>' . '</td>' .
+          '</tr>';
+    } ?>
+    </tbody>
 </table>
 
 </body>
