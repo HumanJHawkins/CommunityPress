@@ -1371,8 +1371,10 @@ CREATE VIEW vContent AS
     v4l.content.createBy           AS createBy,
     v4l.content.createTime         AS createTime,
     v4l.content.updateBy           AS updateBy,
+    v4l.user.userName              AS updateByName,
     v4l.content.updateTime         AS updateTime
-  FROM v4l.content;
+  FROM v4l.content
+    JOIN v4l.user ON (content.updateBy = user.userID);
 
 
 DROP VIEW IF EXISTS vTag;

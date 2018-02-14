@@ -56,8 +56,7 @@ if (!isset($pdo)) {
       echo '</div>' .
         '</td>' .
         '<td data-value="5">' .
-        '<div style="white-space: nowrap;">' .
-        $value['updateBy'] .
+        '<div style="white-space: nowrap;">' . $value['updateByName'] .
         '</div>' .
         '</td>' .
         '<td data-value="6">' .
