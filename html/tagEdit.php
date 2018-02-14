@@ -196,7 +196,7 @@ htmlStart('Tag Edit');
       $tag = $value['tag'];
       $tagCategory = $value['tagCategory'];
       $tagDescription = $value['tagDescription'];
-      $updateBy = $value['updateBy'];
+      $updateBy = $value['updateByName'];
       $updateTime = $value['updateTime'];
       echo '<tr>' . '<td data-value="1">' . $tagCategory . '</td>' . '<td data-value="2">' . $tag . '</td>' . '<td data-value="3">' . $tagDescription . '</td>' . '<td data-value="4">' . '<div style="white-space: nowrap;">' . '<a href="./tagEdit.php?action=edit&pageTagID=' . $tagID . '" class="btn btn-default btn-xs">&nbsp;&nbsp;Edit&nbsp;&nbsp;</a>&nbsp;' . '<a href="./tagEdit.php?action=delete&pageTagID=' . $tagID . '" class="btn btn-default btn-xs" onclick="return confirm(\'Are you sure you wish to delete this Record?\');">Delete</a>' . '</div>' . '</td>' . '<td data-value="5">' . '<div style="white-space: nowrap;">' . $updateBy . '</div>' . '</td>' . '<td data-value="6">' . '<div style="white-space: nowrap;">' . $updateTime . '</div>' . '</td>' . '</tr>';
   } ?>

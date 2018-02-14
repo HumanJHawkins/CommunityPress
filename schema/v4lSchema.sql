@@ -1384,14 +1384,18 @@ CREATE VIEW vTag AS
     v4l.tag.tag                   AS tag,
     v4l.tag.tagDescription        AS tagDescription,
     v4l.tag.updateBy              AS updateBy,
+    user.userName                 AS updateByName,
     v4l.tag.updateTime            AS updateTime,
     (Protected.tagID IS NOT NULL) AS protected
-  FROM ((((v4l.tag
-    JOIN v4l.thingTag ON ((v4l.tag.tagID = v4l.thingTag.thingID))) JOIN v4l.thingTag CategoryUse
-      ON (((v4l.thingTag.tagID = CategoryUse.thingID) AND
-           (CategoryUse.tagID = tagCategoryTagID())))) JOIN v4l.tag Category
-      ON ((CategoryUse.thingID = Category.tagID))) LEFT JOIN v4l.thingTag Protected
-      ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected')))));
+  FROM (((((v4l.tag
+    JOIN v4l.thingTag ON ((v4l.tag.tagID = v4l.thingTag.thingID)))
+    JOIN v4l.thingTag CategoryUse
+      ON (((v4l.thingTag.tagID = CategoryUse.thingID) AND (CategoryUse.tagID = tagCategoryTagID()))))
+    JOIN v4l.tag Category ON ((CategoryUse.thingID = Category.tagID)))
+    JOIN v4l.user ON ((tag.updateBy = user.userID)))
+    LEFT JOIN v4l.thingTag Protected
+      ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected'))))
+  );
 
 -- Insert required tags to support further creation of tags, etc.
 INSERT INTO tag (tag, tagDescription)
