@@ -23,25 +23,25 @@ foreach ($result as $key => $value) {
       echo '<br /><strong>' . $value['tagCategory'] . ':</strong> ';
       if ($value['canEdit']) {
         // First one has different punctuation, so keep inside the conditional
-        echo '<a href = "" class="btn btn-default btn-xs" onclick="if(confirm(\'Remove this tag?\')) fnTagDelete(' . $_POST["pageContentID"] . ', ' . $value['tagID'] . ', ' . $_SESSION['userID'] . ');">' .
-            $value['tag'] . '&nbsp;&#9745;</a>';
+        echo '<button class="btn btn-default btn-xs" onclick="if(confirm(\'Remove this tag?\')){ fnTagDelete(' .
+            $_POST["pageContentID"] . ', ' . $value['tagID'] . ', ' . $_SESSION['userID'] . ');}">' . $value['tag'] .
+            '&nbsp;&#9745;</button>';
       } else {
         echo $value['tag'];
       }
     } else {
       if ($value['canEdit']) {
         // First one has different punctuation, so keep inside the conditional
-        echo '&nbsp;<a href = "" class="btn btn-default btn-xs" onclick="if(confirm(\'Remove this tag?\')) fnTagDelete(' . $_POST["pageContentID"] . ', ' . $value['tagID'] . ', ' . $_SESSION['userID'] . ');">' .
-            $value['tag'] . '&nbsp;&#9745;</a>';
+        echo '&nbsp;<button class="btn btn-default btn-xs" onclick="if(confirm(\'Remove this tag?\')) {fnTagDelete(' .
+            $_POST["pageContentID"] . ', ' . $value['tagID'] . ', ' . $_SESSION['userID'] . ');}">' . $value['tag'] .
+            '&nbsp;&#9745;</button>';
       } else {
         echo ', ' . $value['tag'];
       }
     }
   }
 }
-
 echo '</div>';
-
 ?>
 
 <script>
@@ -50,8 +50,8 @@ echo '</div>';
         if (taggedID > 0 && tagID > 0 && userID > 0) {
             var httpRequest = new XMLHttpRequest();
             var url = "fnTagAttachmentEdit.php";
-            var params = "theTagged=" + taggedID + "&theTag=" + tagID + "&theUser=" + userID;
-
+            var params = "theTagged=" + taggedID + "&theTag=" + tagID + "&theUser=" + userID + "&action=remove";
+            alert(params);
             httpRequest.open("POST", url, true);
             httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 

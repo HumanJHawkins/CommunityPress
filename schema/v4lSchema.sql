@@ -218,7 +218,7 @@ CREATE TABLE user
 )
   COMMENT 'Confirmed status and LicenseAccepted are tags. LicenseAcceptDate is updateTime of TagUse for user / LicenseAccept';
 
-INSERT INTO user (userEmail, userName, sessionID) VALUES ('nobody@nowhere.none', 'nobody', 0);
+INSERT INTO user (userEmail, userName, sessionID) VALUES ('nobody@nowhere.none', 'Initial Setup', 0);
 
 CREATE TRIGGER beforeInsertUser
 BEFORE INSERT ON user

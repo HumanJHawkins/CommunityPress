@@ -1,3 +1,9 @@
+
+ - Translate user Id in grids to user name.
+     - Add user name to vTag
+     - Display instead of updateBy in procViewTags (and content)
+
+
 TO DO:
   - Fix/Handle onClick for content tag display (remove, but only offer if permitted)
   - Enable file delete
