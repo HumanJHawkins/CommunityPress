@@ -67,6 +67,12 @@ $GLOBALS['CONTENT_SUMMARY_LABEL'] = 'Summary';
 $GLOBALS['CONTENT_EXCERPT_LABEL'] = 'Sample';
 $GLOBALS['CONTENT_DESCRIPTION_LABEL'] = 'Description';
 
+// Legal Info
+$GLOBALS['SITE_COMPTROLLER'] = 'Comptroller Legal Name';
+$GLOBALS['SITE_COMPTROLLER_TITLE'] = 'Comptroller Title';
+$GLOBALS['SITE_LEGAL_ADDRESS'] = 'Address for legal contact';
+
+
 // Development
 ini_set('display_errors', 1);
 

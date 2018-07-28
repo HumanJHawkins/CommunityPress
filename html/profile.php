@@ -6,7 +6,7 @@ htmlStart('User Profile');
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
     <br/>
-  <?php include 'divV4LBanner.php'; ?>
+  <?php include 'divCommunityPressBanner.php'; ?>
     <br/>
   <?php
 

@@ -49,7 +49,7 @@ echo '<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-aw
 echo '<link type="text/css" media="all" rel="stylesheet" href="../css/modalEffect.css">';
 
 // Site specific styles
-echo '<link type="text/css" media="all" rel="stylesheet" href="../css/v4lStyle.css">';
+echo '<link type="text/css" media="all" rel="stylesheet" href="../css/communityPressStyle.css">';
 
 
 // sorttable.js (see: https://www.kryogenix.org/code/browser/sorttable/)

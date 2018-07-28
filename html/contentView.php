@@ -39,7 +39,7 @@ htmlStart('Content View');
 echo '<div class="container">';
 include 'divButtonGroupMain.php';
 echo '<br/>';
-// include 'divV4LBanner.php';
+// include 'divCommunityPressBanner.php';
 // echo '<br/>';
 debugSectionOut("Edit Content");
 debugOut('$contentTitle', $contentTitle);

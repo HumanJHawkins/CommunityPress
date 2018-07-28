@@ -1,14 +1,14 @@
 <?php
 include 'sessionStart.php';
-htmlStart('Visions for Learning');
+htmlStart($GLOBALS['SITE_NAME']);
 ?>
 
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
   <br/>
-  <?php include 'divV4LBanner.php'; ?>
+  <?php include 'divCommunityPressBanner.php'; ?>
   <br/>
-  <?php include 'divV4LCarousel.php'; ?>
+  <?php include 'divCommunityPressCarousel.php'; ?>
 </div>
 </body>
 </html>

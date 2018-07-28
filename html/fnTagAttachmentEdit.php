@@ -7,8 +7,8 @@
  * a UserID to both validate that the action is permitted and to log who took this action.
  *
  * Uses:
- *   FUNCTION v4l.tagAttach(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
- *   FUNCTION v4l.tagRemove(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
+ *   FUNCTION communityPress.tagAttach(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
+ *   FUNCTION communityPress.tagRemove(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
 */
 include_once 'sessionStart.php';
 if (!isset($pdo)) {

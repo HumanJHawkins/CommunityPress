@@ -6,7 +6,7 @@
  * Requires input of a thingID (i.e. ContentID), and another thingID (i.e. tagID) to bind to the first thing, as well
  * as a UserID to both validate that the action is permitted and to log who took this action.
  *
- * Uses: FUNCTION v4l.TagUseInsert(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
+ * Uses: FUNCTION communityPress.TagUseInsert(theTagged BIGINT, theTag BIGINT, theUser BIGINT)
  */
 include 'sessionStart.php';
 if (!isset($pdo)) {

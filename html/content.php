@@ -6,7 +6,7 @@ htmlStart('Stories and Lessons');
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
   <br />
-  <?php include 'divV4LBanner.php'; ?>
+  <?php include 'divCommunityPressBanner.php'; ?>
   <br />
   <?php
   if ((isset($_SESSION['isContentEditor']) && $_SESSION['isContentEditor']) ||

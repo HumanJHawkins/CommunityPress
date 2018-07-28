@@ -1,8 +1,8 @@
-CREATE SCHEMA IF NOT EXISTS v4l
+CREATE SCHEMA IF NOT EXISTS communityPress
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;
 
-USE v4l;
+USE communityPress;
 
 
 DROP TABLE IF EXISTS LUID;
@@ -60,7 +60,7 @@ CREATE TABLE content
 
 INSERT INTO content (contentID, contentTitle, contentDescription, contentExcerpt, contentSummary)
 VALUES (0, 'Placeholder: No Title', 'This is a placeholder record with no actual content attached.',
-        'This is a placeholder record with no actual content attached.', 'https://visionsforlearning.org/');
+        'This is a placeholder record with no actual content attached.', 'CommunityPress.org');
 
 CREATE TRIGGER beforeInsertContent
 BEFORE INSERT ON content
@@ -1363,18 +1363,18 @@ CREATE PROCEDURE procTagCategories()
 DROP VIEW IF EXISTS vContent;
 CREATE VIEW vContent AS
   SELECT
-    v4l.content.contentID          AS contentID,
-    v4l.content.contentTitle       AS contentTitle,
-    v4l.content.contentDescription AS contentDescription,
-    v4l.content.contentExcerpt     AS contentExcerpt,
-    v4l.content.contentSummary     AS contentSummary,
-    v4l.content.createBy           AS createBy,
-    v4l.content.createTime         AS createTime,
-    v4l.content.updateBy           AS updateBy,
-    v4l.user.userName              AS updateByName,
-    v4l.content.updateTime         AS updateTime
-  FROM v4l.content
-    JOIN v4l.user ON (content.updateBy = user.userID);
+    communityPress.content.contentID          AS contentID,
+    communityPress.content.contentTitle       AS contentTitle,
+    communityPress.content.contentDescription AS contentDescription,
+    communityPress.content.contentExcerpt     AS contentExcerpt,
+    communityPress.content.contentSummary     AS contentSummary,
+    communityPress.content.createBy           AS createBy,
+    communityPress.content.createTime         AS createTime,
+    communityPress.content.updateBy           AS updateBy,
+    communityPress.user.userName              AS updateByName,
+    communityPress.content.updateTime         AS updateTime
+  FROM communityPress.content
+    JOIN communityPress.user ON (content.updateBy = user.userID);
 
 
 DROP VIEW IF EXISTS vTag;
@@ -1382,24 +1382,24 @@ CREATE VIEW vTag AS
   SELECT DISTINCT
     Category.tagID                 AS tagCategoryID,
     Category.tag                   AS tagCategory,
-    v4l.tag.tagID                  AS tagID,
-    v4l.tag.tag                    AS tag,
-    v4l.tag.tagDescription         AS tagDescription,
-    v4l.tag.updateBy               AS updateBy,
+    communityPress.tag.tagID                  AS tagID,
+    communityPress.tag.tag                    AS tag,
+    communityPress.tag.tagDescription         AS tagDescription,
+    communityPress.tag.updateBy               AS updateBy,
     user.userName                  AS updateByName,
-    v4l.tag.updateTime             AS updateTime,
+    communityPress.tag.updateTime             AS updateTime,
     (Protected.tagID IS NOT NULL)  AS protected,
     (tagUsage.thingID IS NOT NULL) AS inUse
-  FROM ((((((v4l.tag
-    JOIN v4l.thingTag ON ((v4l.tag.tagID = v4l.thingTag.thingID)))
+  FROM ((((((communityPress.tag
+    JOIN communityPress.thingTag ON ((communityPress.tag.tagID = communityPress.thingTag.thingID)))
     -- Tags ate tagged with their category as indicated in ThingTag. So CategoryUse is an intermediary table used to
     -- get back to the actual category name.
-    JOIN v4l.thingTag CategoryUse
-      ON (((v4l.thingTag.tagID = CategoryUse.thingID) AND (CategoryUse.tagID = tagCategoryTagID()))))
-    JOIN v4l.tag Category ON ((CategoryUse.thingID = Category.tagID)))
-    JOIN v4l.user ON ((tag.updateBy = user.userID)))
-    LEFT JOIN v4l.thingTag Protected
-      ON (((v4l.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected'))))
+    JOIN communityPress.thingTag CategoryUse
+      ON (((communityPress.thingTag.tagID = CategoryUse.thingID) AND (CategoryUse.tagID = tagCategoryTagID()))))
+    JOIN communityPress.tag Category ON ((CategoryUse.thingID = Category.tagID)))
+    JOIN communityPress.user ON ((tag.updateBy = user.userID)))
+    LEFT JOIN communityPress.thingTag Protected
+      ON (((communityPress.tag.tagID = Protected.thingID) AND (Protected.tagID = tagIDFromText('Protected'))))
     LEFT JOIN thingTag tagUsage ON (tag.tagID = tagUsage.tagID))
   );
 
@@ -1523,12 +1523,12 @@ CREATE FUNCTION userRevokeContentEditor(revokeFrom BIGINT, revokeBy BIGINT)
 --
 -- IMPORTANT:     Superuser privileges must be removed from user zero.
 --
-SELECT userGrantSuperuser(userIDFromEmail('v4l.webmaster@gmail.com'), 0);
+SELECT userGrantSuperuser(userIDFromEmail('codehawkins.webmaster@gmail.com'), 0);
 SELECT userRevokeSuperuser(0, 0);
 
 -- Further setup should be under the authorized account, such as:
-SELECT userGrantContentEditor(userIDFromEmail('jhawkins@locutius.com'), userIDFromEmail('v4l.webmaster@gmail.com'));
+SELECT userGrantContentEditor(userIDFromEmail('jhawkins128@gmail.com'), userIDFromEmail('codehawkins.webmaster@gmail.com'));
 
-SELECT permitUserRole(userIDFromEmail('kmadian@yahoo.com'), 'TagEditor', userIDFromEmail('v4l.webmaster@gmail.com'));
+SELECT permitUserRole(userIDFromEmail('jhawkins128@gmail.com'), 'TagEditor', userIDFromEmail('codehawkins.webmaster@gmail.com'));
 --
 */ -- ---------------------------------------------------------------------------------------------------------------
