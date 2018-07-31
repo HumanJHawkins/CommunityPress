@@ -1,9 +1,12 @@
+DROP SCHEMA IF EXISTS communityPress;
+
 CREATE SCHEMA IF NOT EXISTS communityPress
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;
 
 USE communityPress;
 
+SET GLOBAL log_bin_trust_function_creators = 1;
 
 DROP TABLE IF EXISTS LUID;
 CREATE TABLE LUID
@@ -63,8 +66,8 @@ VALUES (0, 'Placeholder: No Title', 'This is a placeholder record with no actual
         'This is a placeholder record with no actual content attached.', 'CommunityPress.org');
 
 CREATE TRIGGER beforeInsertContent
-BEFORE INSERT ON content
-FOR EACH ROW
+  BEFORE INSERT ON content
+  FOR EACH ROW
   SET new.contentID = fnGetLUID('contentID');
 
 
@@ -89,8 +92,8 @@ VALUES (0, 'Placeholder: No File', 0, 'No File', '/var/www/none/');
 
 
 CREATE TRIGGER beforeInsertUploadFile
-BEFORE INSERT ON uploadFile
-FOR EACH ROW
+  BEFORE INSERT ON uploadFile
+  FOR EACH ROW
   SET new.uploadFileID = fnGetLUID('contentID');
 
 
@@ -134,8 +137,8 @@ INSERT INTO session (phpSessionID, ipAddress, sessionData)
 VALUES ('0000000000000000000000000000000000000000000', '0000000000000000', '');
 
 CREATE TRIGGER beforeInsertSessionLog
-BEFORE INSERT ON session
-FOR EACH ROW
+  BEFORE INSERT ON session
+  FOR EACH ROW
   SET new.sessionID = fnGetLUID('sessionID');
 
 
@@ -158,13 +161,13 @@ INSERT INTO tag (tagID, tag, tagDescription)
 VALUES (0, 'Non-tag', 'A placeholder tag with no meaning attached.');
 
 CREATE TRIGGER beforeInsertTag
-BEFORE INSERT ON tag
-FOR EACH ROW
+  BEFORE INSERT ON tag
+  FOR EACH ROW
   SET new.tagID = fnGetLUID('tagID');
 
 CREATE TRIGGER beforeUpdateTag
-BEFORE UPDATE ON tag
-FOR EACH ROW
+  BEFORE UPDATE ON tag
+  FOR EACH ROW
   SET new.updateTime = CURRENT_TIMESTAMP;
 
 
@@ -187,13 +190,13 @@ CREATE TABLE thingTag
   COMMENT 'TagUse can tag objects with Tags from the Tag table, or other LUIDs such as UserID to indicate ownership..';
 
 CREATE TRIGGER beforeInsertThingTag
-BEFORE INSERT ON thingTag
-FOR EACH ROW
+  BEFORE INSERT ON thingTag
+  FOR EACH ROW
   SET new.thingTagID = fnGetLUID('thingTagID');
 
 CREATE TRIGGER beforeUpdateThingTag
-BEFORE UPDATE ON thingTag
-FOR EACH ROW
+  BEFORE UPDATE ON thingTag
+  FOR EACH ROW
   SET new.updateTime = CURRENT_TIMESTAMP;
 
 
@@ -221,8 +224,8 @@ CREATE TABLE user
 INSERT INTO user (userEmail, userName, sessionID) VALUES ('nobody@nowhere.none', 'Initial Setup', 0);
 
 CREATE TRIGGER beforeInsertUser
-BEFORE INSERT ON user
-FOR EACH ROW
+  BEFORE INSERT ON user
+  FOR EACH ROW
   BEGIN
     SET new.userID = fnGetLUID('userID');
 
@@ -253,8 +256,8 @@ CREATE TABLE saltHash
 INSERT INTO saltHash (saltHashID) VALUES (0);
 
 CREATE TRIGGER beforeInsertPasswordHash
-BEFORE INSERT ON saltHash
-FOR EACH ROW
+  BEFORE INSERT ON saltHash
+  FOR EACH ROW
   SET new.saltHashID = fnGetLUID('saltHashID');
 
 
@@ -1420,11 +1423,11 @@ INSERT INTO thingTag (thingID, tagID) VALUES (tagCategoryTagID(), tagCategoryTag
 DO tagInsert('Protected', tagIDFromText('Status'), 'Record is protected from edit or delete.', 0);
 DO tagInsert('Confirmed', tagIDFromText('Status'), 'User ID (typically email) is confirmed.', 0);
 DO tagInsert('LicenseAccepted', tagIDFromText('Status'),
-             'User has accepted the license. Date accepted is tag creation date.', @adminUser);
+             'User has accepted the license. Date accepted is tag creation date.', 0);
 DO tagInsert('SiteAdmin', tagIDFromText('Status'),
-             'Site admin or developer. Can edit most data, including user info and status. ', @adminUser);
-DO tagInsert('TagEditor', tagIDFromText('Status'), 'Has permission to create and edit Tags.', @adminUser);
-DO tagInsert('ContentEditor', tagIDFromText('Status'), 'Has permission to create and edit content.', @adminUser);
+             'Site admin or developer. Can edit most data, including user info and status. ', 0);
+DO tagInsert('TagEditor', tagIDFromText('Status'), 'Has permission to create and edit Tags.', 0);
+DO tagInsert('ContentEditor', tagIDFromText('Status'), 'Has permission to create and edit content.', 0);
 
 -- 'Protect' tag is in place, so can use tagProtect going forward.
 DO tagProtect(tagIDFromText('TagCategory'), 0);
@@ -1523,6 +1526,7 @@ CREATE FUNCTION userRevokeContentEditor(revokeFrom BIGINT, revokeBy BIGINT)
 --
 -- IMPORTANT:     Superuser privileges must be removed from user zero.
 --
+SELECT userGrantSuperuser(userIDFromEmail('codehawkins.webmaster@gmail.com'), 0);
 SELECT userGrantSuperuser(userIDFromEmail('codehawkins.webmaster@gmail.com'), 0);
 SELECT userRevokeSuperuser(0, 0);
 
