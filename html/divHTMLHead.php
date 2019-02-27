@@ -53,14 +53,14 @@ echo '<link type="text/css" media="all" rel="stylesheet" href="../css/communityP
 
 
 // sorttable.js (see: https://www.kryogenix.org/code/browser/sorttable/)
-echo '<script src="../js/sorttable.js"></script>';
+echo '<script src="lib/sorttable.js"></script>';
 
 // TinyMCE for HTML Edit Controls
-echo '<script type="text/javascript" src="../js/tinymce/tinymce.min.js" ></script >';
+echo '<script type="text/javascript" src="lib/tinymce/tinymce.min.js" ></script >';
 
 // ModalEffects support
 // Need to be at bottom of page?
-// echo '<script src="js/modalEffects.js"></script>';
+// echo '<script src="lib/modalEffects.js"></script>';
 
 echo '<title>' . $string . '</title>';
 echo '</head>';

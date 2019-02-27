@@ -6,9 +6,9 @@ htmlStart($GLOBALS['SITE_NAME']);
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
   <br/>
-  <?php include 'divCommunityPressBanner.php'; ?>
+    <?php include 'divBanner.php'; ?>
   <br/>
-  <?php include 'divCommunityPressCarousel.php'; ?>
+    <?php include 'divCarousel.php'; ?>
 </div>
 </body>
 </html>

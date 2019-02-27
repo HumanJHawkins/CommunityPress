@@ -149,14 +149,7 @@ if (
     resetLoginProcess('Cannot send code without email.');
   }
 
-// Must use doublequotes below, or PHP will not translate the linefeeds.
-  $mailBodyText = "Dear " . $_SESSION["userEmail"] . ",\r\n\r\nThank you for registering at " .
-    $GLOBALS["SITE_URL_CASUAL"] . ". We hope you will find many great educational resources, and " .
-    "perhaps contribute some of your own.\r\n\r\n" .
-    "Please verify your email by entering the following code where it says \"Enter Code Here: \" at " .
-    $GLOBALS["SITE_URL_CASUAL"] . ": " . $verifyCode . "\r\n\r\n" .
-    "See you at the site.\r\n\r\n" . $GLOBALS["VERIFICATION_EMAIL_SIGNATURE"];
-  sendVerifyCode($mailBodyText, 'verifyCodeEmail.html');
+  sendVerifyCode();
   
   $_SESSION["loginStep"] = LOGIN_VERIFY_DIALOG_STANDARD;
   returnToLogin();

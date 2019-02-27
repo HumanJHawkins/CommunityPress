@@ -197,7 +197,7 @@ htmlStart('Content View');
 <div class="container">
   <?php include 'divButtonGroupMain.php'; ?>
     <br/>
-  <?php include 'divCommunityPressBanner.php'; ?>
+    <?php include 'divBanner.php'; ?>
     <br/>
   <?php
   debugSectionOut("Edit Content");
@@ -210,7 +210,11 @@ htmlStart('Content View');
   debugOut('$contentFilename', $contentFilename);
   debugOut('$sql', $sql);
   ?>
-
+    <!--
+        TO DO: Implement client side file size check (and info for user). Related sample code here:
+            https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_fileupload_files
+        Check image and other files.
+    -->
     <form enctype="multipart/form-data" action="contentEdit.php" method="post" name="contentEditForm">
         <table id="contentEditTable" style="border-spacing:5em;">
 

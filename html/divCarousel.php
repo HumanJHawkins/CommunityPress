@@ -9,23 +9,18 @@
 <!-- Wrapper for slides -->
 <div class="carousel-inner">
     <div class="item active">
-        <h3 align="center"><b>Our Mission:</b><br/>
-            To create a curriculum design and support community that continuously improves learning experiences for use
-            by
-            teachers, students, curriculum designers and artists.<br/><br/></h3>
+        <h3 align="center"><b>Carousel 1:</b><br/>
+            Something enlightening.<br/><br/></h3>
     </div>
 
     <div class="item">
-        <h3 align="center"><b>Our Belief:</b><br/>
-            Local communities have the sensitivity, intelligence, and talent to create great learning experiences,
-            especially when supported by global resources.<br/><br/></h3>
+        <h3 align="center"><b>Carousel 2:</b><br/>
+            Something mystical.<br/><br/></h3>
     </div>
 
     <div class="item">
-        <h3 align="center"><b>On Funding:</b><br/>
-            No one will ever have to pay to use these resources. Donations will pay our work forward so everyone can
-            benefit
-            from all of our efforts.<br/><br/></h3>
+        <h3 align="center"><b>Carousel 3:</b><br/>
+            Something beautiful.<br/><br/></h3>
     </div>
 </div>
 </div>
