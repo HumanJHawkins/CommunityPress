@@ -30,7 +30,7 @@ $GLOBALS['PASSWORD_HASH_COST'] = 8;
 $GLOBALS['VERIFYCODE_HASH_COST'] = 5;
 
 // The debugOut function makes heavy use of this. It's very helpful during debugging to
-// live monitor this. To do so, SSH into your server and use:
+// live monitor this. To do so, SSH into your server (assumes linux) and use:
 //    sudo tail -f /var/log/nginx/error.log
 // Useful related commands include:
 //    sudo truncate --size=0 /var/log/nginx/error.log
