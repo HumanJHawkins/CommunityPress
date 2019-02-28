@@ -657,7 +657,10 @@ function htmlStart($string, $showBody = true)
 
 function htmlEnd($showFooter = true)
 {
+    if($showFooter) {
         // Footer TBD.
+    }
+
     echo '</body></html>';
 }
 
