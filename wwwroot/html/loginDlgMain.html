@@ -1,0 +1,52 @@
+<body onload="document.getElementById('#costumModal2').style.display='block'">
+
+<div id="#costumModal2" class="modal" data-easein="flipXIn" tabindex="-1" role="dialog"
+     aria-labelledby="costumModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    Login / Register
+                </h4>
+            </div>
+            <div class="modal-body">
+                <form action="./login.php" method="post">
+                    <input type="hidden" name="loginStep" value="LOGIN_VERIFY_PASSWORD"/>
+                    <div class="form-group">
+                        <p>
+                            Welcome to <?= $GLOBALS['SITE_NAME'] ?>. Please enter your email address and password to
+                            login.
+                            If this is your first time here, we'll ask you to verify your e-mail.</p>
+                        <p>
+                            NOTICE: We are strong advocates of internet privacy. You can review our
+                            <a href="./privacypolicy.php">privacy policy here</a>. We use cookies to make this
+                            site work as smoothly as possible. For example, by storing the most recent place
+                            you visit on our site so we can return you there after login.
+                        </p>
+                        <p><em>
+                            By logging in or registering, you are consenting to our use of cookies and to the
+                            <a href="./termsandconditions.php">terms and conditions</a> of using our site.
+                        </em></p>
+                        <label><b>Email Address:</b></label>
+                        <input type="email" class="form-control" placeholder="Enter Email Address" name="userEmail"
+                               required>
+                        <label><b>Password</b></label>
+                        <input type="password" class="form-control" placeholder="STRING_REPLACE_PLACEHOLDER"
+                               name="password"
+                               required>
+                        <br/>
+                        <p align="left">
+                            <button type="submit" class="btn btn-primary">Login (or Register)</button>
+                            <span style="float:right;">
+                <button type="button" class="btn btn-basic"
+                        onclick="location.href='STRING_REPLACE_LAST_URL'">&nbsp;&nbsp;&nbsp;Cancel&nbsp;&nbsp;&nbsp;</button>
+              </span>
+                        <p align="left">
+                            <!-- <input type="checkbox" checked="checked"> Remember me </input> -->
+                            <span style="float:right;"><a href="login.php?action=reset">Reset Password</a></span></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

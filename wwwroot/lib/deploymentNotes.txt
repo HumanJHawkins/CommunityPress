@@ -1,0 +1,6 @@
+In the lib directory, we need:
+   "mailgun-php" directory from mailgun.com
+   "tinymce" directory from https://www.tiny.cloud/
+   jquery.min.js
+
+   (Other libs included in repo)
