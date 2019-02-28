@@ -6,7 +6,8 @@ CREATE SCHEMA IF NOT EXISTS communityPress
 
 USE communityPress;
 
-SET GLOBAL log_bin_trust_function_creators = 1;
+-- Need root for this. Do at terminal.
+-- SET GLOBAL log_bin_trust_function_creators = 1;
 
 DROP TABLE IF EXISTS LUID;
 CREATE TABLE LUID
@@ -1497,24 +1498,21 @@ END;
 
 
 DROP FUNCTION IF EXISTS revokeUserRole;
-CREATE FUNCTION revokeUserRole(revokeFrom BIGINT, theUserRole BIGINT, revokeBy BIGINT)
+CREATE FUNCTION revokeUserRole(revokeFrom BIGINT, userRoleID BIGINT, revokeBy BIGINT)
   RETURNS BIGINT
 BEGIN
   DECLARE permissionTagID BIGINT;
 
   IF (userIsSuperuser(revokeBy))
-  THEN -- If revokeBy has permission to do this.
+      THEN
     SET permissionTagID = (
       SELECT thingTagID
       FROM thingTag
-      WHERE thingID = revokeFrom
-        AND tagID = theUserRole);
+      WHERE thingID = revokeFrom AND tagID = userRoleID);
     IF (permissionTagID > 0)
     THEN
-      DELETE
-      FROM thingTag
-      WHERE thingID = revokeFrom
-        AND tagID = theUserRole;
+      DELETE FROM thingTag
+      WHERE thingID = revokeFrom AND tagID = userRoleID;
       RETURN permissionTagID;
     ELSE
       RETURN -1;
@@ -1549,9 +1547,12 @@ END;
 SELECT userGrantSuperuser(userIDFromEmail('codehawkins.webmaster@gmail.com'), 0);
 SELECT userRevokeSuperuser(0, 0);
 
+-- Test:
+SELECT userIsSuperuser(userIDFromEmail('codehawkins.webmaster@gmail.com'));
+SELECT userIsSuperuser(0);
+
 -- Further setup should be under the authorized account, such as:
 SELECT userGrantContentEditor(userIDFromEmail('jhawkins128@gmail.com'), userIDFromEmail('codehawkins.webmaster@gmail.com'));
-
 SELECT permitUserRole(userIDFromEmail('jhawkins128@gmail.com'), 'TagEditor', userIDFromEmail('codehawkins.webmaster@gmail.com'));
 --
 */ -- ---------------------------------------------------------------------------------------------------------------
